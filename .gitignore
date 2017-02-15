@@ -1,29 +1,31 @@
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+# SVN files
+.svn*
 
-# Precompiled Headers
-*.gch
-*.pch
+# EMACS temp files
+*~
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
+# Compiled source files
+*.com
+*.class
 *.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
 *.exe
-*.out
-*.app
+*.o
+*.so
+*.pyc
+*.bin
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumps.db
+
+# Vivado Build
+build*
+
+# Only .bit.gz and .mcs.gz should be committed to git
+*.bit
+*.mcs
