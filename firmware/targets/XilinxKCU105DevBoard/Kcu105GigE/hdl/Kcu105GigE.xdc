@@ -42,5 +42,3 @@ set_clock_groups -asynchronous -group [get_clocks {gtClkP}] -group [get_clocks {
 
 set_clock_groups -asynchronous -group [get_clocks {ethClk125MHz}] -group [get_clocks {dnaClk}] 
  
-# StdLib
-set_property ASYNC_REG TRUE [get_cells -hierarchical *crossDomainSyncReg_reg*]

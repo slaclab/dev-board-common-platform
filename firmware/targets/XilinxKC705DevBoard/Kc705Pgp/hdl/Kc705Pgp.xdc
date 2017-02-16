@@ -49,6 +49,5 @@ set_clock_groups -asynchronous -group [get_clocks {pgpClk}] -group [get_clocks {
 set_clock_groups -asynchronous -group [get_clocks {pgpClk}] -group [get_clocks {dnaClk}] 
 set_clock_groups -asynchronous -group [get_clocks {pgpClk}] -group [get_clocks {dnaClkInv}] 
 
-
 # .bit File Configuration
 set_property BITSTREAM.CONFIG.CONFIGRATE 9 [current_design]  

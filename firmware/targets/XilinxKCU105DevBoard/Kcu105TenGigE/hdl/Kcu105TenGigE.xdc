@@ -37,12 +37,10 @@ create_clock -name ethClkP -period  6.400 [get_ports {ethClkP}]
 create_generated_clock -name ethClk [get_pins {U_10GigE/GEN_LANE[0].TenGigEthGthUltraScale_Inst/U_TenGigEthRst/CLK156_BUFG_GT/O}]
 create_generated_clock -name dnaClk [get_pins {U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_ULTRA_SCALE.DeviceDnaUltraScale_Inst/BUFGCE_DIV_Inst/O}]
 
-set_clock_groups -asynchronous   -group [get_clocks {ethClk}] -group [get_clocks {dnaClk}]
+set_clock_groups -asynchronous -group [get_clocks {ethClk}]  -group [get_clocks {dnaClk}]
+set_clock_groups -asynchronous -group [get_clocks {ethClkP}] -group [get_clocks {dnaClk}]
 
 # BITSTREAM Configurations
 set_property BITSTREAM.CONFIG.CONFIGRATE 50 [current_design] 
 set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 1 [current_design]
 set_property BITSTREAM.CONFIG.SPI_FALL_EDGE No [current_design]
- 
-# StdLib
-set_property ASYNC_REG TRUE [get_cells -hierarchical *crossDomainSyncReg_reg*]
