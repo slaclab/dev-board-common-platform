@@ -60,10 +60,14 @@ set_property PACKAGE_PIN E1 [get_ports {ethTxN[3]}]
 create_clock -name sysClkP -period  5.000 [get_ports {sysClkP}]
 create_clock -name ethClk  -period  6.400 [get_pins {U_XAUI/XauiGth7_Inst/U_XauiGth7Core/U0/gt_wrapper_i/gt0_XauiGth7Core_gt_wrapper_i/gthe2_i/TXOUTCLK}]
 
-create_generated_clock  -name ethRefClk [get_pins {ClockManager7_0/MmcmGen.U_Mmcm/CLKOUT0}] 
+create_generated_clock -name ethRefClk [get_pins {ClockManager7_0/MmcmGen.U_Mmcm/CLKOUT0}] 
 create_generated_clock -name dnaClk    [get_pins {U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_7SERIES.DeviceDna7Series_Inst/BUFR_Inst/O}] 
+create_generated_clock -name dnaClkInv [get_pins {U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_7SERIES.DeviceDna7Series_Inst/DNA_CLK_INV_BUFR/O}] 
 
-set_clock_groups -asynchronous -group [get_clocks {sysClkP}] -group [get_clocks {ethRefClk}] -group [get_clocks {ethClk}] -group [get_clocks {dnaClk}]
+set_clock_groups -asynchronous -group [get_clocks ethRefClk] -group [get_clocks sysClkP]
+set_clock_groups -asynchronous -group [get_clocks ethRefClk] -group [get_clocks ethClk]
+set_clock_groups -asynchronous -group [get_clocks ethRefClk] -group [get_clocks dnaClk]
+set_clock_groups -asynchronous -group [get_clocks ethRefClk] -group [get_clocks dnaClkInv]
 
 # StdLib
 set_property ASYNC_REG TRUE [get_cells -hierarchical *crossDomainSyncReg_reg*]

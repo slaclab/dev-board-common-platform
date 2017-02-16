@@ -30,10 +30,14 @@ set_property PACKAGE_PIN B3 [get_ports ETH1_RX_N]
 
 # Timing Constraints 
 create_clock -name sysClkP -period  5.000 [get_ports {FPGA_SYSCLK_P}]
-create_generated_clock  -name pgpClk [get_pins {REAL_PGP.ClockManager7_0/MmcmGen.U_Mmcm/CLKOUT0}] 
-create_generated_clock -name dnaClk    [get_pins {U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_7SERIES.DeviceDna7Series_Inst/BUFR_Inst/O}] 
 
-set_clock_groups -asynchronous -group [get_clocks {sysClkP}] -group [get_clocks {pgpClk}] -group [get_clocks {dnaClk}]
+create_generated_clock -name pgpClk    [get_pins {ClockManager7_0/MmcmGen.U_Mmcm/CLKOUT0}] 
+create_generated_clock -name dnaClk    [get_pins {U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_7SERIES.DeviceDna7Series_Inst/BUFR_Inst/O}] 
+create_generated_clock -name dnaClkInv [get_pins {U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_7SERIES.DeviceDna7Series_Inst/DNA_CLK_INV_BUFR/O}] 
+
+set_clock_groups -asynchronous -group [get_clocks {pgpClk}] -group [get_clocks {sysClkP}]
+set_clock_groups -asynchronous -group [get_clocks {pgpClk}] -group [get_clocks {dnaClk}]                               
+set_clock_groups -asynchronous -group [get_clocks {pgpClk}] -group [get_clocks {dnaClkInv}]  
                                
 # StdLib
 set_property ASYNC_REG TRUE [get_cells -hierarchical *crossDomainSyncReg_reg*]

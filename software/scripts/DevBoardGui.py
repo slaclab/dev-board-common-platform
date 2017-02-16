@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 #-----------------------------------------------------------------------------
-# Title      : PyRogue febBoard Module
+# Title      : PyRogue DevBoardGui Module
 #-----------------------------------------------------------------------------
-# File       : febBoard.py
+# File       : DevBoardGui.py
 # Author     : Larry Ruckman <ruckman@slac.stanford.edu>
-# Created    : 2016-11-09
-# Last update: 2016-11-09
+# Created    : 2017-02-15
+# Last update: 2017-02-15
 #-----------------------------------------------------------------------------
 # Description:
-# Rogue interface to FEB board
+# Rogue interface to DEV board
 #-----------------------------------------------------------------------------
-# This file is part of the ATLAS CHESS2 DEV. It is subject to 
+# This file is part of the 'Development Board Examples'. It is subject to 
 # the license terms in the LICENSE.txt file found in the top-level directory 
 # of this distribution and at: 
 #    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
-# No part of the ATLAS CHESS2 DEV, including this file, may be 
+# No part of the 'Development Board Examples', including this file, may be 
 # copied, modified, propagated, or distributed except according to the terms 
 # contained in the LICENSE.txt file.
 #-----------------------------------------------------------------------------
@@ -22,7 +22,7 @@ import rogue.hardware.pgp
 import pyrogue.utilities.fileio
 import pyrogue.gui
 import pyrogue.protocols
-import AtlasChess2Feb
+import DevBoard
 import threading
 import signal
 import atexit
@@ -57,7 +57,7 @@ class MyRunControl(pyrogue.RunControl):
       while (self._runState == 'Running'):
          delay = 1.0 / ({value: key for key,value in self.runRate.enum.items()}[self._runRate])
          time.sleep(delay)
-         self._root.feb.sysReg.softTrig()
+         # # # # self._root.feb.sysReg.softTrig()
 
          self._runCount += 1
          if self._last != int(time.time()):
@@ -79,8 +79,8 @@ def gui(arg):
     # Check for PGP link
     if (arg == 'PGP'):
         # Create the PGP interfaces
-        pgpVc0 = rogue.hardware.pgp.PgpCard('/dev/pgpcard_0',0,0) # Data
-        pgpVc1 = rogue.hardware.pgp.PgpCard('/dev/pgpcard_0',0,1) # Registers
+        pgpVc0 = rogue.hardware.pgp.PgpCard('/dev/pgpcard_0',0,0) # Registers
+        pgpVc1 = rogue.hardware.pgp.PgpCard('/dev/pgpcard_0',0,1) # Data
 
         # Display PGP card's firmware version
         print("")
@@ -89,10 +89,10 @@ def gui(arg):
 
         # Create and Connect SRPv0 to VC1
         srp = rogue.protocols.srp.SrpV0()
-        pyrogue.streamConnectBiDir(pgpVc1,srp)
+        pyrogue.streamConnectBiDir(pgpVc0,srp)
         
         # Add data stream to file as channel 1
-        pyrogue.streamConnect(pgpVc0,dataWriter.getChannel(0x1))
+        pyrogue.streamConnect(pgpVc1,dataWriter.getChannel(0x1))
     #################################################################
     # Else it's Ethernet based
     else:
@@ -108,25 +108,8 @@ def gui(arg):
     #################################################################
              
     # Add registers
-    system.add(AtlasChess2Feb.feb(memBase=srp))
-    
-    # Get the updated variables
-    system.readAll()
-    
-    # print ('Load the matrix')
-    # system.feb.Chess2Ctrl0.loadMatrix()
-    # system.feb.Chess2Ctrl1.loadMatrix()
-    # system.feb.Chess2Ctrl2.loadMatrix()
-    
-    #####################################################
-    # Example: Enable only one pixel for charge injection
-    #####################################################
-    # print ('Disable all pixels')
-    # system.feb.Chess2Ctrl0.writeAllPixels(enable=0,chargeInj=0)
-    # # Enable only one pixel for charge injection
-    # print ('Enable only one pixels')
-    # system.feb.Chess2Ctrl0.writePixel(enable=1, chargeInj=1, col=0, row=0)
-    
+    system.add(DevBoard.feb(memBase=srp))
+        
     # Create GUI
     appTop = PyQt4.QtGui.QApplication(sys.argv)
     guiTop = pyrogue.gui.GuiTop('PyRogueGui')

@@ -1,6 +1,6 @@
 
 # Python Package directories
-setenv FEB_DIR    ${PWD}/../firmware/common/AtlasChess2Feb
+setenv FEB_DIR    ${PWD}/../firmware/common
 setenv SURF_DIR   ${PWD}/../firmware/submodules/surf
 setenv ROGUE_DIR  ${PWD}/rogue
 

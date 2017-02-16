@@ -38,19 +38,14 @@ set_property PACKAGE_PIN N12 [get_ports vPIn] set_property PACKAGE_PIN P11 [get_
 
 # Timing Constraints
 create_clock -period 8.000 -name gtClkP [get_ports gtClkP]
+
 create_generated_clock -name ethClk125MHz [get_pins U_ETH_PHY_MAC/U_MMCM/MmcmGen.U_Mmcm/CLKOUT0]
 create_generated_clock -name ethClk62p5MHz [get_pins U_ETH_PHY_MAC/U_MMCM/MmcmGen.U_Mmcm/CLKOUT1]
-create_generated_clock -name dnaClk [get_pins U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_7SERIES.DeviceDna7Series_Inst/BUFR_Inst/O]
+create_generated_clock -name dnaClk    [get_pins {U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_7SERIES.DeviceDna7Series_Inst/BUFR_Inst/O}] 
+create_generated_clock -name dnaClkInv [get_pins {U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_7SERIES.DeviceDna7Series_Inst/DNA_CLK_INV_BUFR/O}] 
 
 set_clock_groups -asynchronous -group [get_clocks ethClk125MHz] -group [get_clocks dnaClk]
-
-# StdLib
-set_property ASYNC_REG true [get_cells -hierarchical *crossDomainSyncReg_reg*]
+set_clock_groups -asynchronous -group [get_clocks ethClk125MHz] -group [get_clocks dnaClkInv]
 
 # .bit File Configuration
 set_property BITSTREAM.CONFIG.CONFIGRATE 33 [current_design]
-
-connect_debug_port u_ila_0/probe0 [get_nets [list {U_ETH_PHY_MAC/GEN_LANE[0].U_GigEthGtp7/U_MAC/U_EthMac/U_1G_IMPORT.U_EthMacImport/v[macMaster][tData][0]} {U_ETH_PHY_MAC/GEN_LANE[0].U_GigEthGtp7/U_MAC/U_EthMac/U_1G_IMPORT.U_EthMacImport/v[macMaster][tData][1]} {U_ETH_PHY_MAC/GEN_LANE[0].U_GigEthGtp7/U_MAC/U_EthMac/U_1G_IMPORT.U_EthMacImport/v[macMaster][tData][2]} {U_ETH_PHY_MAC/GEN_LANE[0].U_GigEthGtp7/U_MAC/U_EthMac/U_1G_IMPORT.U_EthMacImport/v[macMaster][tData][3]} {U_ETH_PHY_MAC/GEN_LANE[0].U_GigEthGtp7/U_MAC/U_EthMac/U_1G_IMPORT.U_EthMacImport/v[macMaster][tData][4]} {U_ETH_PHY_MAC/GEN_LANE[0].U_GigEthGtp7/U_MAC/U_EthMac/U_1G_IMPORT.U_EthMacImport/v[macMaster][tData][5]} {U_ETH_PHY_MAC/GEN_LANE[0].U_GigEthGtp7/U_MAC/U_EthMac/U_1G_IMPORT.U_EthMacImport/v[macMaster][tData][6]} {U_ETH_PHY_MAC/GEN_LANE[0].U_GigEthGtp7/U_MAC/U_EthMac/U_1G_IMPORT.U_EthMacImport/v[macMaster][tData][7]}]]
-connect_debug_port u_ila_0/probe1 [get_nets [list {U_ETH_PHY_MAC/GEN_LANE[0].U_GigEthGtp7/U_MAC/U_EthMac/U_1G_IMPORT.U_EthMacImport/FFData[0]} {U_ETH_PHY_MAC/GEN_LANE[0].U_GigEthGtp7/U_MAC/U_EthMac/U_1G_IMPORT.U_EthMacImport/FFData[1]} {U_ETH_PHY_MAC/GEN_LANE[0].U_GigEthGtp7/U_MAC/U_EthMac/U_1G_IMPORT.U_EthMacImport/FFData[2]} {U_ETH_PHY_MAC/GEN_LANE[0].U_GigEthGtp7/U_MAC/U_EthMac/U_1G_IMPORT.U_EthMacImport/FFData[3]} {U_ETH_PHY_MAC/GEN_LANE[0].U_GigEthGtp7/U_MAC/U_EthMac/U_1G_IMPORT.U_EthMacImport/FFData[4]} {U_ETH_PHY_MAC/GEN_LANE[0].U_GigEthGtp7/U_MAC/U_EthMac/U_1G_IMPORT.U_EthMacImport/FFData[5]} {U_ETH_PHY_MAC/GEN_LANE[0].U_GigEthGtp7/U_MAC/U_EthMac/U_1G_IMPORT.U_EthMacImport/FFData[6]} {U_ETH_PHY_MAC/GEN_LANE[0].U_GigEthGtp7/U_MAC/U_EthMac/U_1G_IMPORT.U_EthMacImport/FFData[7]}]]
-connect_debug_port u_ila_0/probe2 [get_nets [list {U_ETH_PHY_MAC/GEN_LANE[0].U_GigEthGtp7/U_MAC/U_EthMac/U_1G_IMPORT.U_EthMacImport/macSlave[tReady]}]]
-

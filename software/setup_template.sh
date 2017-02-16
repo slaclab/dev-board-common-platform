@@ -1,6 +1,6 @@
 
 # Python Package directories
-export FEB_DIR=${PWD}/../firmware/common/AtlasChess2Feb
+export FEB_DIR=${PWD}/../firmware/common
 export SURF_DIR=${PWD}/../firmware/submodules/surf
 export ROGUE_DIR=${PWD}/rogue
 
