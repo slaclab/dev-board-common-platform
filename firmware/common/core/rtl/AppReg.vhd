@@ -1,13 +1,8 @@
 -------------------------------------------------------------------------------
--- Title      : 
--------------------------------------------------------------------------------
 -- File       : AppReg.vhd
--- Author     : Larry Ruckman  <ruckman@slac.stanford.edu>
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2016-02-05
--- Last update: 2016-07-13
--- Platform   : 
--- Standard   : VHDL'93/02
+-- Created    : 2017-02-15
+-- Last update: 2017-02-15
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -33,6 +28,7 @@ use work.SsiPkg.all;
 entity AppReg is
    generic (
       TPD_G            : time            := 1 ns;
+      BUILD_INFO_G     : BuildInfoType;
       XIL_DEVICE_G     : string          := "7SERIES";
       AXI_ERROR_RESP_G : slv(1 downto 0) := AXI_RESP_DECERR_C);
    port (
@@ -64,41 +60,40 @@ architecture mapping of AppReg is
    constant SHARED_MEM_WIDTH_C : positive                           := 10;
    constant IRQ_ADDR_C         : slv(SHARED_MEM_WIDTH_C-1 downto 0) := (others => '1');
 
-   constant NUM_AXI_MASTERS_C : natural := 5;
+   constant NUM_AXI_MASTERS_C : natural := 6;
 
    constant VERSION_INDEX_C : natural := 0;
-   constant ADC_INDEX_C     : natural := 1;
-   constant MEM_INDEX_C     : natural := 2;
-   constant PRBS_TX_INDEX_C : natural := 3;
-   constant PRBS_RX_INDEX_C : natural := 4;
-
-   constant VERSION_ADDR_C : slv(31 downto 0) := X"00000000";
-   constant ADC_ADDR_C     : slv(31 downto 0) := X"00010000";
-   constant MEM_ADDR_C     : slv(31 downto 0) := X"00020000";
-   constant PRBS_TX_ADDR_C : slv(31 downto 0) := X"00030000";
-   constant PRBS_RX_ADDR_C : slv(31 downto 0) := X"00040000";
+   constant XADC_INDEX_C    : natural := 1;
+   constant SYS_MON_INDEX_C : natural := 2;
+   constant MEM_INDEX_C     : natural := 3;
+   constant PRBS_TX_INDEX_C : natural := 4;
+   constant PRBS_RX_INDEX_C : natural := 5;
 
    constant AXI_CROSSBAR_MASTERS_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := (
       VERSION_INDEX_C => (
-         baseAddr     => VERSION_ADDR_C,
+         baseAddr     => x"0000_0000",
          addrBits     => 16,
          connectivity => X"FFFF"),
-      ADC_INDEX_C     => (
-         baseAddr     => ADC_ADDR_C,
+      XADC_INDEX_C    => (
+         baseAddr     => x"0001_0000",
+         addrBits     => 16,
+         connectivity => X"FFFF"),
+      SYS_MON_INDEX_C => (
+         baseAddr     => x"0002_0000",
          addrBits     => 16,
          connectivity => X"FFFF"),
       MEM_INDEX_C     => (
-         baseAddr     => MEM_ADDR_C,
+         baseAddr     => x"0003_0000",
          addrBits     => 16,
          connectivity => X"FFFF"),
       PRBS_TX_INDEX_C => (
-         baseAddr     => PRBS_TX_ADDR_C,
+         baseAddr     => x"0004_0000",
          addrBits     => 16,
          connectivity => X"FFFF"),
       PRBS_RX_INDEX_C => (
-         baseAddr     => PRBS_RX_ADDR_C,
+         baseAddr     => x"0005_0000",
          addrBits     => 16,
-         connectivity => X"FFFF"));                
+         connectivity => X"FFFF"));
 
    signal mAxilWriteMaster : AxiLiteWriteMasterType;
    signal mAxilWriteSlave  : AxiLiteWriteSlaveType;
@@ -190,6 +185,7 @@ begin
    U_AxiVersion : entity work.AxiVersion
       generic map (
          TPD_G            => TPD_G,
+         BUILD_INFO_G     => BUILD_INFO_G,
          AXI_ERROR_RESP_G => AXI_ERROR_RESP_G,
          XIL_DEVICE_G     => XIL_DEVICE_G,
          EN_DEVICE_DNA_G  => true)
@@ -210,17 +206,46 @@ begin
             TPD_G            => TPD_G,
             AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
          port map (
-            axiReadMaster  => mAxilReadMasters(ADC_INDEX_C),
-            axiReadSlave   => mAxilReadSlaves(ADC_INDEX_C),
-            axiWriteMaster => mAxilWriteMasters(ADC_INDEX_C),
-            axiWriteSlave  => mAxilWriteSlaves(ADC_INDEX_C),
+            axiReadMaster  => mAxilReadMasters(XADC_INDEX_C),
+            axiReadSlave   => mAxilReadSlaves(XADC_INDEX_C),
+            axiWriteMaster => mAxilWriteMasters(XADC_INDEX_C),
+            axiWriteSlave  => mAxilWriteSlaves(XADC_INDEX_C),
             axiClk         => clk,
             axiRst         => rst,
             vPIn           => vPIn,
-            vNIn           => vNIn); 
+            vNIn           => vNIn);
+      --------------------------
+      -- AXI-Lite: SYSMON Module
+      --------------------------
+      U_AxiLiteEmpty : entity work.AxiLiteEmpty
+         generic map (
+            TPD_G            => TPD_G,
+            AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
+         port map (
+            axiClk         => clk,
+            axiClkRst      => rst,
+            axiReadMaster  => mAxilReadMasters(SYS_MON_INDEX_C),
+            axiReadSlave   => mAxilReadSlaves(SYS_MON_INDEX_C),
+            axiWriteMaster => mAxilWriteMasters(SYS_MON_INDEX_C),
+            axiWriteSlave  => mAxilWriteSlaves(SYS_MON_INDEX_C));
+
    end generate;
 
    GEN_ULTRA_SCALE : if (XIL_DEVICE_G = "ULTRASCALE") generate
+      ------------------------
+      -- AXI-Lite: XADC Module
+      ------------------------
+      U_AxiLiteEmpty : entity work.AxiLiteEmpty
+         generic map (
+            TPD_G            => TPD_G,
+            AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
+         port map (
+            axiClk         => clk,
+            axiClkRst      => rst,
+            axiReadMaster  => mAxilReadMasters(XADC_INDEX_C),
+            axiReadSlave   => mAxilReadSlaves(XADC_INDEX_C),
+            axiWriteMaster => mAxilWriteMasters(XADC_INDEX_C),
+            axiWriteSlave  => mAxilWriteSlaves(XADC_INDEX_C));
       --------------------------
       -- AXI-Lite: SYSMON Module
       --------------------------
@@ -228,14 +253,14 @@ begin
          generic map (
             TPD_G => TPD_G)
          port map (
-            axiReadMaster  => mAxilReadMasters(ADC_INDEX_C),
-            axiReadSlave   => mAxilReadSlaves(ADC_INDEX_C),
-            axiWriteMaster => mAxilWriteMasters(ADC_INDEX_C),
-            axiWriteSlave  => mAxilWriteSlaves(ADC_INDEX_C),
+            axiReadMaster  => mAxilReadMasters(SYS_MON_INDEX_C),
+            axiReadSlave   => mAxilReadSlaves(SYS_MON_INDEX_C),
+            axiWriteMaster => mAxilWriteMasters(SYS_MON_INDEX_C),
+            axiWriteSlave  => mAxilWriteSlaves(SYS_MON_INDEX_C),
             axiClk         => clk,
             axiRst         => rst,
             vPIn           => vPIn,
-            vNIn           => vNIn);    
+            vNIn           => vNIn);
    end generate;
 
    --------------------------------          
@@ -264,7 +289,7 @@ begin
          axiReadMaster  => mAxilReadMasters(MEM_INDEX_C),
          axiReadSlave   => mAxilReadSlaves(MEM_INDEX_C),
          axiWriteMaster => mAxilWriteMasters(MEM_INDEX_C),
-         axiWriteSlave  => mAxilWriteSlaves(MEM_INDEX_C));       
+         axiWriteSlave  => mAxilWriteSlaves(MEM_INDEX_C));
 
    -------------------
    -- AXI-Lite PRBS RX
@@ -288,7 +313,7 @@ begin
          axilReadMaster  => mAxilReadMasters(PRBS_TX_INDEX_C),
          axilReadSlave   => mAxilReadSlaves(PRBS_TX_INDEX_C),
          axilWriteMaster => mAxilWriteMasters(PRBS_TX_INDEX_C),
-         axilWriteSlave  => mAxilWriteSlaves(PRBS_TX_INDEX_C));  
+         axilWriteSlave  => mAxilWriteSlaves(PRBS_TX_INDEX_C));
 
    -------------------
    -- AXI-Lite PRBS RX
@@ -309,6 +334,6 @@ begin
          axiReadMaster  => mAxilReadMasters(PRBS_RX_INDEX_C),
          axiReadSlave   => mAxilReadSlaves(PRBS_RX_INDEX_C),
          axiWriteMaster => mAxilWriteMasters(PRBS_RX_INDEX_C),
-         axiWriteSlave  => mAxilWriteSlaves(PRBS_RX_INDEX_C));          
+         axiWriteSlave  => mAxilWriteSlaves(PRBS_RX_INDEX_C));
 
 end mapping;

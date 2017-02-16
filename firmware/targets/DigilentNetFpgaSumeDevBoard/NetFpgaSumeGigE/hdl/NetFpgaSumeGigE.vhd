@@ -34,6 +34,7 @@ use unisim.vcomponents.all;
 entity NetFpgaSumeGigE is
    generic (
       TPD_G         : time    := 1 ns;
+      BUILD_INFO_G  : BuildInfoType;
       SIM_SPEEDUP_G : boolean := false;
       SIMULATION_G  : boolean := false);
    port (
@@ -129,6 +130,7 @@ begin
    U_App : entity work.AppCore
       generic map (
          TPD_G        => TPD_G,
+         BUILD_INFO_G => BUILD_INFO_G,
          XIL_DEVICE_G => "7SERIES",
          APP_TYPE_G   => "ETH",
          AXIS_SIZE_G  => AXIS_SIZE_C,

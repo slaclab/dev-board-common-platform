@@ -5,7 +5,7 @@
 -- Author     : Larry Ruckman  <ruckman@slac.stanford.edu>
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2016-02-09
--- Last update: 2016-02-09
+-- Last update: 2017-02-16
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -34,6 +34,7 @@ use unisim.vcomponents.all;
 entity Kcu105Pgp is
    generic (
       TPD_G         : time    := 1 ns;
+      BUILD_INFO_G  : BuildInfoType;
       SIM_SPEEDUP_G : boolean := false;
       SIMULATION_G  : boolean := false);
    port (
@@ -49,7 +50,7 @@ entity Kcu105Pgp is
       pgpRxP  : in  sl;
       pgpRxN  : in  sl;
       pgpTxP  : out sl;
-      pgpTxN  : out sl);       
+      pgpTxN  : out sl);
 end Kcu105Pgp;
 
 architecture top_level of Kcu105Pgp is
@@ -79,7 +80,7 @@ begin
          generic map (
             REFCLK_EN_TX_PATH  => '0',
             REFCLK_HROW_CK_SEL => "00",  -- 2'b00: ODIV2 = O
-            REFCLK_ICNTL_RX    => "00")      
+            REFCLK_ICNTL_RX    => "00")
          port map (
             I     => pgpClkP,
             IB    => pgpClkN,
@@ -126,7 +127,7 @@ begin
             pgpTxMasters    => txMasters,
             pgpTxSlaves     => txSlaves,
             pgpRxMasters    => rxMasters,
-            pgpRxCtrl       => rxCtrl);            
+            pgpRxCtrl       => rxCtrl);
    end generate REAL_PGP;
 
    SIM_PGP : if (SIMULATION_G) generate
@@ -145,9 +146,9 @@ begin
             pgpTxMasters => txMasters,
             pgpTxSlaves  => txSlaves,
             pgpRxMasters => rxMasters,
-            pgpRxCtrl    => rxCtrl);     
+            pgpRxCtrl    => rxCtrl);
 
-      clk <= pgpClkP;         
+      clk <= pgpClkP;
 
    end generate SIM_PGP;
 
@@ -160,7 +161,7 @@ begin
       port map (
          clk    => clk,
          arst   => extRst,
-         rstOut => rst);      
+         rstOut => rst);
 
    -------------------
    -- Application Core
@@ -168,9 +169,10 @@ begin
    U_App : entity work.AppCore
       generic map (
          TPD_G        => TPD_G,
+         BUILD_INFO_G => BUILD_INFO_G,
          XIL_DEVICE_G => "ULTRASCALE",
          APP_TYPE_G   => "PGP",
-         AXIS_SIZE_G  => AXIS_SIZE_C)         
+         AXIS_SIZE_G  => AXIS_SIZE_C)
       port map (
          -- Clock and Reset
          clk       => clk,
@@ -195,5 +197,5 @@ begin
    led(2) <= phyReady;
    led(1) <= phyReady;
    led(0) <= phyReady;
-   
+
 end top_level;

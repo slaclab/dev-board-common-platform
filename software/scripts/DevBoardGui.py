@@ -87,8 +87,8 @@ def gui(arg):
         print("PGP Card Version: %x" % (pgpVc0.getInfo().version))
         print("")
 
-        # Create and Connect SRPv0 to VC1
-        srp = rogue.protocols.srp.SrpV0()
+        # Create and Connect SRPv3 to VC1
+        srp = rogue.protocols.srp.SrpV3()
         pyrogue.streamConnectBiDir(pgpVc0,srp)
         
         # Add data stream to file as channel 1
@@ -99,8 +99,8 @@ def gui(arg):
         # Create the ETH interface @ IP Address = arg
         ethLink = pyrogue.protocols.UdpRssiPack(host=arg,port=8192,size=1400)    
     
-        # Create and Connect SRPv0 to AxiStream.tDest = 0x0
-        srp = rogue.protocols.srp.SrpV0()  
+        # Create and Connect SrpV3 to AxiStream.tDest = 0x0
+        srp = rogue.protocols.srp.SrpV3()  
         pyrogue.streamConnectBiDir(srp,ethLink.application(0))
 
         # Add data stream to file as channel 1 to tDest = 0x1

@@ -5,7 +5,7 @@
 -- Author     : Larry Ruckman  <ruckman@slac.stanford.edu>
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2015-04-08
--- Last update: 2016-02-09
+-- Last update: 2017-02-16
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -33,11 +33,12 @@ use unisim.vcomponents.all;
 
 entity Kcu105TenGigE is
    generic (
-      TPD_G : time := 1 ns;
-      SIM_SPEEDUP_G     : boolean         := false;
-      SIMULATION_G      : boolean         := false);
+      TPD_G         : time    := 1 ns;
+      BUILD_INFO_G  : BuildInfoType;
+      SIM_SPEEDUP_G : boolean := false;
+      SIMULATION_G  : boolean := false);
    port (
-   -- Misc. IOs
+      -- Misc. IOs
       extRst  : in  sl;
       led     : out slv(7 downto 0);
       -- XADC Ports
@@ -49,13 +50,13 @@ entity Kcu105TenGigE is
       ethRxP  : in  sl;
       ethRxN  : in  sl;
       ethTxP  : out sl;
-      ethTxN  : out sl);       
+      ethTxN  : out sl);
 end Kcu105TenGigE;
 
 architecture top_level of Kcu105TenGigE is
 
    constant AXIS_SIZE_C : positive         := 1;
-   constant IP_ADDR_C   : slv(31 downto 0) := x"0A02A8C0";      -- 192.168.2.10  
+   constant IP_ADDR_C   : slv(31 downto 0) := x"0A02A8C0";  -- 192.168.2.10  
    constant MAC_ADDR_C  : slv(47 downto 0) := x"010300564400";  -- 00:44:56:00:03:01
 
    signal txMasters : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
@@ -110,11 +111,12 @@ begin
    U_App : entity work.AppCore
       generic map (
          TPD_G        => TPD_G,
+         BUILD_INFO_G => BUILD_INFO_G,
          XIL_DEVICE_G => "ULTRASCALE",
          APP_TYPE_G   => "ETH",
          AXIS_SIZE_G  => AXIS_SIZE_C,
          MAC_ADDR_G   => MAC_ADDR_C,
-         IP_ADDR_G    => IP_ADDR_C)         
+         IP_ADDR_G    => IP_ADDR_C)
       port map (
          -- Clock and Reset
          clk       => clk,
@@ -139,5 +141,5 @@ begin
    led(2) <= phyReady;
    led(1) <= phyReady;
    led(0) <= phyReady;
-   
+
 end top_level;

@@ -1,13 +1,8 @@
 -------------------------------------------------------------------------------
--- Title      : 
--------------------------------------------------------------------------------
 -- File       : AppCore.vhd
--- Author     : Larry Ruckman  <ruckman@slac.stanford.edu>
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2016-02-05
--- Last update: 2016-04-27
--- Platform   : 
--- Standard   : VHDL'93/02
+-- Created    : 2017-02-15
+-- Last update: 2017-02-16
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -30,12 +25,15 @@ use work.AxiLitePkg.all;
 entity AppCore is
    generic (
       TPD_G            : time             := 1 ns;
+      BUILD_INFO_G     : BuildInfoType;
       XIL_DEVICE_G     : string           := "7SERIES";
       APP_TYPE_G       : string           := "ETH";
       AXIS_SIZE_G      : positive         := 1;
       AXI_ERROR_RESP_G : slv(1 downto 0)  := AXI_RESP_DECERR_C;
-      MAC_ADDR_G       : slv(47 downto 0) := x"010300564400";  -- 192.168.2.10 (ETH only)
-      IP_ADDR_G        : slv(31 downto 0) := x"0A02A8C0");     -- 00:44:56:00:03:01 (ETH only)
+      MAC_ADDR_G       : slv(47 downto 0) := x"010300564400";  -- 00:44:56:00:03:01 (ETH only)
+      IP_ADDR_G        : slv(31 downto 0) := x"0A02A8C0";  -- 192.168.2.10 (ETH only)
+      DHCP_G           : boolean          := true;
+      JUMBO_G          : boolean          := false);
    port (
       -- Clock and Reset
       clk       : in  sl;
@@ -63,8 +61,8 @@ architecture mapping of AppCore is
    signal pbrsRxMaster : AxiStreamMasterType;
    signal pbrsRxSlave  : AxiStreamSlaveType;
 
-   signal mbTxMaster   : AxiStreamMasterType;
-   signal mbTxSlave    : AxiStreamSlaveType;
+   signal mbTxMaster : AxiStreamMasterType;
+   signal mbTxSlave  : AxiStreamSlaveType;
 
 begin
 
@@ -76,7 +74,9 @@ begin
          generic map (
             TPD_G      => TPD_G,
             MAC_ADDR_G => MAC_ADDR_G,
-            IP_ADDR_G  => IP_ADDR_G)
+            IP_ADDR_G  => IP_ADDR_G,
+            DHCP_G     => DHCP_G,
+            JUMBO_G    => JUMBO_G)
          port map (
             -- Clock and Reset
             clk             => clk,
@@ -96,9 +96,10 @@ begin
             axilWriteMaster => axilWriteMaster,
             axilWriteSlave  => axilWriteSlave,
             axilReadMaster  => axilReadMaster,
-            axilReadSlave   => axilReadSlave);  
-
-      mbTxSlave  <= AXI_STREAM_SLAVE_FORCE_C;
+            axilReadSlave   => axilReadSlave,
+            -- Microblaze stream
+            mbTxMaster      => mbTxMaster,
+            mbTxSlave       => mbTxSlave);
 
    end generate;
 
@@ -131,8 +132,7 @@ begin
             axilReadSlave   => axilReadSlave,
             -- Microblaze stream
             mbTxMaster      => mbTxMaster,
-            mbTxSlave       => mbTxSlave
-         );      
+            mbTxSlave       => mbTxSlave);
    end generate;
 
    -------------------
@@ -141,6 +141,7 @@ begin
    U_Reg : entity work.AppReg
       generic map (
          TPD_G            => TPD_G,
+         BUILD_INFO_G     => BUILD_INFO_G,
          XIL_DEVICE_G     => XIL_DEVICE_G,
          AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
       port map (
@@ -162,6 +163,6 @@ begin
          mbTxSlave       => mbTxSlave,
          -- ADC Ports
          vPIn            => vPIn,
-         vNIn            => vNIn);    
+         vNIn            => vNIn);
 
 end mapping;

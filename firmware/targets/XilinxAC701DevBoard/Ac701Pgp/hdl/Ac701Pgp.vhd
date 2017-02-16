@@ -1,13 +1,8 @@
 -------------------------------------------------------------------------------
--- Title      : 
--------------------------------------------------------------------------------
 -- File       : Ac701Pgp.vhd
--- Author     : Larry Ruckman  <ruckman@slac.stanford.edu>
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2015-02-02
--- Last update: 2016-02-09
--- Platform   : 
--- Standard   : VHDL'93/02
+-- Last update: 2017-02-16
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -34,6 +29,7 @@ use unisim.vcomponents.all;
 entity Ac701Pgp is
    generic (
       TPD_G         : time    := 1 ns;
+      BUILD_INFO_G  : BuildInfoType;
       SIM_SPEEDUP_G : boolean := false;
       SIMULATION_G  : boolean := false);
    port (
@@ -52,7 +48,7 @@ entity Ac701Pgp is
       gtRxP   : in  sl;
       gtRxN   : in  sl;
       gtTxP   : out sl;
-      gtTxN   : out sl);      
+      gtTxN   : out sl);
 end Ac701Pgp;
 
 architecture top_level of Ac701Pgp is
@@ -103,7 +99,7 @@ begin
             gtTxP        => gtTxP,
             gtTxN        => gtTxN,
             gtRxP        => gtRxP,
-            gtRxN        => gtRxN);      
+            gtRxN        => gtRxN);
    end generate REAL_PGP;
 
    SIM_PGP : if (SIMULATION_G) generate
@@ -122,7 +118,7 @@ begin
             pgpTxMasters => txMasters,
             pgpTxSlaves  => txSlaves,
             pgpRxMasters => rxMasters,
-            pgpRxCtrl    => rxCtrl);  
+            pgpRxCtrl    => rxCtrl);
 
       clk <= gtClkP;
 
@@ -134,7 +130,7 @@ begin
             OUT_POLARITY_G => '1')
          port map (
             clk    => clk,
-            rstOut => rst);            
+            rstOut => rst);
 
    end generate SIM_PGP;
 
@@ -144,6 +140,7 @@ begin
    U_App : entity work.AppCore
       generic map (
          TPD_G        => TPD_G,
+         BUILD_INFO_G => BUILD_INFO_G,
          XIL_DEVICE_G => "7SERIES",
          APP_TYPE_G   => "PGP",
          AXIS_SIZE_G  => AXIS_SIZE_C)

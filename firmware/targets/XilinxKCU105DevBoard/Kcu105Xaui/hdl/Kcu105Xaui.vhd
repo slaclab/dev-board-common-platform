@@ -5,7 +5,7 @@
 -- Author     : Larry Ruckman  <ruckman@slac.stanford.edu>
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2015-04-08
--- Last update: 2016-02-09
+-- Last update: 2017-02-16
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -37,6 +37,7 @@ use unisim.vcomponents.all;
 entity Kcu105Xaui is
    generic (
       TPD_G         : time    := 1 ns;
+      BUILD_INFO_G  : BuildInfoType;
       SIM_SPEEDUP_G : boolean := false;
       SIMULATION_G  : boolean := false);
    port (
@@ -58,13 +59,13 @@ entity Kcu105Xaui is
       ethRxP          : in  slv(3 downto 0);
       ethRxN          : in  slv(3 downto 0);
       ethTxP          : out slv(3 downto 0);
-      ethTxN          : out slv(3 downto 0));       
+      ethTxN          : out slv(3 downto 0));
 end Kcu105Xaui;
 
 architecture top_level of Kcu105Xaui is
 
    constant AXIS_SIZE_C : positive         := 1;
-   constant IP_ADDR_C   : slv(31 downto 0) := x"0A02A8C0";      -- 192.168.2.10  
+   constant IP_ADDR_C   : slv(31 downto 0) := x"0A02A8C0";  -- 192.168.2.10  
    constant MAC_ADDR_C  : slv(47 downto 0) := x"010300564400";  -- 00:44:56:00:03:01
 
    signal txMasters : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
@@ -97,7 +98,7 @@ begin
       generic map (
          TPD_G         => TPD_G,
          -- AXI Streaming Configurations
-         AXIS_CONFIG_G => EMAC_AXIS_CONFIG_C)  
+         AXIS_CONFIG_G => EMAC_AXIS_CONFIG_C)
       port map (
          -- Streaming DMA Interface 
          dmaClk      => clk,
@@ -118,7 +119,7 @@ begin
          gtTxP       => ethTxP,
          gtTxN       => ethTxN,
          gtRxP       => ethRxP,
-         gtRxN       => ethRxN); 
+         gtRxN       => ethRxN);
 
    -------------------
    -- Application Core
@@ -126,11 +127,12 @@ begin
    U_App : entity work.AppCore
       generic map (
          TPD_G        => TPD_G,
+         BUILD_INFO_G => BUILD_INFO_G,
          XIL_DEVICE_G => "ULTRASCALE",
          APP_TYPE_G   => "ETH",
          AXIS_SIZE_G  => AXIS_SIZE_C,
          MAC_ADDR_G   => MAC_ADDR_C,
-         IP_ADDR_G    => IP_ADDR_C)         
+         IP_ADDR_G    => IP_ADDR_C)
       port map (
          -- Clock and Reset
          clk       => clk,
@@ -160,5 +162,5 @@ begin
    fmcSfpTxDisable <= (others => '0');
    fmcSfpRateSel   <= (others => '1');
    fmcSfpModDef0   <= (others => '0');
-   
+
 end top_level;

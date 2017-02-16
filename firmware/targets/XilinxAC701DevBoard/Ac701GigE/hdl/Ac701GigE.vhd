@@ -5,7 +5,7 @@
 -- Author     : Larry Ruckman  <ruckman@slac.stanford.edu>
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2015-02-02
--- Last update: 2016-05-11
+-- Last update: 2017-02-16
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -34,6 +34,7 @@ use unisim.vcomponents.all;
 entity Ac701GigE is
    generic (
       TPD_G         : time    := 1 ns;
+      BUILD_INFO_G  : BuildInfoType;
       SIM_SPEEDUP_G : boolean := false;
       SIMULATION_G  : boolean := false);
    port (
@@ -52,13 +53,13 @@ entity Ac701GigE is
       gtRxP   : in  sl;
       gtRxN   : in  sl;
       gtTxP   : out sl;
-      gtTxN   : out sl);      
+      gtTxN   : out sl);
 end Ac701GigE;
 
 architecture top_level of Ac701GigE is
 
    constant AXIS_SIZE_C : positive         := 1;
-   constant IP_ADDR_C   : slv(31 downto 0) := x"40_01_A8_C0";        -- 192.168.1.64
+   constant IP_ADDR_C   : slv(31 downto 0) := x"40_01_A8_C0";  -- 192.168.1.64
    constant MAC_ADDR_C  : slv(47 downto 0) := x"63_45_00_56_00_08";  -- 08:00:56:00:45:63
 
    signal txMasters : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
@@ -108,7 +109,7 @@ begin
          gtTxP(0)     => gtTxP,
          gtTxN(0)     => gtTxN,
          gtRxP(0)     => gtRxP,
-         gtRxN(0)     => gtRxN);      
+         gtRxN(0)     => gtRxN);
 
    -------------------
    -- Application Core
@@ -116,11 +117,12 @@ begin
    U_App : entity work.AppCore
       generic map (
          TPD_G        => TPD_G,
+         BUILD_INFO_G => BUILD_INFO_G,
          XIL_DEVICE_G => "7SERIES",
          APP_TYPE_G   => "ETH",
          AXIS_SIZE_G  => AXIS_SIZE_C,
          MAC_ADDR_G   => MAC_ADDR_C,
-         IP_ADDR_G    => IP_ADDR_C)         
+         IP_ADDR_G    => IP_ADDR_C)
       port map (
          -- Clock and Reset
          clk       => clk,
