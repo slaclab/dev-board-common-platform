@@ -23,6 +23,7 @@
 .Trashes
 ehthumbs.db
 Thumps.db
+build.info
 
 # Vivado Build
 build*
