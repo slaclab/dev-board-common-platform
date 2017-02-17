@@ -13,8 +13,8 @@ import os, sys
 from subprocess import check_call
 
 ## Define the GIT submodule path and TAG-ing
-tagConfig = [ ['/firmware/submodules/ruckus', 'master'],
-              ['/firmware/submodules/surf',   'master'],
+tagConfig = [ ['/firmware/submodules/ruckus', 'v1.1.0'],
+              ['/firmware/submodules/surf',   'v1.1.0'],
               ['/software/rogue',             'v1.0.0'] ]
 
 # Check that the submodule paths exists
