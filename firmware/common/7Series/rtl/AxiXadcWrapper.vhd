@@ -1,13 +1,8 @@
 -------------------------------------------------------------------------------
--- Title      : 
--------------------------------------------------------------------------------
 -- File       : AxiXadcWrapper.vhd
--- Author     : Larry Ruckman  <ruckman@slac.stanford.edu>
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2015-01-30
--- Last update: 2016-02-08
--- Platform   : 
--- Standard   : VHDL'93/02
+-- Last update: 2017-03-17
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -114,6 +109,6 @@ begin
          eoc_out       => open,
          alarm_out     => open,
          eos_out       => open,
-         busy_out      => open);  
+         busy_out      => open);
 
 end architecture mapping;

@@ -2,5 +2,5 @@
 source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
 
 # Load Source Code
-loadSource -path "rtl/AxiLiteExample.vhd"
-loadSource -path "vivado_hls/ip/AxiLiteExampleCore.dcp"
+loadSource -path "$::DIR_PATH/rtl/AxiLiteExample.vhd"
+loadSource -path "$::DIR_PATH/vivado_hls/ip/AxiLiteExampleCore.dcp"

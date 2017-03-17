@@ -1,0 +1,3 @@
+hdl/StaticDesign.xdc
+hdl/LedRtlA.xdc
+hdl/LedRtlB.xdc

@@ -1,0 +1,5 @@
+vhdl work Version.vhd
+vhdl work hdl/StaticDesign.vhd
+vhdl work hdl/CntRtl.vhd
+vhdl work hdl/LedRtlA.vhd
+vhdl work hdl/LedRtlB.vhd

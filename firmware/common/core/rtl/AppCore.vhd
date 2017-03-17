@@ -2,7 +2,7 @@
 -- File       : AppCore.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-02-15
--- Last update: 2017-02-16
+-- Last update: 2017-03-17
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -60,11 +60,11 @@ architecture mapping of AppCore is
    signal pbrsTxSlave  : AxiStreamSlaveType;
    signal pbrsRxMaster : AxiStreamMasterType;
    signal pbrsRxSlave  : AxiStreamSlaveType;
-   
+
    signal hlsTxMaster : AxiStreamMasterType;
    signal hlsTxSlave  : AxiStreamSlaveType;
    signal hlsRxMaster : AxiStreamMasterType;
-   signal hlsRxSlave  : AxiStreamSlaveType;   
+   signal hlsRxSlave  : AxiStreamSlaveType;
 
    signal mbTxMaster : AxiStreamMasterType;
    signal mbTxSlave  : AxiStreamSlaveType;
@@ -101,7 +101,7 @@ begin
             hlsTxMaster     => hlsTxMaster,
             hlsTxSlave      => hlsTxSlave,
             hlsRxMaster     => hlsRxMaster,
-            hlsRxSlave      => hlsRxSlave,            
+            hlsRxSlave      => hlsRxSlave,
             -- AXI-Lite interface
             axilWriteMaster => axilWriteMaster,
             axilWriteSlave  => axilWriteSlave,

@@ -1,13 +1,8 @@
 -------------------------------------------------------------------------------
--- Title      : 
--------------------------------------------------------------------------------
 -- File       : PgpVcMapping.vhd
--- Author     : Larry Ruckman  <ruckman@slac.stanford.edu>
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2015-01-30
--- Last update: 2017-02-16
--- Platform   : 
--- Standard   : VHDL'93/02
+-- Last update: 2017-03-17
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -48,10 +43,10 @@ entity PgpVcMapping is
       pbrsRxMaster    : out AxiStreamMasterType;
       pbrsRxSlave     : in  AxiStreamSlaveType;
       -- HLS Interface
-      hlsTxMaster    : in  AxiStreamMasterType;
-      hlsTxSlave     : out AxiStreamSlaveType;
-      hlsRxMaster    : out AxiStreamMasterType;
-      hlsRxSlave     : in  AxiStreamSlaveType;     
+      hlsTxMaster     : in  AxiStreamMasterType;
+      hlsTxSlave      : out AxiStreamSlaveType;
+      hlsRxMaster     : out AxiStreamMasterType;
+      hlsRxSlave      : in  AxiStreamSlaveType;
       -- MB Interface
       mbTxMaster      : in  AxiStreamMasterType;
       mbTxSlave       : out AxiStreamSlaveType;
@@ -162,7 +157,7 @@ begin
          mAxisRst    => rst,
          mAxisMaster => pbrsRxMaster,
          mAxisSlave  => pbrsRxSlave);
-         
+
    -- VC2 TX, HLS
    VCTX2 : entity work.AxiStreamFifo
       generic map (
@@ -223,8 +218,8 @@ begin
          mAxisClk    => clk,
          mAxisRst    => rst,
          mAxisMaster => hlsRxMaster,
-         mAxisSlave  => hlsRxSlave);         
-         
+         mAxisSlave  => hlsRxSlave);
+
    -- Terminate Unused slave AXIS
    rxSlaves <= (others => AXI_STREAM_SLAVE_INIT_C);
 

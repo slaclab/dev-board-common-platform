@@ -1,13 +1,8 @@
 -------------------------------------------------------------------------------
--- Title      : 
--------------------------------------------------------------------------------
 -- File       : EthPortMapping.vhd
--- Author     : Larry Ruckman  <ruckman@slac.stanford.edu>
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2015-01-30
--- Last update: 2017-02-16
--- Platform   : 
--- Standard   : VHDL'93/02
+-- Last update: 2017-03-17
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -52,6 +47,11 @@ entity EthPortMapping is
       pbrsTxSlave     : out AxiStreamSlaveType;
       pbrsRxMaster    : out AxiStreamMasterType;
       pbrsRxSlave     : in  AxiStreamSlaveType;
+      -- HLS Interface
+      hlsTxMaster     : in  AxiStreamMasterType;
+      hlsTxSlave      : out AxiStreamSlaveType;
+      hlsRxMaster     : out AxiStreamMasterType;
+      hlsRxSlave      : in  AxiStreamSlaveType;
       -- MB Interface
       mbTxMaster      : in  AxiStreamMasterType;
       mbTxSlave       : out AxiStreamSlaveType;
@@ -76,7 +76,7 @@ architecture mapping of EthPortMapping is
    constant NUM_SERVERS_C  : integer                                 := 1;
    constant SERVER_PORTS_C : PositiveArray(NUM_SERVERS_C-1 downto 0) := (0 => 8192);
 
-   constant RSSI_SIZE_C   : positive                                     := 4;
+   constant RSSI_SIZE_C : positive := 4;
    constant AXIS_CONFIG_C : AxiStreamConfigArray(RSSI_SIZE_C-1 downto 0) := (
       0 => ssiAxiStreamConfig(4),
       1 => ssiAxiStreamConfig(4),
@@ -91,7 +91,7 @@ architecture mapping of EthPortMapping is
    signal rssiIbMasters : AxiStreamMasterArray(RSSI_SIZE_C-1 downto 0);
    signal rssiIbSlaves  : AxiStreamSlaveArray(RSSI_SIZE_C-1 downto 0);
    signal rssiObMasters : AxiStreamMasterArray(RSSI_SIZE_C-1 downto 0);
-   signal rssiObSlaves  : AxiStreamSlaveArray(RSSI_SIZE_C-1 downto 0);   
+   signal rssiObSlaves  : AxiStreamSlaveArray(RSSI_SIZE_C-1 downto 0);
 
 begin
 
