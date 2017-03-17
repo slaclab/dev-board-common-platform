@@ -47,6 +47,11 @@ entity PgpVcMapping is
       pbrsTxSlave     : out AxiStreamSlaveType;
       pbrsRxMaster    : out AxiStreamMasterType;
       pbrsRxSlave     : in  AxiStreamSlaveType;
+      -- HLS Interface
+      hlsTxMaster    : in  AxiStreamMasterType;
+      hlsTxSlave     : out AxiStreamSlaveType;
+      hlsRxMaster    : out AxiStreamMasterType;
+      hlsRxSlave     : in  AxiStreamSlaveType;     
       -- MB Interface
       mbTxMaster      : in  AxiStreamMasterType;
       mbTxSlave       : out AxiStreamSlaveType;
@@ -157,9 +162,40 @@ begin
          mAxisRst    => rst,
          mAxisMaster => pbrsRxMaster,
          mAxisSlave  => pbrsRxSlave);
+         
+   -- VC2 TX, HLS
+   VCTX2 : entity work.AxiStreamFifo
+      generic map (
+         -- General Configurations
+         TPD_G               => TPD_G,
+         PIPE_STAGES_G       => 1,
+         SLAVE_READY_EN_G    => true,
+         VALID_THOLD_G       => 1,
+         -- FIFO configurations
+         BRAM_EN_G           => true,
+         USE_BUILT_IN_G      => false,
+         GEN_SYNC_FIFO_G     => true,
+         CASCADE_SIZE_G      => 1,
+         FIFO_ADDR_WIDTH_G   => 10,
+         FIFO_FIXED_THRESH_G => true,
+         FIFO_PAUSE_THRESH_G => 128,
+         -- AXI Stream Port Configurations
+         SLAVE_AXI_CONFIG_G  => ssiAxiStreamConfig(4),
+         MASTER_AXI_CONFIG_G => SSI_PGP2B_CONFIG_C)
+      port map (
+         -- Slave Port
+         sAxisClk    => clk,
+         sAxisRst    => rst,
+         sAxisMaster => hlsTxMaster,
+         sAxisSlave  => hlsTxSlave,
+         -- Master Port
+         mAxisClk    => clk,
+         mAxisRst    => rst,
+         mAxisMaster => txMasters(2),
+         mAxisSlave  => txSlaves(2));
 
-   -- VC2 RX/TX, Loopback Testing Module
-   VCRX2_VCTX2 : entity work.AxiStreamFifo
+   -- VC2 RX, HLS
+   VCRX2 : entity work.AxiStreamFifo
       generic map (
          -- General Configurations
          TPD_G               => TPD_G,
@@ -176,7 +212,7 @@ begin
          FIFO_PAUSE_THRESH_G => 128,
          -- AXI Stream Port Configurations
          SLAVE_AXI_CONFIG_G  => SSI_PGP2B_CONFIG_C,
-         MASTER_AXI_CONFIG_G => SSI_PGP2B_CONFIG_C)
+         MASTER_AXI_CONFIG_G => ssiAxiStreamConfig(4))
       port map (
          -- Slave Port
          sAxisClk    => clk,
@@ -186,9 +222,9 @@ begin
          -- Master Port
          mAxisClk    => clk,
          mAxisRst    => rst,
-         mAxisMaster => txMasters(2),
-         mAxisSlave  => txSlaves(2));
-
+         mAxisMaster => hlsRxMaster,
+         mAxisSlave  => hlsRxSlave);         
+         
    -- Terminate Unused slave AXIS
    rxSlaves <= (others => AXI_STREAM_SLAVE_INIT_C);
 

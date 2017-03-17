@@ -2,7 +2,7 @@
 -- File       : AppReg.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-02-15
--- Last update: 2017-02-15
+-- Last update: 2017-03-17
 -------------------------------------------------------------------------------
 -- Description:
 -------------------------------------------------------------------------------
@@ -45,14 +45,17 @@ entity AppReg is
       pbrsTxSlave     : in  AxiStreamSlaveType;
       pbrsRxMaster    : in  AxiStreamMasterType;
       pbrsRxSlave     : out AxiStreamSlaveType;
-
+      -- HLS Interface
+      hlsTxMaster     : out AxiStreamMasterType;
+      hlsTxSlave      : in  AxiStreamSlaveType;
+      hlsRxMaster     : in  AxiStreamMasterType;
+      hlsRxSlave      : out AxiStreamSlaveType;
       -- MB Interface
-      mbTxMaster : out AxiStreamMasterType;
-      mbTxSlave  : in  AxiStreamSlaveType;
-
+      mbTxMaster      : out AxiStreamMasterType;
+      mbTxSlave       : in  AxiStreamSlaveType;
       -- ADC Ports
-      vPIn : in sl;
-      vNIn : in sl);
+      vPIn            : in  sl;
+      vNIn            : in  sl);
 end AppReg;
 
 architecture mapping of AppReg is
@@ -60,7 +63,7 @@ architecture mapping of AppReg is
    constant SHARED_MEM_WIDTH_C : positive                           := 10;
    constant IRQ_ADDR_C         : slv(SHARED_MEM_WIDTH_C-1 downto 0) := (others => '1');
 
-   constant NUM_AXI_MASTERS_C : natural := 6;
+   constant NUM_AXI_MASTERS_C : natural := 7;
 
    constant VERSION_INDEX_C : natural := 0;
    constant XADC_INDEX_C    : natural := 1;
@@ -68,6 +71,7 @@ architecture mapping of AppReg is
    constant MEM_INDEX_C     : natural := 3;
    constant PRBS_TX_INDEX_C : natural := 4;
    constant PRBS_RX_INDEX_C : natural := 5;
+   constant HLS_INDEX_C     : natural := 6;
 
    constant AXI_CROSSBAR_MASTERS_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := (
       VERSION_INDEX_C => (
@@ -92,6 +96,10 @@ architecture mapping of AppReg is
          connectivity => X"FFFF"),
       PRBS_RX_INDEX_C => (
          baseAddr     => x"0005_0000",
+         addrBits     => 16,
+         connectivity => X"FFFF"),
+      HLS_INDEX_C     => (
+         baseAddr     => x"0006_0000",
          addrBits     => 16,
          connectivity => X"FFFF"));
 
@@ -335,5 +343,31 @@ begin
          axiReadSlave   => mAxilReadSlaves(PRBS_RX_INDEX_C),
          axiWriteMaster => mAxilWriteMasters(PRBS_RX_INDEX_C),
          axiWriteSlave  => mAxilWriteSlaves(PRBS_RX_INDEX_C));
+
+   ------------------------------
+   -- AXI-Lite HLS Example Module
+   ------------------------------            
+   U_AxiLiteExample : entity work.AxiLiteExample
+      port map (
+         axiClk         => clk,
+         axiRst         => rst,
+         axiReadMaster  => mAxilReadMasters(HLS_INDEX_C),
+         axiReadSlave   => mAxilReadSlaves(HLS_INDEX_C),
+         axiWriteMaster => mAxilWriteMasters(HLS_INDEX_C),
+         axiWriteSlave  => mAxilWriteSlaves(HLS_INDEX_C));
+
+   ------------------------------------
+   -- AXI Streaming: HLS Example Module
+   ------------------------------------
+   U_AxiStreamExample : entity work.AxiStreamExample
+      port map (
+         axisClk     => clk,
+         axisRst     => rst,
+         -- Slave Port
+         sAxisMaster => hlsRxMaster,
+         sAxisSlave  => hlsRxSlave,
+         -- Master Port
+         mAxisMaster => hlsTxMaster,
+         mAxisSlave  => hlsTxSlave);
 
 end mapping;

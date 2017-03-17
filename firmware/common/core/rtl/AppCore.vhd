@@ -60,6 +60,11 @@ architecture mapping of AppCore is
    signal pbrsTxSlave  : AxiStreamSlaveType;
    signal pbrsRxMaster : AxiStreamMasterType;
    signal pbrsRxSlave  : AxiStreamSlaveType;
+   
+   signal hlsTxMaster : AxiStreamMasterType;
+   signal hlsTxSlave  : AxiStreamSlaveType;
+   signal hlsRxMaster : AxiStreamMasterType;
+   signal hlsRxSlave  : AxiStreamSlaveType;   
 
    signal mbTxMaster : AxiStreamMasterType;
    signal mbTxSlave  : AxiStreamSlaveType;
@@ -92,6 +97,11 @@ begin
             pbrsTxSlave     => pbrsTxSlave,
             pbrsRxMaster    => pbrsRxMaster,
             pbrsRxSlave     => pbrsRxSlave,
+            -- HLS Interface
+            hlsTxMaster     => hlsTxMaster,
+            hlsTxSlave      => hlsTxSlave,
+            hlsRxMaster     => hlsRxMaster,
+            hlsRxSlave      => hlsRxSlave,            
             -- AXI-Lite interface
             axilWriteMaster => axilWriteMaster,
             axilWriteSlave  => axilWriteSlave,
@@ -125,6 +135,11 @@ begin
             pbrsTxSlave     => pbrsTxSlave,
             pbrsRxMaster    => pbrsRxMaster,
             pbrsRxSlave     => pbrsRxSlave,
+            -- HLS Interface
+            hlsTxMaster     => hlsTxMaster,
+            hlsTxSlave      => hlsTxSlave,
+            hlsRxMaster     => hlsRxMaster,
+            hlsRxSlave      => hlsRxSlave,
             -- AXI-Lite interface
             axilWriteMaster => axilWriteMaster,
             axilWriteSlave  => axilWriteSlave,
@@ -158,6 +173,11 @@ begin
          pbrsTxSlave     => pbrsTxSlave,
          pbrsRxMaster    => pbrsRxMaster,
          pbrsRxSlave     => pbrsRxSlave,
+         -- HLS Interface
+         hlsTxMaster     => hlsTxMaster,
+         hlsTxSlave      => hlsTxSlave,
+         hlsRxMaster     => hlsRxMaster,
+         hlsRxSlave      => hlsRxSlave,
          -- Microblaze stream
          mbTxMaster      => mbTxMaster,
          mbTxSlave       => mbTxSlave,

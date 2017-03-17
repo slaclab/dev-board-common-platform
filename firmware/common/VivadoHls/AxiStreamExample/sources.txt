@@ -1,0 +1,2 @@
+vhdl work rtl/AxiStreamExample.vhd
+vhdl work vivado_hls/ip/AxiStreamExampleCore.dcp
