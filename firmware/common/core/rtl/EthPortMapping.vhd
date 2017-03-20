@@ -206,10 +206,12 @@ begin
    rssiObSlaves(1)  <= pbrsRxSlave;
 
    ------------------------
-   -- TDEST = 0x2: Loopback
+   -- TDEST = 0x2: HLS AXIS
    ------------------------
-   rssiIbMasters(2) <= rssiObMasters(2);
-   rssiObSlaves(2)  <= rssiIbSlaves(2);
+   rssiIbMasters(2) <= hlsTxMaster;
+   hlsTxSlave       <= rssiIbSlaves(2);
+   hlsRxMaster      <= rssiObMasters(2);
+   rssiObSlaves(2)  <= hlsRxSlave;
 
    --------------------------
    -- TDEST = 0x3: TX/RX PBRS   

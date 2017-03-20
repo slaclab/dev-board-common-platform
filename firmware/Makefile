@@ -1,7 +1,12 @@
 export PARALLEL_BUILD = 3
 export BUILD_SCRIPT = $(PWD)/submodules/ruckus/system_build_all.mk
 export SETUP_ENV    = $(PWD)/setup_env_slac.csh
-export TARGET_DIRS  = $(PWD)/targets/XilinxAC701DevBoard/Ac701GigE/ \
+export TARGET_DIRS  = $(PWD)/common/VivadoHls/AxiLiteExample/vivado_hls/ \
+                      $(PWD)/common/VivadoHls/AxiStreamExample/vivado_hls/ \
+                      $(PWD)/targets/PartialReconfigurationExample/StaticDesign/ \
+                      $(PWD)/targets/PartialReconfigurationExample/LedRtlA/ \
+                      $(PWD)/targets/PartialReconfigurationExample/LedRtlB/ \
+                      $(PWD)/targets/XilinxAC701DevBoard/Ac701GigE/ \
                       $(PWD)/targets/XilinxAC701DevBoard/Ac701Pgp/ \
                       $(PWD)/targets/XilinxKC705DevBoard/Kc705GigE/ \
                       $(PWD)/targets/XilinxKC705DevBoard/Kc705Pgp/ \
