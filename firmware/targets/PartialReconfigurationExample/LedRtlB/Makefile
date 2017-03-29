@@ -1,10 +1,10 @@
-export GIT_BYPASS = 1
+export GIT_BYPASS = 0
 
 # Define target output
 target: bit_dynamic
 
 # Declare the static checkpoint
-export RECONFIG_CHECKPOINT = $(PROJ_DIR)/../StaticDesign/images/StaticDesign_10000000_static.dcp
+export RECONFIG_CHECKPOINT = $(PROJ_DIR)/../StaticDesign/images/StaticDesign-0x00000001-20170329131559-ruckman-22e32b9_static.dcp
 
 # Define Firmware Version Number
 export PRJ_VERSION = 0x00000001
