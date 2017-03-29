@@ -1,3 +1,4 @@
+export GIT_BYPASS = 1
 
 # Define target output
 target: bit_static
@@ -6,15 +7,15 @@ target: bit_static
 export RECONFIG_NAME = LedRtlA \
                        LedRtlB
 
+# Define Firmware Version Number
+export PRJ_VERSION = 0x00000001
+
 # Define target part
 export PRJ_PART = XC7K325TFFG900-2
 
-# List of build core directories.
-export MODULE_DIRS = $(PROJ_DIR)/../../modules/StdLib  \
-                     $(PROJ_DIR)
-
-# Max number of smart explorer runs
-export SMART_MAX_RUNS = 10
+# Using a non-standard target directory structure, 
+# which requires me to define the TOP_DIR path
+export TOP_DIR = $(abspath $(PWD)/../../..)
 
 # Use top level makefile
-include ../../modules/StdLib/build/system_vivado_v1.mk
+include $(TOP_DIR)/submodules/ruckus/system_vivado.mk
