@@ -1,10 +1,4 @@
 ##################################################################################################
-File       : file:///afs/slac/g/reseng/svn/repos/PartialReconfigurationExample/trunk/firmware/README.txt
-Author     : Larry Ruckman <ruckman@slac.stanford.edu>
-Company    : SLAC National Accelerator Laboratory
-Created    : 2014-10-16
-Last update: 2014-10-16
-##################################################################################################
 
 The Static design is the primary .bit file that the FPGA boots into.  
 The LedRltA and LedRtlB are two example partial designs that either can programmed into the FPGA after boot.
@@ -15,31 +9,17 @@ These examples are based on Xilinx's UG947 and UG909.  To get the proper backgro
 reconfiguration, I HIGHLY recommend you read these two user guides 
 before going through these below instructions.
 
-# Log on to a server
-$ ssh $USER@rdusr219 -YC
-
-# Check out the SVN project
-$ cd $HOME/projects/
-$ svn checkout file:///afs/slac/g/reseng/svn/repos/PartialReconfigurationExample/trunk PartialReconfigurationExample
-
-# Source the setup scripts
-$ cd $HOME/projects/PartialReconfigurationExample/firmware
-$ source setup_env.csh
-
 # Make the static .bit file
-$ cd $HOME/projects/PartialReconfigurationExample/firmware/targets/StaticDesign/
-$ make clean; make
-$ ls -lath images/
+$ cd dev-board-examples/firmware/targets/PartialReconfigurationExample/StaticDesign/
+$ make
 
 # Make Partial Design A .bit file
-$ cd $HOME/projects/PartialReconfigurationExample/firmware/targets/LedRtlA/
-$ make clean; make
-$ ls -lath images/
+$ cd dev-board-examples/firmware/targets/PartialReconfigurationExample/LedRtlA/
+$ make
 
 # Make Partial Design B .bit file
-$ cd $HOME/projects/PartialReconfigurationExample/firmware/targets/LedRtlB/
-$ make clean; make
-$ ls -lath images/
+$ cd dev-board-examples/firmware/targets/PartialReconfigurationExample/LedRtlB/
+$ make
 
 ##################################################################################################
 
@@ -56,17 +36,17 @@ in the project build that differ from the standard Vivado Makefile build:
    export RECONFIG_NAME = LedRtlA \
                           LedRtlB      
                           
-3) Add a default RTL module for each reconfigurable RTL module in sources.txt    
+3) Add a default RTL module for each reconfigurable RTL module in target's ruckus.tcl    
    For example (refer to StaticDesign Project): 
    vhdl work hdl/LedRtlA.vhd
    vhdl work hdl/LedRtlB.vhd   
    
-3) Add a default XDC file for each reconfigurable RTL module in constraints.txt 
+3) Add a default XDC file for each reconfigurable RTL module in target's ruckus.tcl  
    For example (refer to StaticDesign Project):    
    hdl/LedRtlA.xdc
    hdl/LedRtlB.xdc   
    NOTE: These .xdc files can be left blank if the user has no additional constraints
-   NOTE: The project .xdc file should be the first file in the constraints.txt
+   NOTE: The project .xdc file should be the first file in the target's ruckus.tcl  
    
 4) Set the MakeFile target to either "bit_static" or "prom_static"
    For example (refer to StaticDesign Project): 
@@ -112,3 +92,5 @@ in the project build that differ from the standard Vivado Makefile build:
 4) Set the MakeFile target to "bit_dynamic"
    For example (refer to LedRtlA Project): 
    target: bit_dynamic
+   
+#######################################################################################
