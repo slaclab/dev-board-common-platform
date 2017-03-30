@@ -1,7 +1,7 @@
 export GIT_BYPASS = 0
 
 # Define target output
-target: bit_static
+target: prom
 
 # List of Reconfigurable RTL Block Names.
 export RECONFIG_NAME = LedRtlA \

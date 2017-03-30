@@ -30,27 +30,27 @@ in the project build that differ from the standard Vivado Makefile build:
    For example (refer to StaticDesign Project): LedRtlA and LedRtlB 
    (only two reconfigurable RTL modules in this example)
    
-2) Create a "RECONFIG_NAME" export in the Makefile 
-   and declare all reconfigurable RTL module
+2) Create a "RECONFIG_NAME" export in the Makefile and declare all reconfigurable RTL module
    For example (refer to StaticDesign Project): 
    export RECONFIG_NAME = LedRtlA \
                           LedRtlB      
                           
 3) Add a default RTL module for each reconfigurable RTL module in target's ruckus.tcl    
    For example (refer to StaticDesign Project): 
-   vhdl work hdl/LedRtlA.vhd
-   vhdl work hdl/LedRtlB.vhd   
+   loadSource -path "$::DIR_PATH/hdl/LedRtlA.vhd"
+   loadSource -path "$::DIR_PATH/hdl/LedRtlB.vhd" 
    
 3) Add a default XDC file for each reconfigurable RTL module in target's ruckus.tcl  
    For example (refer to StaticDesign Project):    
-   hdl/LedRtlA.xdc
-   hdl/LedRtlB.xdc   
+   loadConstraints -path "$::DIR_PATH/hdl/LedRtlA.xdc"
+   loadConstraints -path "$::DIR_PATH/hdl/LedRtlB.xdc"
    NOTE: These .xdc files can be left blank if the user has no additional constraints
-   NOTE: The project .xdc file should be the first file in the target's ruckus.tcl  
    
-4) Set the MakeFile target to either "bit_static" or "prom_static"
+4) Set the MakeFile target to either "bit" or "prom"
    For example (refer to StaticDesign Project): 
-   target: bit_static
+   target: prom
+   Note: The Vivado build system knowns that this is a static design 
+         when the RECONFIG_NAME environmental variable is defined
    
 5) The top level RTL needs to instantiate the reconfigurable RTL module(s) 
    as "black boxes" (including only the entity declaration of each reconfigurable 
@@ -63,6 +63,8 @@ in the project build that differ from the standard Vivado Makefile build:
    For example (refer to StaticDesign Project): 
    See StaticDesign/hdl/StaticDesign.vhd
    "LedRtlA_Inst : LedRtlA"
+   Note: The Vivado build system looks for ***_Inst in the RTL hierarchy, 
+         which is why we have this requirement
 
 7) The name of each reconfigurable RTL file(s) (.vhd or .v) 
    must match its entity declaration.
@@ -81,7 +83,9 @@ in the project build that differ from the standard Vivado Makefile build:
    
 1) There is one project for each reconfigurable RTL module 
 
-2) The project name must match the reconfigurable RTL module's
+2) The project name must match the reconfigurable RTL module's 
+   or the user must define PROJECT environmental variable to be the same as the 
+   reconfigurable RTL module's name in the target's Makefile
    For example: LedRtlA project matches with StaticDesign's LedRtlA.vhd module 
 
 3) Create a "RECONFIG_CHECKPOINT" export in the Makefile 
@@ -89,8 +93,10 @@ in the project build that differ from the standard Vivado Makefile build:
    For example (refer to LedRtlA Project): 
    export RECONFIG_CHECKPOINT = $(PROJ_DIR)/../StaticDesign/images/StaticDesign_10000000_static.dcp
 
-4) Set the MakeFile target to "bit_dynamic"
+4) Set the MakeFile target to either "bit" or "prom"
    For example (refer to LedRtlA Project): 
-   target: bit_dynamic
-   
+   target: prom
+   Note: The Vivado build system knowns that this is a dynamic design 
+         when the RECONFIG_CHECKPOINT environmental variable is defined   
+      
 #######################################################################################

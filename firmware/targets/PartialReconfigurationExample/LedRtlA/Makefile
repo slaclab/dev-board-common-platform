@@ -1,7 +1,7 @@
 export GIT_BYPASS = 0
 
 # Define target output
-target: bit_dynamic
+target: prom
 
 # Declare the static checkpoint
 export RECONFIG_CHECKPOINT = $(PROJ_DIR)/../StaticDesign/images/StaticDesign-0x00000001-20170329131559-ruckman-22e32b9_static.dcp
