@@ -8,5 +8,4 @@ loadRuckusTcl $::env(PROJ_DIR)/../../../
 loadSource      -dir "$::DIR_PATH/hdl/"
 loadConstraints -dir "$::DIR_PATH/hdl/"
 
-loadSource -path "$::DIR_PATH/ip/PgpGthCore.dcp"
-#loadIpCore  -path "$::DIR_PATH/ip/PgpGthCore.xci" 
+

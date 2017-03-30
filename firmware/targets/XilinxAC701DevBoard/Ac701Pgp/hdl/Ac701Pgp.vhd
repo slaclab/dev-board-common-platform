@@ -4,7 +4,7 @@
 -- Created    : 2015-02-02
 -- Last update: 2017-02-16
 -------------------------------------------------------------------------------
--- Description: 
+-- Description: Example using PGP2B Protocol
 -------------------------------------------------------------------------------
 -- This file is part of 'Example Project Firmware'.
 -- It is subject to the license terms in the LICENSE.txt file found in the 

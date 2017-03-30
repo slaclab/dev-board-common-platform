@@ -4,7 +4,7 @@
 -- Created    : 2014-07-31
 -- Last update: 2017-03-17
 -------------------------------------------------------------------------------
--- 
+-- Description: 
 -------------------------------------------------------------------------------
 -- This file is part of 'Example Project Firmware'.
 -- It is subject to the license terms in the LICENSE.txt file found in the 

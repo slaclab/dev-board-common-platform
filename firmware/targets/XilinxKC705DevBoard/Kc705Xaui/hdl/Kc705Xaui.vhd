@@ -1,15 +1,13 @@
 -------------------------------------------------------------------------------
--- Title      : 
--------------------------------------------------------------------------------
 -- File       : Kc705Xaui.vhd
--- Author     : Larry Ruckman  <ruckman@slac.stanford.edu>
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2015-04-07
 -- Last update: 2016-02-09
--- Platform   : 
--- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
--- Description: 
+-- Description: Example using 10 GbE XAUI Protocol
+--              https://en.wikipedia.org/wiki/XAUI
+-- Note: To use this firmware build, you will need the FMC below:
+-- http://www.fastertechnology.com/products/fmc/fm-s14.html
 -------------------------------------------------------------------------------
 -- This file is part of 'Example Project Firmware'.
 -- It is subject to the license terms in the LICENSE.txt file found in the 

@@ -3,7 +3,6 @@
 # Title      : PyRogue feb Module
 #-----------------------------------------------------------------------------
 # File       : _feb.py
-# Author     : Larry Ruckman <ruckman@slac.stanford.edu>
 # Created    : 2017-02-15
 # Last update: 2017-02-15
 #-----------------------------------------------------------------------------
@@ -32,5 +31,4 @@ class feb(pr.Device):
         # Add devices
         #############
         self.add(surf.AxiVersion.create(   offset=0x00000000,expand=False))
-        # self.add(surf.Xadc(                offset=0x00010000,expand=False))  
      
