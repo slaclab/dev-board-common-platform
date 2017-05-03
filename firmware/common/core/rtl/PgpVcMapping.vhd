@@ -71,7 +71,31 @@ architecture mapping of PgpVcMapping is
 begin
 
    -- VC0 RX/TX, SRPv3 Register Module    
-   --U_SRPv3 : entity work.SrpV3AxiLite
+--   U_SRPv3 : entity work.SrpV3AxiLite
+--      generic map (
+--         TPD_G               => TPD_G,
+--         SLAVE_READY_EN_G    => false,
+--         GEN_SYNC_FIFO_G     => true,
+--         AXI_STREAM_CONFIG_G => SSI_PGP2B_CONFIG_C)
+--      port map (
+--         -- Streaming Slave (Rx) Interface (sAxisClk domain) 
+--         sAxisClk         => clk,
+--         sAxisRst         => rst,
+--         sAxisMaster      => rxMasters(0),
+--         sAxisCtrl        => rxCtrl(0),
+--         -- Streaming Master (Tx) Data Interface (mAxisClk domain)
+--         mAxisClk         => clk,
+--         mAxisRst         => rst,
+--         mAxisMaster      => txMasters(0),
+--         mAxisSlave       => txSlaves(0),
+--         -- Master AXI-Lite Interface (axilClk domain)
+--         axilClk          => clk,
+--         axilRst          => rst,
+--         mAxilReadMaster  => axilReadMaster,
+--         mAxilReadSlave   => axilReadSlave,
+--         mAxilWriteMaster => axilWriteMaster,
+--         mAxilWriteSlave  => axilWriteSlave);
+
    U_SRPv0 : entity work.SrpV0AxiLite
       generic map (
          TPD_G               => TPD_G,
@@ -90,12 +114,12 @@ begin
          mAxisMaster      => txMasters(0),
          mAxisSlave       => txSlaves(0),
          -- Master AXI-Lite Interface (axilClk domain)
-         axilClk          => clk,
-         axilRst          => rst,
-         mAxilReadMaster  => axilReadMaster,
-         mAxilReadSlave   => axilReadSlave,
-         mAxilWriteMaster => axilWriteMaster,
-         mAxilWriteSlave  => axilWriteSlave);
+         axiLiteClk          => clk,
+         axiLiteRst          => rst,
+         mAxiLiteReadMaster  => axilReadMaster,
+         mAxiLiteReadSlave   => axilReadSlave,
+         mAxiLiteWriteMaster => axilWriteMaster,
+         mAxiLiteWriteSlave  => axilWriteSlave);
 
    -- VC1 TX, PBRS
    VCTX1 : entity work.AxiStreamFifo
