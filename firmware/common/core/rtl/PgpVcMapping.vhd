@@ -71,7 +71,8 @@ architecture mapping of PgpVcMapping is
 begin
 
    -- VC0 RX/TX, SRPv3 Register Module    
-   U_SRPv3 : entity work.SrpV3AxiLite
+   --U_SRPv3 : entity work.SrpV3AxiLite
+   U_SRPv0 : entity work.SrpV0AxiLite
       generic map (
          TPD_G               => TPD_G,
          SLAVE_READY_EN_G    => false,
