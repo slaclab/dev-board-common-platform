@@ -88,7 +88,8 @@ def gui(arg):
         print("")
 
         # Create and Connect SRPv3 to VC1
-        srp = rogue.protocols.srp.SrpV3()
+        #srp = rogue.protocols.srp.SrpV3()
+        srp = rogue.protocols.srp.SrpV0()
         pyrogue.streamConnectBiDir(pgpVc0,srp)
         
         # Add data stream to file as channel 1
