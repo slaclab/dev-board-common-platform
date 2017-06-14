@@ -1,6 +1,6 @@
 
 # Location of aes-stream-drivers include
-AES_INCLUDE := ../../../aes-stream-drivers-1.0.1/include/
+AES_INCLUDE := ../../../aes-stream-drivers-v1.0.1/include/
 
 # Variables
 CC      := g++
