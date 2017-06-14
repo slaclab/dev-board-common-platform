@@ -20,8 +20,7 @@
 
 import pyrogue as pr
 
-import surf
-import surf.AxiVersion
+import surf.axi
 
 class feb(pr.Device):
     def __init__(self, name="feb", memBase=None, offset=0, hidden=False):
@@ -30,5 +29,5 @@ class feb(pr.Device):
         #############
         # Add devices
         #############
-        self.add(surf.AxiVersion.create(   offset=0x00000000,expand=False))
+        self.add(surf.axi.AxiVersion(offset=0x00000000,expand=False))
      

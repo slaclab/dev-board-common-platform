@@ -31,45 +31,12 @@ import time
 import sys
 import PyQt4.QtGui
 
-# Custom run control
-class MyRunControl(pyrogue.RunControl):
-   def __init__(self,name):
-      pyrogue.RunControl.__init__(self,name,'Run Controller')
-      self._thread = None
-
-      self.runRate.enum = {1:'1 Hz', 10:'10 Hz', 100:'100 Hz'}
-
-   def _setRunState(self,dev,var,value):
-      if self._runState != value:
-         self._runState = value
-
-         if self._runState == 'Running':
-            self._thread = threading.Thread(target=self._run)
-            self._thread.start()
-         else:
-            self._thread.join()
-            self._thread = None
-
-   def _run(self):
-      self._runCount = 0
-      self._last = int(time.time())
-
-      while (self._runState == 'Running'):
-         delay = 1.0 / ({value: key for key,value in self.runRate.enum.items()}[self._runRate])
-         time.sleep(delay)
-         # # # # self._root.feb.sysReg.softTrig()
-
-         self._runCount += 1
-         if self._last != int(time.time()):
-             self._last = int(time.time())
-             self.runCount._updated()
+def runTest():
+    print("hello")
 
 def gui(arg):
     # Set base
     system = pyrogue.Root('System','Front End Board')
-
-    # Run control
-    system.add(MyRunControl('runControl'))
 
     # File writer
     dataWriter = pyrogue.utilities.fileio.StreamWriter('dataWriter')
@@ -110,7 +77,13 @@ def gui(arg):
              
     # Add registers
     system.add(DevBoard.feb(memBase=srp))
-        
+       
+    system.add(pyrogue.RunControl('runControl',
+                                rates={1:'1 Hz', 10:'10 Hz',100:'100 Hz'}, 
+                                #cmd=system.feb.sysReg.softTrig()))
+                                #cmd=None))
+                                cmd=runTest))
+
     # Create GUI
     appTop = PyQt4.QtGui.QApplication(sys.argv)
     guiTop = pyrogue.gui.GuiTop('PyRogueGui')
