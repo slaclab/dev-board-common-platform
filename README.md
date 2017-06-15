@@ -50,5 +50,13 @@ Development Board Firmware/Software Examples
 4) Optional: Review the results in GUI mode
 > $ make gui
 
+# How to build/run the software 
+
+1) Install 'rogue' software on your platform
+
+> Build instrustions can be found here:
+
+>> https://github.com/slaclab/rogue/blob/master/Readme_build.txt
+
 
 
