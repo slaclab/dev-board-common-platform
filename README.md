@@ -23,7 +23,7 @@ Development Board Firmware/Software Examples
 
 1) Setup Xilinx licensing
 
-> Example showing how to setup Xilinx licensing @ SLAC
+> If you are on the SLAC network, here's how to setup the Xilinx licensing
 
 >> In C-Shell: $ source dev-board-examples/firmware/setup_env_slac.csh
 
@@ -40,9 +40,9 @@ Development Board Firmware/Software Examples
 
 >> $ mkdir dev-board-examples/firmware/build
 
-3) Go to the target directory and make the firmware:
+3) Go to the target directory (that you want to build) and make the firmware:
 
-> Example of building the Kcu105TenGigE firmware target
+> Example of building the Kcu105TenGigE firmware example target
 
 >> $ cd dev-board-examples/firmware/targets/XilinxKCU105DevBoard/Kcu105TenGigE
 >> $ make
@@ -58,5 +58,19 @@ Development Board Firmware/Software Examples
 
 >> https://github.com/slaclab/rogue/blob/master/Readme_build.txt
 
+> If you are on the SLAC network, there in a network install of rogue on AFS:
+ 
+>> /afs/slac/g/reseng/rogue/master/
 
+2) Go to your git clone's rogue software directory
+
+> $ cd dev-board-examples/software/rogue
+
+3) Setup your environment (example below assumes access to SLAC AFS):
+
+>> $ source  setup_template.csh
+
+4) Launch the PyQT QUI
+
+> $ python3 scripts/DevBoardGui.py 
 
