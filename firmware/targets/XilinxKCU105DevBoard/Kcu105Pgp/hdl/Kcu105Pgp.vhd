@@ -2,7 +2,7 @@
 -- File       : Kcu105Pgp.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2016-02-09
--- Last update: 2017-02-16
+-- Last update: 2017-06-16
 -------------------------------------------------------------------------------
 -- Description: Example using PGP2B Protocol
 -------------------------------------------------------------------------------
@@ -184,13 +184,13 @@ begin
    ----------------
    -- Misc. Signals
    ----------------
-   led(7) <= phyReady;
-   led(6) <= phyReady;
-   led(5) <= phyReady;
-   led(4) <= phyReady;
-   led(3) <= phyReady;
-   led(2) <= phyReady;
-   led(1) <= phyReady;
-   led(0) <= phyReady;
+   led(7) <= extRst;
+   led(6) <= rst;
+   led(5) <= pgpTxOut.linkReady and not(rst);
+   led(4) <= pgpTxOut.phyTxReady and not(rst);
+   led(3) <= pgpRxOut.remLinkReady and not(rst);
+   led(2) <= pgpRxOut.linkDown and not(rst);
+   led(1) <= pgpRxOut.linkReady and not(rst);
+   led(0) <= pgpRxOut.phyRxReady and not(rst);
 
 end top_level;

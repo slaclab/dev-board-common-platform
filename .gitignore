@@ -25,8 +25,9 @@ ehthumbs.db
 Thumps.db
 build.info
 
-# Vivado Build
+# Build directories 
 build*
+bin*
 
 # Only .bit.gz and .mcs.gz should be committed to git
 *.bit
