@@ -3,8 +3,14 @@ export GIT_BYPASS = 0
 # Define target output
 target: prom
 
-# Declare the static checkpoint
-export RECONFIG_CHECKPOINT = $(PROJ_DIR)/../StaticDesign/images/StaticDesign-0x00000001-20170329131559-ruckman-22e32b9_static.dcp
+# Define the file path to the static checkpoint
+export RECONFIG_CHECKPOINT = $(PROJ_DIR)/../StaticDesign/images/StaticDesign-0x00000001-20170808102834-ruckman-dirty_static.dcp
+
+# Define hierarchical path to dynamic module
+export RECONFIG_ENDPOINT = U_LedRtlB
+
+# Define the PBLOCK name
+export RECONFIG_PBLOCK = LED_B
 
 # Define Firmware Version Number
 export PRJ_VERSION = 0x00000001

@@ -33,12 +33,6 @@ end StaticDesign;
 
 architecture top_level of StaticDesign is
 
-   -- Signals
-   signal clk,
-      testPointA,
-      testPOintB : sl;
-   signal cnt : slv(31 downto 0) := (others => '0');
-
    -- Declare the Reconfigurable RTL as a black box
    -- and don't include its RTL file (.vhd or .v) 
    -- during the initial synthesis process 
@@ -48,40 +42,46 @@ architecture top_level of StaticDesign is
          cnt : in  slv(31 downto 0);
          led : out sl);
    end component;
-   attribute BOX_TYPE of LedRtlA : component is "BLACK_BOX";
-   
    component LedRtlB
       port (
          clk : in  sl;
          cnt : in  slv(31 downto 0);
          led : out sl);
    end component;
-   attribute BOX_TYPE of LedRtlB : component is "BLACK_BOX";   
+   attribute BLACK_BOX                : string;
+   attribute BLACK_BOX of LedRtlA : component is "TRUE";
+   attribute BLACK_BOX of LedRtlB : component is "TRUE";
+   
+   -- Signals
+   signal clk : sl;
+   signal testPointA : sl;
+   signal testPointB : sl;
+   signal cnt : slv(31 downto 0) := (others => '0');
    
 begin
 
    -- Reference Clock
-   IBUFGDS_Inst : IBUFGDS
+   U_IBUFGDS : IBUFGDS
       port map (
          I  => clkP,
          IB => clkN,
          O  => clk);  
 
    -- Static RTL Core
-   CntRtl_Inst : entity work.CntRtl
+   U_CntRtl : entity work.CntRtl
       port map (
          clk => clk,
          cnt => cnt);
 
    -- Reconfigurable RTL Core
-   LedRtlA_Inst : LedRtlA
+   U_LedRtlA : LedRtlA
       port map (
          clk => clk,
          cnt => cnt,
          led => testPointA);
          
    -- Reconfigurable RTL Core
-   LedRtlB_Inst : LedRtlB
+   U_LedRtlB : LedRtlB
       port map (
          clk => clk,
          cnt => cnt,
@@ -91,26 +91,3 @@ begin
    led <= x"8" & "00" & testPointB & testPointA;
    
 end top_level;
-----------------------------------
-library ieee;
-use ieee.std_logic_1164.all;
-use work.StdRtlPkg.all;
-
-entity LedRtlA is
-   port (
-      clk : in  sl;
-      cnt : in  slv(31 downto 0);
-      led : out sl);
-end LedRtlA;
-----------------------------------
-library ieee;
-use ieee.std_logic_1164.all;
-use work.StdRtlPkg.all;
-
-entity LedRtlB is
-   port (
-      clk : in  sl;
-      cnt : in  slv(31 downto 0);
-      led : out sl);
-end LedRtlB;
-----------------------------------

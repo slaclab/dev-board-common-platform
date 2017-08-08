@@ -3,10 +3,6 @@ export GIT_BYPASS = 0
 # Define target output
 target: prom
 
-# List of Reconfigurable RTL Block Names.
-export RECONFIG_NAME = LedRtlA \
-                       LedRtlB
-
 # Define Firmware Version Number
 export PRJ_VERSION = 0x00000001
 
