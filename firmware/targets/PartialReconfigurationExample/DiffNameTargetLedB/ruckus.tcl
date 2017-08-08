@@ -9,3 +9,7 @@ loadSource -path "$::DIR_PATH/hdl/LedRtlB.vhd"
 
 # Load local constraints
 loadConstraints -path "$::DIR_PATH/hdl/LedRtlB.xdc"
+
+# Set the top-level RTL
+set_property top {LedRtlB} [current_fileset]
+
