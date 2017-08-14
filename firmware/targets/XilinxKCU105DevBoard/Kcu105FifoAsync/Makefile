@@ -1,7 +1,7 @@
 export GIT_BYPASS = 0
 
 # Define target output
-target: prom
+target: bit
 
 # Define Firmware Version Number
 export PRJ_VERSION = 0x00000001
