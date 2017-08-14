@@ -4,7 +4,7 @@ export GIT_BYPASS = 0
 target: prom
 
 # Define the file path to the static checkpoint
-export RECONFIG_CHECKPOINT = $(PROJ_DIR)/../StaticDesign/images/StaticDesign-0x00000001-20170808110902-ruckman-2c56355_static.dcp
+export RECONFIG_CHECKPOINT = $(PROJ_DIR)/../StaticDesign/images/StaticDesign-0x00000001-20170808110902-ruckman-2c56355-static.dcp
 
 # Define hierarchical path to dynamic module
 export RECONFIG_ENDPOINT = U_LedRtlA
