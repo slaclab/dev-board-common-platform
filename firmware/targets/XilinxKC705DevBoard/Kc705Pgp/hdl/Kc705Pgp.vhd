@@ -119,18 +119,17 @@ begin
 
       clk <= gtClkP;
 
-      U_PwrUpRst : entity work.PwrUpRst
-         generic map (
-            TPD_G          => TPD_G,
-            SIM_SPEEDUP_G  => SIM_SPEEDUP_G,
-            IN_POLARITY_G  => '1',
-            OUT_POLARITY_G => '1')
-         port map (
-            clk    => clk,
-            rstOut => rst);     
-
    end generate SIM_PGP;
 
+   U_PwrUpRst : entity work.PwrUpRst
+      generic map (
+         TPD_G          => TPD_G,
+         SIM_SPEEDUP_G  => SIM_SPEEDUP_G,
+         IN_POLARITY_G  => '1',
+         OUT_POLARITY_G => '1')
+      port map (
+         clk    => clk,
+         rstOut => rst);     
    -------------------
    -- Application Core
    -------------------
