@@ -2,7 +2,7 @@
 -- File       : Kc705Pgp.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2015-01-30
--- Last update: 2016-02-09
+-- Last update: 2017-09-01
 -------------------------------------------------------------------------------
 -- Description: Example using PGP2B Protocol
 -------------------------------------------------------------------------------
@@ -45,7 +45,7 @@ entity Kc705Pgp is
       gtRxP  : in  sl;
       gtRxN  : in  sl;
       gtTxP  : out sl;
-      gtTxN  : out sl);      
+      gtTxN  : out sl);
 end Kc705Pgp;
 
 architecture top_level of Kc705Pgp is
@@ -96,7 +96,7 @@ begin
             gtTxP        => gtTxP,
             gtTxN        => gtTxN,
             gtRxP        => gtRxP,
-            gtRxN        => gtRxN);        
+            gtRxN        => gtRxN);
    end generate REAL_PGP;
 
    SIM_PGP : if (SIMULATION_G) generate
@@ -115,21 +115,23 @@ begin
             pgpTxMasters => txMasters,
             pgpTxSlaves  => txSlaves,
             pgpRxMasters => rxMasters,
-            pgpRxCtrl    => rxCtrl);  
+            pgpRxCtrl    => rxCtrl);
 
       clk <= gtClkP;
 
+      U_PwrUpRst : entity work.PwrUpRst
+         generic map (
+            TPD_G          => TPD_G,
+            SIM_SPEEDUP_G  => SIM_SPEEDUP_G,
+            IN_POLARITY_G  => '1',
+            OUT_POLARITY_G => '1')
+         port map (
+            clk    => clk,
+            arst   => extRst,
+            rstOut => rst);
+
    end generate SIM_PGP;
 
-   U_PwrUpRst : entity work.PwrUpRst
-      generic map (
-         TPD_G          => TPD_G,
-         SIM_SPEEDUP_G  => SIM_SPEEDUP_G,
-         IN_POLARITY_G  => '1',
-         OUT_POLARITY_G => '1')
-      port map (
-         clk    => clk,
-         rstOut => rst);     
    -------------------
    -- Application Core
    -------------------
