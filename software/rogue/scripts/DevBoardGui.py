@@ -36,23 +36,26 @@ def runTest():
 
 def gui(arg):
     # Set base
-    system = pyrogue.Root('System','Front End Board')
+    system = pyrogue.Root(name='System',description='Front End Board')
 
     # File writer
-    dataWriter = pyrogue.utilities.fileio.StreamWriter('dataWriter')
+    dataWriter = pyrogue.utilities.fileio.StreamWriter(name='dataWriter')
     system.add(dataWriter)
 
     #################################################################
     # Check for PGP link
     if (arg == 'PGP'):
         # Create the PGP interfaces
-        pgpVc0 = rogue.hardware.pgp.PgpCard('/dev/pgpcard_0',0,0) # Registers
-        pgpVc1 = rogue.hardware.pgp.PgpCard('/dev/pgpcard_0',0,1) # Data
+        
+        # pgpVc0 = rogue.hardware.pgp.PgpCard('/dev/pgpcard_0',0,0) # Registers
+        # pgpVc1 = rogue.hardware.pgp.PgpCard('/dev/pgpcard_0',0,1) # Data
+        pgpVc0    = rogue.hardware.data.DataCard('/dev/datadev_0',0)
+        pgpVc1    = rogue.hardware.data.DataCard('/dev/datadev_0',1)
 
-        # Display PGP card's firmware version
-        print("")
-        print("PGP Card Version: %x" % (pgpVc0.getInfo().version))
-        print("")
+        # # Display PGP card's firmware version
+        # print("")
+        # print("PGP Card Version: %x" % (pgpVc0.getInfo().version))
+        # print("")
 
         # Create and Connect SRPv3 to VC1
         #srp = rogue.protocols.srp.SrpV3()
@@ -77,16 +80,19 @@ def gui(arg):
              
     # Add registers
     system.add(DevBoard.feb(memBase=srp))
+    
+    # Start the system
+    system.start(pollEn=True)    
        
-    system.add(pyrogue.RunControl('runControl',
-                                rates={1:'1 Hz', 10:'10 Hz',100:'100 Hz'}, 
-                                #cmd=system.feb.sysReg.softTrig()))
-                                #cmd=None))
-                                cmd=runTest))
+    # system.add(pyrogue.RunControl('runControl',
+                                # rates={1:'1 Hz', 10:'10 Hz',100:'100 Hz'}, 
+                                # #cmd=system.feb.sysReg.softTrig()))
+                                # #cmd=None))
+                                # cmd=runTest))
 
     # Create GUI
     appTop = PyQt4.QtGui.QApplication(sys.argv)
-    guiTop = pyrogue.gui.GuiTop('PyRogueGui')
+    guiTop = pyrogue.gui.GuiTop(group='PyRogueGui')
     guiTop.resize(800, 1000)
     guiTop.addTree(system)
     

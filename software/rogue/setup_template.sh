@@ -1,6 +1,7 @@
 
-# Source rogue environment. Use your local rogue path if not on slac afs.
-source /afs/slac.stanford.edu/g/reseng/rogue/v1.2.0/setup_env.sh
+# Setup environment
+#source /afs/slac/g/reseng/rogue/master/setup_env.sh
+source /afs/slac/g/reseng/rogue/v2.2.0/setup_env.sh
 
 # Python Package directories
 export FEB_DIR=${PWD}/../firmware/common

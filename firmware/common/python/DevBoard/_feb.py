@@ -22,10 +22,23 @@ import pyrogue as pr
 
 import surf.axi
 
-class feb(pr.Device):
-    def __init__(self, name="feb", memBase=None, offset=0, hidden=False):
-        super(self.__class__, self).__init__(name, "feb Module",
-                                             memBase=memBase, offset=offset, hidden=hidden)        
+class feb(pr.Device):                         
+    def __init__( self,       
+        name        = "feb",
+        description = "feb Module",
+        memBase     =  None,
+        offset      =  0x00,
+        hidden      =  False,
+        expand      =  True,
+    ):
+        super().__init__(
+            name        = name,
+            description = description,
+            memBase     = memBase,
+            offset      = offset,
+            hidden      = hidden,
+            expand      = expand,
+        )        
         #############
         # Add devices
         #############
