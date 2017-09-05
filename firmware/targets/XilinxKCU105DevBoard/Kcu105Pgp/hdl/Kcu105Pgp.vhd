@@ -2,7 +2,7 @@
 -- File       : Kcu105Pgp.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2016-02-09
--- Last update: 2017-06-16
+-- Last update: 2017-09-01
 -------------------------------------------------------------------------------
 -- Description: Example using PGP2B Protocol
 -------------------------------------------------------------------------------
@@ -145,18 +145,18 @@ begin
 
       clk <= pgpClkP;
 
-   end generate SIM_PGP;
+      U_PwrUpRst : entity work.PwrUpRst
+         generic map (
+            TPD_G          => TPD_G,
+            SIM_SPEEDUP_G  => SIM_SPEEDUP_G,
+            IN_POLARITY_G  => '1',
+            OUT_POLARITY_G => '1')
+         port map (
+            clk    => clk,
+            arst   => extRst,
+            rstOut => rst);
 
-   U_PwrUpRst : entity work.PwrUpRst
-      generic map (
-         TPD_G          => TPD_G,
-         SIM_SPEEDUP_G  => SIM_SPEEDUP_G,
-         IN_POLARITY_G  => '1',
-         OUT_POLARITY_G => '1')
-      port map (
-         clk    => clk,
-         arst   => extRst,
-         rstOut => rst);
+   end generate SIM_PGP;
 
    -------------------
    -- Application Core

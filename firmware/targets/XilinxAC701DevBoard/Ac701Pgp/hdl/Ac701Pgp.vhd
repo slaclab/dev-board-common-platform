@@ -2,7 +2,7 @@
 -- File       : Ac701Pgp.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2015-02-02
--- Last update: 2017-02-16
+-- Last update: 2017-09-01
 -------------------------------------------------------------------------------
 -- Description: Example using PGP2B Protocol
 -------------------------------------------------------------------------------
@@ -130,6 +130,7 @@ begin
             OUT_POLARITY_G => '1')
          port map (
             clk    => clk,
+            arst   => extRst,
             rstOut => rst);
 
    end generate SIM_PGP;
