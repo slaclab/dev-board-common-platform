@@ -1,10 +1,10 @@
 export GIT_BYPASS = 0
 
 # Define target output
-target: bin
+target: bit
 
 # Define the file path to the static checkpoint
-export RECONFIG_CHECKPOINT = $(PROJ_DIR)/../StaticDesign/images/StaticDesign-0x00000001-20170918142238-ruckman-dirty-static.dcp
+export RECONFIG_CHECKPOINT = $(PROJ_DIR)/../StaticDesign/images/StaticDesign-0x00000001-20170918153056-ruckman-27107730-static.dcp
 
 # Define hierarchical path to dynamic module
 export RECONFIG_ENDPOINT = U_LedRtlB
