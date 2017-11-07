@@ -39,9 +39,9 @@ $ source dev-board-examples/firmware/setup_env_slac.sh
 
 2) Go to the target directory (that you want to build) and make the firmware:
 
-> Example of building the Kcu105TenGigE firmware example target
+> Example of building the Ac701GigE firmware example target
 ```
-$ cd dev-board-examples/firmware/targets/XilinxKCU105DevBoard/Kcu105TenGigE
+$ cd dev-board-examples/firmware/targets/XilinxKCU105DevBoard/Ac701GigE
 $ make
 ```
 
