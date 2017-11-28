@@ -33,6 +33,16 @@ set_property IOSTANDARD LVCMOS18 [get_ports "phyMdio"]
 set_property PACKAGE_PIN J23     [get_ports "phyRstN"]
 set_property IOSTANDARD LVCMOS18 [get_ports "phyRstN"]
 
+# GPIO DIP Switch
+set_property PACKAGE_PIN AN16 [get_ports "gpioDip[0]"]
+set_property IOSTANDARD LVCMOS12 [get_ports "gpioDip[0]"]
+set_property PACKAGE_PIN AN19 [get_ports "gpioDip[1]"]
+set_property IOSTANDARD LVCMOS12 [get_ports "gpioDip[1]"]
+set_property PACKAGE_PIN AP18 [get_ports "gpioDip[2]"]
+set_property IOSTANDARD LVCMOS12 [get_ports "gpioDip[2]"]
+set_property PACKAGE_PIN AN14 [get_ports "gpioDip[3]"]
+set_property IOSTANDARD LVCMOS12 [get_ports "gpioDip[3]"]
+
 # On-Board System clock
 set_property ODT RTT_48 [get_ports "sysClk300N"]
 set_property PACKAGE_PIN AK16 [get_ports "sysClk300N"]

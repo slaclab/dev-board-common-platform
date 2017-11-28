@@ -38,6 +38,7 @@ entity Kcu105GigE is
       -- Misc. IOs
       extRst     : in  sl;
       led        : out slv(7 downto 0);
+      gpioDip    : in  slv(3 downto 0);
       -- XADC Ports
       vPIn       : in  sl;
       vNIn       : in  sl;
