@@ -23,22 +23,24 @@ set_property -dict { PACKAGE_PIN M22 IOSTANDARD LVCMOS18 } [get_ports { led[5] }
 set_property -dict { PACKAGE_PIN R23 IOSTANDARD LVCMOS18 } [get_ports { led[6] }]
 set_property -dict { PACKAGE_PIN P23 IOSTANDARD LVCMOS18 } [get_ports { led[7] }]
 
-set_property PACKAGE_PIN U4 [get_ports ethTxP]
-set_property PACKAGE_PIN U3 [get_ports ethTxN]
-set_property PACKAGE_PIN T2 [get_ports ethRxP]
-set_property PACKAGE_PIN T1 [get_ports ethRxN]
+# MDIO/Ext. PHY
+set_property PACKAGE_PIN K25     [get_ports "phyIrqN"]
+set_property IOSTANDARD LVCMOS18 [get_ports "phyIrqN"]
+set_property PACKAGE_PIN L25     [get_ports "phyMdc"]
+set_property IOSTANDARD LVCMOS18 [get_ports "phyMdc"]
+set_property PACKAGE_PIN H26     [get_ports "phyMdio"]
+set_property IOSTANDARD LVCMOS18 [get_ports "phyMdio"]
+set_property PACKAGE_PIN J23     [get_ports "phyRstN"]
+set_property IOSTANDARD LVCMOS18 [get_ports "phyRstN"]
 
-set_property PACKAGE_PIN P6 [get_ports ethClkP]
-set_property PACKAGE_PIN P5 [get_ports ethClkN]
+# On-Board System clock
+set_property ODT RTT_48 [get_ports "sysClk300N"]
+set_property PACKAGE_PIN AK16 [get_ports "sysClk300N"]
+set_property IOSTANDARD DIFF_SSTL12_DCI [get_ports "sysClk300N"]
+set_property PACKAGE_PIN AK17 [get_ports "sysClk300P"]
+set_property IOSTANDARD DIFF_SSTL12_DCI [get_ports "sysClk300P"]
+set_property ODT RTT_48 [get_ports "sysClk300P"]
 
-# Timing Constraints 
-create_clock -name gtClkP -period 6.400    [get_ports {ethClkP}]
-create_generated_clock -name ethClk125MHz  [get_pins {U_1GigE/U_MMCM/MmcmGen.U_Mmcm/CLKOUT0}] 
-create_generated_clock -name ethClk62p5MHz [get_pins {U_1GigE/U_MMCM/MmcmGen.U_Mmcm/CLKOUT1}] 
 create_generated_clock -name dnaClk        [get_pins {U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_ULTRA_SCALE.DeviceDnaUltraScale_Inst/BUFGCE_DIV_Inst/O}]
 
-set_clock_groups -asynchronous -group [get_clocks {gtClkP}] -group [get_clocks {ethClk125MHz}] 
-set_clock_groups -asynchronous -group [get_clocks {gtClkP}] -group [get_clocks {ethClk62p5MHz}] 
-
 set_clock_groups -asynchronous -group [get_clocks {ethClk125MHz}] -group [get_clocks {dnaClk}] 
- 

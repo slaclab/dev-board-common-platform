@@ -17,6 +17,7 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 use work.StdRtlPkg.all;
 use work.AxiStreamPkg.all;
@@ -46,7 +47,14 @@ entity Kcu105GigE is
       ethRxP     : in  sl;
       ethRxN     : in  sl;
       ethTxP     : out sl;
-      ethTxN     : out sl
+      ethTxN     : out sl;
+      -- SGMII (ext. PHY) ETH
+      sgmiiClkP  : in  sl;
+      sgmiiClkN  : in  sl;
+      sgmiiRxP   : in  sl;
+      sgmiiRxN   : in  sl;
+      sgmiiTxP   : out sl;
+      sgmiiTxN   : out sl;
       -- ETH external PHY pins
       phyMdc     : out sl;
       phyMdio    : inout sl;
@@ -73,6 +81,8 @@ architecture top_level of Kcu105GigE is
    signal rst           : sl;
    signal phyReady      : sl;
 
+   signal phyMdo        : sl := '1';
+
    signal sysClk300NB   : sl;
    signal sysClk300     : sl;
    signal sysRst300     : sl;
@@ -80,6 +90,11 @@ architecture top_level of Kcu105GigE is
    signal speed10_100   : sl := '0';
    signal speed100      : sl := '0';
    signal linkIsUp      : sl := '0';
+
+   signal extPhyRstN    : sl;
+   signal extPhyReady   : sl;
+
+   signal initDone      : sl := '0';
 
 
    attribute dont_touch              : string;
@@ -158,17 +173,14 @@ begin
          gtRxP(0)     => ethRxP,
          gtRxN(0)     => ethRxN);
 
-   phyRstN <= '0';
-   phyMdc  <= '0';
-   phyMdo  <= '1';
+   extPhyRstN <= '0';
+   phyMdc     <= '0';
 
    end generate GEN_GTH;
 
    GEN_SGMII : if (SGMII_ETH_G) generate
 
    signal rstCnt      : slv(23 downto 0) := RST_DEL_C;
-   signal extPhyRstN  : sl;
-   signal extPhyReady : sl;
    signal phyInitRst  : sl;
    signal phyIrq      : sl;
    signal phyMdi      : sl;
@@ -192,7 +204,7 @@ begin
 
    extPhyReady <= rstCnt(23);
 
-   extPhyRstN  <= ite( ( unsigned(rstCnt(22 downto 20)) > 3 ) and ( extPhyRdy = '0' ), '0', '1' );
+   extPhyRstN  <= ite( ( unsigned(rstCnt(22 downto 20)) > 3 ) and ( extPhyReady = '0' ), '0', '1' );
 
    -- The MDIO controller which talks to the external PHY must be held
    -- in reset until extPhyReady; it works in a different clock domain...
@@ -222,7 +234,7 @@ begin
       port map (
          clk             => clk,
          rst             => phyInitRst,
-         initDone        => open,
+         initDone        => initDone,
 
          speed_is_10_100 => speed10_100,
          speed_is_100    => speed100,
@@ -268,31 +280,31 @@ begin
          AXIS_CONFIG_G      => (others => EMAC_AXIS_CONFIG_C))
       port map (
          -- Local Configurations
-         localMac        => (others => MAC_ADDR_C),
+         localMac           => (others => MAC_ADDR_C),
          -- Streaming DMA Interface 
-         dmaClk          => (others => clk),
-         dmaRst          => (others => rst),
-         dmaIbMasters    => rxMasters,
-         dmaIbSlaves     => rxSlaves,
-         dmaObMasters    => txMasters,
-         dmaObSlaves     => txSlaves,
+         dmaClk             => (others => clk),
+         dmaRst             => (others => rst),
+         dmaIbMasters       => rxMasters,
+         dmaIbSlaves        => rxSlaves,
+         dmaObMasters       => txMasters,
+         dmaObSlaves        => txSlaves,
          -- Misc. Signals
-         extRst          => extRst,
-         phyClk          => clk,
-         phyRst          => rst,
-         phyReady(0)     => phyReady,
-         mmcmLocked      => open,
-         speed_is_10_100 => speed10_100,
-         speed_is_100    => speed100,
+         extRst             => extRst,
+         phyClk             => clk,
+         phyRst             => rst,
+         phyReady(0)        => phyReady,
+         mmcmLocked         => open,
+         speed_is_10_100(0) => speed10_100,
+         speed_is_100(0)    => speed100,
 
          -- MGT Clock Port
-         sgmiiClkP       => ethClkP,
-         sgmiiClkN       => ethClkN,
+         sgmiiClkP          => sgmiiClkP,
+         sgmiiClkN          => sgmiiClkN,
          -- MGT Ports
-         sgmiiTxP(0)     => ethTxP,
-         sgmiiTxN(0)     => ethTxN,
-         sgmiiRxP(0)     => ethRxP,
-         sgmiiRxN(0)     => ethRxN);
+         sgmiiTxP(0)        => sgmiiTxP,
+         sgmiiTxN(0)        => sgmiiTxN,
+         sgmiiRxP(0)        => sgmiiRxP,
+         sgmiiRxN(0)        => sgmiiRxN);
 
    end generate GEN_SGMII;
 
@@ -325,15 +337,17 @@ begin
    -- Misc. Signals
    ----------------
    led(7) <= linkIsUp;
-   led(6) <= not speed10_100;              -- lit when 1Gb
-   led(5) <= not speed10_100 or speed_100; -- lit when 1Gb or 100Mb
-   led(4) <= phyReady;
-   led(3) <= phyReady;
-   led(2) <= phyReady;
+   led(6) <= not speed10_100;             -- lit when 1Gb
+   led(5) <= not speed10_100 or speed100; -- lit when 1Gb or 100Mb
+   led(4) <= extPhyRstN;
+   led(3) <= phyIrqN;
+   led(2) <= initDone;
    led(1) <= phyReady;
    led(0) <= phyReady;
 
    -- Tri-state driver for phyMdio
    phyMdio <= 'Z' when phyMdo = '1' else '0';
+   -- Reset line of the external phy
+   phyRstN <= extPhyRstN;
 
 end top_level;
