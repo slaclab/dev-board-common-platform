@@ -32,8 +32,7 @@ entity Kcu105GigE is
       TPD_G         : time    := 1 ns;
       BUILD_INFO_G  : BuildInfoType;
       SIM_SPEEDUP_G : boolean := false;
-      SIMULATION_G  : boolean := false;
-      SGMII_ETH_G   : boolean := false);
+      SIMULATION_G  : boolean := false);
    port (
       -- Misc. IOs
       extRst     : in  sl;
@@ -73,14 +72,40 @@ architecture top_level of Kcu105GigE is
    constant MAC_ADDR_C  : slv(47 downto 0) := x"010300564400";  -- 00:44:56:00:03:01
    constant RST_DEL_C   : slv(23 downto 0) := X"5FFFFF"; -- 2*10ms @ 300MHz
 
-   signal txMasters     : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
-   signal txSlaves      : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
-   signal rxMasters     : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
-   signal rxSlaves      : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
+   type MuxedSignalsType is record
+      txMasters     : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
+      txSlaves      : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
+      rxMasters     : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
+      rxSlaves      : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
+      appRst        : sl;
+      phyReady      : sl;
+   end record;
 
-   signal clk           : sl;
-   signal rst           : sl;
-   signal phyReady      : sl;
+   signal muxedSignals  : MuxedSignalsType;
+
+   signal txMastersGTH  : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
+   signal txSlavesGTH   : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
+   signal rxMastersGTH  : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
+   signal rxSlavesGTH   : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
+   signal txMastersSGMII: AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
+   signal txSlavesSGMII : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
+   signal rxMastersSGMII: AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
+   signal rxSlavesSGMII : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
+
+
+
+   signal gthClk        : sl;
+   signal gthRst        : sl;
+   signal sgmiiClk      : sl;
+   signal sgmiiRst      : sl;
+   signal appClk        : sl;
+   signal gthRstExt     : sl;
+   signal sgmiiRstExt   : sl;
+
+   signal sgmiiPhyReady : sl;
+   signal gthPhyReady   : sl;
+
+   signal selSGMII      : sl;
 
    signal phyMdo        : sl := '1';
 
@@ -94,17 +119,24 @@ architecture top_level of Kcu105GigE is
 
    signal extPhyRstN    : sl;
    signal extPhyReady   : sl;
+   signal rstCnt        : slv(23 downto 0) := RST_DEL_C;
+   signal phyInitRst    : sl;
+   signal phyIrq        : sl;
+   signal phyMdi        : sl;
+
 
    signal initDone      : sl := '0';
 
 
-   attribute dont_touch              : string;
-   attribute dont_touch of txMasters : signal is "TRUE";
-   attribute dont_touch of txSlaves  : signal is "TRUE";
-   attribute dont_touch of rxMasters : signal is "TRUE";
-   attribute dont_touch of rxSlaves  : signal is "TRUE";
+   attribute dont_touch                 : string;
+   attribute dont_touch of muxedSignals : signal is "TRUE";
 
 begin
+
+   -- hold unused ethernet in reset so it doesn't ARP or 
+   -- communicate otherwise
+   gthRstExt   <= extRst or selSGMII;
+   sgmiiRstExt <= extRst or not selSGMII;
 
    -- 300MHz system clock
    U_SysClk300IBUFDS : IBUFDS
@@ -131,13 +163,11 @@ begin
          syncRst      => sysRst300
       );
 
-
-   GEN_GTH : if ( not SGMII_ETH_G ) generate
-
    ---------------------
    -- 1 GigE XAUI Module
    ---------------------
-   U_1GigE : entity work.GigEthGthUltraScaleWrapper
+
+   U_1GigE_GTH : entity work.GigEthGthUltraScaleWrapper
       generic map (
          TPD_G              => TPD_G,
          -- DMA/MAC Configurations
@@ -154,17 +184,17 @@ begin
          -- Local Configurations
          localMac     => (others => MAC_ADDR_C),
          -- Streaming DMA Interface 
-         dmaClk       => (others => clk),
-         dmaRst       => (others => rst),
-         dmaIbMasters => rxMasters,
-         dmaIbSlaves  => rxSlaves,
-         dmaObMasters => txMasters,
-         dmaObSlaves  => txSlaves,
+         dmaClk       => (others => gthClk),
+         dmaRst       => (others => gthRst),
+         dmaIbMasters => rxMastersGTH,
+         dmaIbSlaves  => rxSlavesGTH,
+         dmaObMasters => txMastersGTH,
+         dmaObSlaves  => txSlavesGTH,
          -- Misc. Signals
-         extRst       => extRst,
-         phyClk       => clk,
-         phyRst       => rst,
-         phyReady(0)  => phyReady,
+         extRst       => gthRstExt,
+         phyClk       => gthClk,
+         phyRst       => gthRst,
+         phyReady(0)  => gthPhyReady,
          -- MGT Clock Port
          gtClkP       => ethClkP,
          gtClkN       => ethClkN,
@@ -173,19 +203,6 @@ begin
          gtTxN(0)     => ethTxN,
          gtRxP(0)     => ethRxP,
          gtRxN(0)     => ethRxN);
-
-   extPhyRstN <= '0';
-   phyMdc     <= '0';
-
-   end generate GEN_GTH;
-
-   GEN_SGMII : if (SGMII_ETH_G) generate
-
-   signal rstCnt      : slv(23 downto 0) := RST_DEL_C;
-   signal phyInitRst  : sl;
-   signal phyIrq      : sl;
-   signal phyMdi      : sl;
-   begin
 
    -- Main clock is derived from the PHY refclock. However,
    -- while it is in reset there is no clock coming in;
@@ -216,7 +233,7 @@ begin
          OUT_POLARITY_G => '1'
       )
       port map (
-         clk            => clk,
+         clk            => sgmiiClk,
          asyncRst       => extPhyReady,
          syncRst        => phyInitRst
       );
@@ -233,7 +250,7 @@ begin
          DIV_G    => 100
       )
       port map (
-         clk             => clk,
+         clk             => sgmiiClk,
          rst             => phyInitRst,
          initDone        => initDone,
 
@@ -248,10 +265,10 @@ begin
          linkIrq         => phyIrq
       );
 
-   -- synchronize MDI and IRQ signals into 'clk' domain
+   -- synchronize MDI and IRQ signals into 'sgmiiClk' domain
    U_SyncMdi : entity work.Synchronizer
       port map (
-         clk       => clk,
+         clk       => sgmiiClk,
          dataIn    => phyMdio,
          dataOut   => phyMdi
       );
@@ -262,12 +279,12 @@ begin
          INIT_G         => "11"
       )
       port map (
-         clk       => clk,
+         clk       => sgmiiClk,
          dataIn    => phyIrqN,
          dataOut   => phyIrq
       );
 
-   U_1GigE : entity work.GigEthLVDSUltraScaleWrapper
+   U_1GigE_SGMII : entity work.GigEthLVDSUltraScaleWrapper
       generic map (
          TPD_G              => TPD_G,
          -- DMA/MAC Configurations
@@ -283,17 +300,17 @@ begin
          -- Local Configurations
          localMac           => (others => MAC_ADDR_C),
          -- Streaming DMA Interface 
-         dmaClk             => (others => clk),
-         dmaRst             => (others => rst),
-         dmaIbMasters       => rxMasters,
-         dmaIbSlaves        => rxSlaves,
-         dmaObMasters       => txMasters,
-         dmaObSlaves        => txSlaves,
+         dmaClk             => (others => sgmiiClk),
+         dmaRst             => (others => sgmiiRst),
+         dmaIbMasters       => rxMastersSGMII,
+         dmaIbSlaves        => rxSlavesSGMII,
+         dmaObMasters       => txMastersSGMII,
+         dmaObSlaves        => txSlavesSGMII,
          -- Misc. Signals
-         extRst             => extRst,
-         phyClk             => clk,
-         phyRst             => rst,
-         phyReady(0)        => phyReady,
+         extRst             => sgmiiRstExt,
+         phyClk             => sgmiiClk,
+         phyRst             => sgmiiRst,
+         phyReady(0)        => sgmiiPhyReady,
          mmcmLocked         => open,
          speed_is_10_100(0) => speed10_100,
          speed_is_100(0)    => speed100,
@@ -307,8 +324,25 @@ begin
          sgmiiRxP(0)        => sgmiiRxP,
          sgmiiRxN(0)        => sgmiiRxN);
 
-   end generate GEN_SGMII;
+   txMastersGTH   <= muxedSignals.txMasters    when selSGMII = '0' else (others => AXI_STREAM_MASTER_INIT_C);
+   rxSlavesGTH    <= muxedSignals.rxSlaves     when selSGMII = '0' else (others => AXI_STREAM_SLAVE_FORCE_C);
+   txMastersSGMII <= muxedSignals.txMasters    when selSGMII = '1' else (others => AXI_STREAM_MASTER_INIT_C);
+   rxSlavesSGMII  <= muxedSignals.rxSlaves     when selSGMII = '1' else (others => AXI_STREAM_SLAVE_FORCE_C);
 
+   muxedSignals.txSlaves   <= txSlavesGTH  when selSGMII = '0' else txSlavesSGMII;
+   muxedSignals.rxMasters  <= rxMastersGTH when selSGMII = '0' else rxMastersSGMII;
+
+   muxedSignals.appRst     <= gthRst       when selSGMII = '0' else sgmiiRst;
+
+   muxedSignals.phyReady   <= gthPhyReady  when selSGMII = '0' else sgmiiPhyReady;
+
+   U_AppClkMux : BUFGMUX_CTRL
+      port map (
+         I0   => gthClk,
+         I1   => sgmiiClk,
+         S    => selSGMII,
+         O    => appClk);
+      
    -------------------
    -- Application Core
    -------------------
@@ -323,13 +357,13 @@ begin
          IP_ADDR_G    => IP_ADDR_C)
       port map (
          -- Clock and Reset
-         clk       => clk,
-         rst       => rst,
+         clk       => appClk,
+         rst       => muxedSignals.appRst,
          -- AXIS interface
-         txMasters => txMasters,
-         txSlaves  => txSlaves,
-         rxMasters => rxMasters,
-         rxSlaves  => rxSlaves,
+         txMasters => muxedSignals.txMasters,
+         txSlaves  => muxedSignals.txSlaves,
+         rxMasters => muxedSignals.rxMasters,
+         rxSlaves  => muxedSignals.rxSlaves,
          -- ADC Ports
          vPIn      => vPIn,
          vNIn      => vNIn);
@@ -343,8 +377,10 @@ begin
    led(4) <= extPhyRstN;
    led(3) <= phyIrqN;
    led(2) <= initDone;
-   led(1) <= phyReady;
-   led(0) <= phyReady;
+   led(1) <= muxedSignals.phyReady;
+   led(0) <= muxedSignals.phyReady;
+
+   selSGMII <= gpioDip(0);
 
    -- Tri-state driver for phyMdio
    phyMdio <= 'Z' when phyMdo = '1' else '0';

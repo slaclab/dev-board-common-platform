@@ -51,6 +51,65 @@ set_property PACKAGE_PIN AK17 [get_ports "sysClk300P"]
 set_property IOSTANDARD DIFF_SSTL12_DCI [get_ports "sysClk300P"]
 set_property ODT RTT_48 [get_ports "sysClk300P"]
 
-create_generated_clock -name dnaClk        [get_pins {U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_ULTRA_SCALE.DeviceDnaUltraScale_Inst/BUFGCE_DIV_Inst/O}]
+# GTH/SFP
+set_property PACKAGE_PIN U4 [get_ports ethTxP]
+set_property PACKAGE_PIN U3 [get_ports ethTxN]
+set_property PACKAGE_PIN T2 [get_ports ethRxP]
+set_property PACKAGE_PIN T1 [get_ports ethRxN]
 
-set_clock_groups -asynchronous -group [get_clocks {ethClk125MHz}] -group [get_clocks {dnaClk}] 
+set_property PACKAGE_PIN P6 [get_ports ethClkP]
+set_property PACKAGE_PIN P5 [get_ports ethClkN]
+
+# SGMII/Ext. PHY
+set_property PACKAGE_PIN P25 [get_ports sgmiiRxN]
+set_property IOSTANDARD DIFF_HSTL_I_18 [get_ports sgmiiRxN]
+set_property PACKAGE_PIN P24 [get_ports sgmiiRxP]
+set_property IOSTANDARD DIFF_HSTL_I_18 [get_ports sgmiiRxP]
+set_property PACKAGE_PIN M24 [get_ports sgmiiTxN]
+set_property IOSTANDARD DIFF_HSTL_I_18 [get_ports sgmiiTxN]
+set_property PACKAGE_PIN N24 [get_ports sgmiiTxP]
+set_property IOSTANDARD DIFF_HSTL_I_18 [get_ports sgmiiTxP]
+set_property PACKAGE_PIN N26 [get_ports sgmiiClkN]
+set_property IOSTANDARD LVDS_25 [get_ports sgmiiClkN]
+set_property PACKAGE_PIN P26 [get_ports sgmiiClkP]
+set_property IOSTANDARD LVDS_25 [get_ports sgmiiClkP]
+
+# Placement - put SGMII ETH close in clock region of the 625MHz clock;
+#             otherwise it is difficult to meet timing.
+create_pblock SGMII_ETH_BLK
+add_cells_to_pblock [get_pblocks SGMII_ETH_BLK] [get_cells U_1GigE_SGMII]
+resize_pblock       [get_pblocks SGMII_ETH_BLK] -add {CLOCKREGION_X2Y1:CLOCKREGION_X2Y1}
+
+
+
+# Timing Constraints 
+create_clock -name gtClkP     -period 6.400 [get_ports {ethClkP}  ]
+create_clock -name sgmiiClkP  -period 1.600 [get_ports {sgmiiClkP}]
+
+create_generated_clock -name gthClk125MHz    [get_pins {U_1GigE_GTH/U_MMCM/MmcmGen.U_Mmcm/CLKOUT0}] 
+create_generated_clock -name gthClk62p5MHz   [get_pins {U_1GigE_GTH/U_MMCM/MmcmGen.U_Mmcm/CLKOUT1}] 
+
+create_generated_clock -name sgmiiClk125MHz  [get_pins {U_1GigE_SGMII/U_MMCM/CLKOUT0}] 
+
+set_clock_groups -asynchronous -group [get_clocks {gtClkP}] -group [get_clocks {gthClk125MHz}] 
+set_clock_groups -asynchronous -group [get_clocks {gtClkP}] -group [get_clocks {gthClk62p5MHz}] 
+
+
+create_generated_clock -name gthClk125MHzApp   -divide_by 1 -add -master [get_clocks gthClk125MHz]   -source [get_pins {U_AppClkMux/I0}] [get_pins {U_AppClkMux/O}]
+create_generated_clock -name sgmiiClk125MHzApp -divide_by 1 -add -master [get_clocks sgmiiClk125MHz] -source [get_pins {U_AppClkMux/I1}] [get_pins {U_AppClkMux/O}]
+create_generated_clock -name dnaClkGth   -master [get_clocks gthClk125MHzApp]    [get_pins {U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_ULTRA_SCALE.DeviceDnaUltraScale_Inst/BUFGCE_DIV_Inst/O}]
+create_generated_clock -name dnaClkSgmii -master [get_clocks sgmiiClk125MHzApp]  [get_pins {U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_ULTRA_SCALE.DeviceDnaUltraScale_Inst/BUFGCE_DIV_Inst/O}]
+
+
+set_clock_groups -physically_exclusive -group [get_clocks {gthClk125MHzApp gthClk125MHz dnaClkGth}] -group [get_clocks {sgmiiClk125MHzApp sgmiiClk125MHz dnaClkSgmii}]
+
+set_clock_groups -asynchronous -group [get_clocks {gthClk125MHzApp   gthClk125MHz}]    -group [get_clocks {dnaClkGth}]
+set_clock_groups -asynchronous -group [get_clocks {sgmiiClk125MHzApp sgmiiClk125MHz}]  -group [get_clocks {dnaClkSgmii}]
+
+
+# Selector for ethernet MUX
+set_false_path -from [get_ports {gpioDip[0]}]
+
+# false paths through mux
+#set_false_path -from [get_clocks gthClk125MHz]   -to [get_clocks sgmiiClk125MHz] -through [get_nets {muxedSignals*}]
+#set_false_path -from [get_clocks sgmiiClk125MHz] -to [get_clocks gthClk125MHz]   -through [get_nets {muxedSignals*}]
