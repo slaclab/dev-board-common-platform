@@ -83,33 +83,21 @@ resize_pblock       [get_pblocks SGMII_ETH_BLK] -add {CLOCKREGION_X2Y1:CLOCKREGI
 
 
 # Timing Constraints 
-create_clock -name gtClkP     -period 6.400 [get_ports {ethClkP}  ]
-create_clock -name sgmiiClkP  -period 1.600 [get_ports {sgmiiClkP}]
+create_clock -name sysClk300P -period 3.333 [get_ports {sysClk300P}]
+create_clock -name gtClkP     -period 6.400 [get_ports {ethClkP}   ]
+create_clock -name sgmiiClkP  -period 1.600 [get_ports {sgmiiClkP} ]
+
+create_generated_clock -name sysClk156MHz [get_pins {U_SysPll/MmcmGen.U_Mmcm/CLKOUT0}]
 
 create_generated_clock -name gthClk125MHz    [get_pins {U_1GigE_GTH/U_MMCM/MmcmGen.U_Mmcm/CLKOUT0}] 
 create_generated_clock -name gthClk62p5MHz   [get_pins {U_1GigE_GTH/U_MMCM/MmcmGen.U_Mmcm/CLKOUT1}] 
 
 create_generated_clock -name sgmiiClk125MHz  [get_pins {U_1GigE_SGMII/U_MMCM/CLKOUT0}] 
 
+create_generated_clock -name dnaClk [get_pins {U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_ULTRA_SCALE.DeviceDnaUltraScale_Inst/BUFGCE_DIV_Inst/O}]
+
 set_clock_groups -asynchronous -group [get_clocks {gtClkP}] -group [get_clocks {gthClk125MHz}] 
 set_clock_groups -asynchronous -group [get_clocks {gtClkP}] -group [get_clocks {gthClk62p5MHz}] 
+set_clock_groups -asynchronous -group [get_clocks {sysClk156MHz}] -group [get_clocks {dnaClk}]
 
-
-create_generated_clock -name gthClk125MHzApp   -divide_by 1 -add -master [get_clocks gthClk125MHz]   -source [get_pins {U_AppClkMux/I0}] [get_pins {U_AppClkMux/O}]
-create_generated_clock -name sgmiiClk125MHzApp -divide_by 1 -add -master [get_clocks sgmiiClk125MHz] -source [get_pins {U_AppClkMux/I1}] [get_pins {U_AppClkMux/O}]
-create_generated_clock -name dnaClkGth   -master [get_clocks gthClk125MHzApp]    [get_pins {U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_ULTRA_SCALE.DeviceDnaUltraScale_Inst/BUFGCE_DIV_Inst/O}]
-create_generated_clock -name dnaClkSgmii -master [get_clocks sgmiiClk125MHzApp]  [get_pins {U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_ULTRA_SCALE.DeviceDnaUltraScale_Inst/BUFGCE_DIV_Inst/O}]
-
-
-set_clock_groups -physically_exclusive -group [get_clocks {gthClk125MHzApp gthClk125MHz dnaClkGth}] -group [get_clocks {sgmiiClk125MHzApp sgmiiClk125MHz dnaClkSgmii}]
-
-set_clock_groups -asynchronous -group [get_clocks {gthClk125MHzApp   gthClk125MHz}]    -group [get_clocks {dnaClkGth}]
-set_clock_groups -asynchronous -group [get_clocks {sgmiiClk125MHzApp sgmiiClk125MHz}]  -group [get_clocks {dnaClkSgmii}]
-
-
-# Selector for ethernet MUX
-set_false_path -from [get_ports {gpioDip[0]}]
-
-# false paths through mux
-#set_false_path -from [get_clocks gthClk125MHz]   -to [get_clocks sgmiiClk125MHz] -through [get_nets {muxedSignals*}]
-#set_false_path -from [get_clocks sgmiiClk125MHz] -to [get_clocks gthClk125MHz]   -through [get_nets {muxedSignals*}]
+set_false_path -through [get_nets {muxedSignals[phyReady]*}]
