@@ -131,6 +131,17 @@ architecture top_level of Kcu105GigE is
    attribute dont_touch                 : string;
    attribute dont_touch of muxedSignals : signal is "TRUE";
 
+   component Ila_256 is
+      port (
+         clk            : in  sl;
+--       trig_out       : out sl;
+--       trig_out_ack   : in  sl;
+--       trig_in        : in  sl;
+--       trig_in_ack    : out sl;
+         probe0         : in  slv(255 downto 0)
+      );
+   end component ila_0;
+
 begin
 
    -- hold unused ethernet in reset so it doesn't ARP or 
@@ -394,5 +405,19 @@ begin
    phyMdio <= 'Z' when phyMdo = '1' else '0';
    -- Reset line of the external phy
    phyRstN <= extPhyRstN;
+
+   U_ila     : component Ila_256
+      port map (
+         clk          => sysClk156,
+--       trig_out_ack => '1',
+--       trig_in      => '0',
+         probe0(0)    => muxedSignals.txMasters(0).tValid ,
+         probe0(1)    => muxedSignals.txSlaves(0).tReady  ,
+         probe0(2)    => muxedSignals.txMasters(0).tLast  ,
+         probe0(3)    => muxedSignals.rxMasters(0).tValid ,
+         probe0(4)    => muxedSignals.rxSlaves(0).tReady  ,
+         probe0(5)    => muxedSignals.rxMasters(0).tLast  ,
+         probe0(255 downto 6) => (others => '0')
+      );
 
 end top_level;

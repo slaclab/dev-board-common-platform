@@ -64,6 +64,16 @@ end EthPortMapping;
 
 architecture mapping of EthPortMapping is
 
+   component DebugBridgeJtag is
+     port (
+       jtag_tdi : in  std_logic;
+       jtag_tdo : out std_logic;
+       jtag_tms : in  std_logic;
+       jtag_tck : in  std_logic
+     );
+   end component DebugBridgeJtag;
+   
+
    constant MB_STREAM_CONFIG_C : AxiStreamConfigType := (
       TSTRB_EN_C    => false,
       TDATA_BYTES_C => 4,
@@ -73,8 +83,17 @@ architecture mapping of EthPortMapping is
       TUSER_BITS_C  => 4,
       TUSER_MODE_C  => TUSER_LAST_C);
 
-   constant NUM_SERVERS_C  : integer                                 := 1;
-   constant SERVER_PORTS_C : PositiveArray(NUM_SERVERS_C-1 downto 0) := (0 => 8192);
+   constant JTAG_AXIS_CONFIG_C : AxiStreamConfigType := (
+      TSTRB_EN_C    => false,
+      TDATA_BYTES_C => 4,
+      TDEST_BITS_C  => 0,
+      TID_BITS_C    => 0,
+      TKEEP_MODE_C  => TKEEP_FIXED_C,
+      TUSER_BITS_C  => 0,
+      TUSER_MODE_C  => TUSER_NONE_C);
+
+   constant NUM_SERVERS_C  : integer                                 := 2;
+   constant SERVER_PORTS_C : PositiveArray(NUM_SERVERS_C-1 downto 0) := (0 => 8192, 1 => 2542);
 
    constant RSSI_SIZE_C : positive := 4;
    constant AXIS_CONFIG_C : AxiStreamConfigArray(RSSI_SIZE_C-1 downto 0) := (
@@ -88,10 +107,22 @@ architecture mapping of EthPortMapping is
    signal obServerMasters : AxiStreamMasterArray(NUM_SERVERS_C-1 downto 0);
    signal obServerSlaves  : AxiStreamSlaveArray(NUM_SERVERS_C-1 downto 0);
 
-   signal rssiIbMasters : AxiStreamMasterArray(RSSI_SIZE_C-1 downto 0);
-   signal rssiIbSlaves  : AxiStreamSlaveArray(RSSI_SIZE_C-1 downto 0);
-   signal rssiObMasters : AxiStreamMasterArray(RSSI_SIZE_C-1 downto 0);
-   signal rssiObSlaves  : AxiStreamSlaveArray(RSSI_SIZE_C-1 downto 0);
+   signal rssiIbMasters   : AxiStreamMasterArray(RSSI_SIZE_C-1 downto 0);
+   signal rssiIbSlaves    : AxiStreamSlaveArray(RSSI_SIZE_C-1 downto 0);
+   signal rssiObMasters   : AxiStreamMasterArray(RSSI_SIZE_C-1 downto 0);
+   signal rssiObSlaves    : AxiStreamSlaveArray(RSSI_SIZE_C-1 downto 0);
+
+   signal tck             : sl;
+   signal tms             : sl;
+   signal tdi             : sl;
+   signal tdo             : sl;
+
+   signal mUdpToJtag      : AxiStreamMasterType;
+   signal mJtagToUdp      : AxiStreamMasterType;
+   signal sUdpToJtag      : AxiStreamSlaveType;
+   signal sJtagToUdp      : AxiStreamSlaveType;
+
+   signal spliceSsi       : AxiStreamMasterType;
 
 begin
 
@@ -224,5 +255,81 @@ begin
    ------------------------------
    rssiObSlaves(3) <= AXI_STREAM_SLAVE_FORCE_C;
    rxCtrl          <= AXI_STREAM_CTRL_UNUSED_C;
+
+   U_ResizeIb : entity work.AxiStreamResize
+      generic map (
+         TPD_G               => TPD_G,
+         SLAVE_AXI_CONFIG_G  => EMAC_AXIS_CONFIG_C,
+         MASTER_AXI_CONFIG_G => JTAG_AXIS_CONFIG_C
+      )
+      port map (
+         axisClk             => clk,
+         axisRst             => rst,
+
+         sAxisMaster         => obServerMasters(1),
+         sAxisSlave          => obServerSlaves(1),
+
+         mAxisMaster         => mUdpToJtag,
+         mAxisSlave          => sUdpToJtag
+      );
+
+
+   process (spliceSsi)
+      variable v : AxiStreamMasterType;
+   begin
+
+      v := spliceSsi;
+
+      v.tUser(1 downto 0) := "10"; -- SSI SOF
+
+      ibServerMasters(1) <= v;
+   end process;
+
+   U_ResizeOb : entity work.AxiStreamResize
+      generic map (
+         TPD_G               => TPD_G,
+         SLAVE_AXI_CONFIG_G  => JTAG_AXIS_CONFIG_C,
+         MASTER_AXI_CONFIG_G => EMAC_AXIS_CONFIG_C
+      )
+      port map (
+         axisClk             => clk,
+         axisRst             => rst,
+
+         sAxisMaster         => mJtagToUdp,
+         sAxisSlave          => sJtagToUdp,
+
+         mAxisMaster         => spliceSsi,
+         mAxisSlave          => ibServerSlaves(1)
+      );
+
+   U_AxisJtag : entity work.AxisToJtag
+      generic map (
+         TPD_G       => TPD_G,
+         CLK_DIV2_G  => 6,
+         MEM_DEPTH_G => 512
+      )
+      port map (
+         axisClk     => clk,
+         axisRst     => rst,
+
+         mAxisReq    => mUdpToJtag,
+         sAxisReq    => sUdpToJtag,
+
+         mAxisTdo    => mJtagToUdp,
+         sAxisTdo    => sJtagToUdp,
+
+         tck         => tck,
+         tms         => tms,
+         tdi         => tdi,
+         tdo         => tdo
+      );
+
+   U_JtagBscan : DebugBridgeJtag
+      port map (
+         jtag_tck    => tck,
+         jtag_tms    => tms,
+         jtag_tdi    => tdi,
+         jtag_tdo    => tdo
+      );
 
 end mapping;

@@ -119,7 +119,11 @@ architecture mapping of AppReg is
    signal irqReq   : slv(7 downto 0);
    signal irqCount : slv(27 downto 0);
 
+   constant GEN_MB_C : boolean := false;
+
 begin
+
+   GEN_MB : if ( GEN_MB_C ) generate
 
    U_CPU : entity work.MicroblazeBasicCoreWrapper
       generic map (
@@ -160,6 +164,14 @@ begin
          end if;
       end if;
    end process;
+
+   end generate;
+
+   NOT_GEN_MB : if ( not GEN_MB_C ) generate
+      mbTxMaster <= AXI_STREAM_MASTER_INIT_C;
+      mAxilWriteMaster <= AXI_LITE_WRITE_MASTER_INIT_C;
+      mAxilReadMaster  <= AXI_LITE_READ_MASTER_INIT_C;
+   end generate;
 
    ---------------------------
    -- AXI-Lite Crossbar Module
