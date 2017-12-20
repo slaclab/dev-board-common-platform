@@ -64,16 +64,6 @@ end EthPortMapping;
 
 architecture mapping of EthPortMapping is
 
-   component DebugBridgeJtag is
-     port (
-       jtag_tdi : in  std_logic;
-       jtag_tdo : out std_logic;
-       jtag_tms : in  std_logic;
-       jtag_tck : in  std_logic
-     );
-   end component DebugBridgeJtag;
-   
-
    constant MB_STREAM_CONFIG_C : AxiStreamConfigType := (
       TSTRB_EN_C    => false,
       TDATA_BYTES_C => 4,
@@ -112,17 +102,9 @@ architecture mapping of EthPortMapping is
    signal rssiObMasters   : AxiStreamMasterArray(RSSI_SIZE_C-1 downto 0);
    signal rssiObSlaves    : AxiStreamSlaveArray(RSSI_SIZE_C-1 downto 0);
 
-   signal tck             : sl;
-   signal tms             : sl;
-   signal tdi             : sl;
-   signal tdo             : sl;
+   signal spliceSOF       : AxiStreamMasterType;
 
-   signal mUdpToJtag      : AxiStreamMasterType;
-   signal mJtagToUdp      : AxiStreamMasterType;
-   signal sUdpToJtag      : AxiStreamSlaveType;
-   signal sJtagToUdp      : AxiStreamSlaveType;
-
-   signal spliceSsi       : AxiStreamMasterType;
+   constant USE_JTAG_C    : boolean := true;
 
 begin
 
@@ -256,80 +238,42 @@ begin
    rssiObSlaves(3) <= AXI_STREAM_SLAVE_FORCE_C;
    rxCtrl          <= AXI_STREAM_CTRL_UNUSED_C;
 
-   U_ResizeIb : entity work.AxiStreamResize
-      generic map (
-         TPD_G               => TPD_G,
-         SLAVE_AXI_CONFIG_G  => EMAC_AXIS_CONFIG_C,
-         MASTER_AXI_CONFIG_G => JTAG_AXIS_CONFIG_C
-      )
-      port map (
-         axisClk             => clk,
-         axisRst             => rst,
-
-         sAxisMaster         => obServerMasters(1),
-         sAxisSlave          => obServerSlaves(1),
-
-         mAxisMaster         => mUdpToJtag,
-         mAxisSlave          => sUdpToJtag
-      );
-
-
-   process (spliceSsi)
+   P_SPLICE : process(spliceSOF)
       variable v : AxiStreamMasterType;
    begin
+      v                   := spliceSOF;
+      v.tUser(1 downto 0) := "10";
+      ibServerMasters(1)  <= v;
+   end process P_SPLICE;
 
-      v := spliceSsi;
+   NO_JTAG  : if ( not USE_JTAG_C ) generate
 
-      v.tUser(1 downto 0) := "10"; -- SSI SOF
+   spliceSOF          <= AXI_STREAM_MASTER_INIT_C;
+   obServerSlaves(1)  <= AXI_STREAM_SLAVE_FORCE_C;
 
-      ibServerMasters(1) <= v;
-   end process;
+   end generate;
 
-   U_ResizeOb : entity work.AxiStreamResize
+   GEN_JTAG : if ( USE_JTAG_C ) generate
+
+   U_AxisBscan : entity work.AxisDebugBridge
       generic map (
-         TPD_G               => TPD_G,
-         SLAVE_AXI_CONFIG_G  => JTAG_AXIS_CONFIG_C,
-         MASTER_AXI_CONFIG_G => EMAC_AXIS_CONFIG_C
+         TPD_G        => TPD_G,
+         AXIS_WIDTH_G => EMAC_AXIS_CONFIG_C.TDATA_BYTES_C,
+         AXIS_FREQ_G  => CLK_FREQUENCY_G,
+         CLK_DIV2_G   => 5,
+         MEM_DEPTH_G  => (2048/EMAC_AXIS_CONFIG_C.TDATA_BYTES_C) 
       )
       port map (
-         axisClk             => clk,
-         axisRst             => rst,
+         axisClk      => clk,
+         axisRst      => rst,
 
-         sAxisMaster         => mJtagToUdp,
-         sAxisSlave          => sJtagToUdp,
-
-         mAxisMaster         => spliceSsi,
-         mAxisSlave          => ibServerSlaves(1)
+         mAxisReq     => obServerMasters(1),
+         sAxisReq     => obServerSlaves(1),
+ 
+         mAxisTdo     => spliceSOF,
+         sAxisTdo     => ibServerSlaves(1)
       );
 
-   U_AxisJtag : entity work.AxisToJtag
-      generic map (
-         TPD_G       => TPD_G,
-         CLK_DIV2_G  => 6,
-         MEM_DEPTH_G => 512
-      )
-      port map (
-         axisClk     => clk,
-         axisRst     => rst,
-
-         mAxisReq    => mUdpToJtag,
-         sAxisReq    => sUdpToJtag,
-
-         mAxisTdo    => mJtagToUdp,
-         sAxisTdo    => sJtagToUdp,
-
-         tck         => tck,
-         tms         => tms,
-         tdi         => tdi,
-         tdo         => tdo
-      );
-
-   U_JtagBscan : DebugBridgeJtag
-      port map (
-         jtag_tck    => tck,
-         jtag_tms    => tms,
-         jtag_tdi    => tdi,
-         jtag_tdo    => tdo
-      );
+   end generate;
 
 end mapping;

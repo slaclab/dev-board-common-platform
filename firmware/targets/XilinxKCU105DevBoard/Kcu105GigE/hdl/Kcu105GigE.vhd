@@ -138,7 +138,10 @@ architecture top_level of Kcu105GigE is
 --       trig_out_ack   : in  sl;
 --       trig_in        : in  sl;
 --       trig_in_ack    : out sl;
-         probe0         : in  slv(255 downto 0)
+         probe0         : in  slv(63 downto 0) := (others => '0');
+         probe1         : in  slv(63 downto 0) := (others => '0');
+         probe2         : in  slv(63 downto 0) := (others => '0');
+         probe3         : in  slv(63 downto 0) := (others => '0')
       );
    end component ila_0;
 
@@ -408,16 +411,9 @@ begin
 
    U_ila     : component Ila_256
       port map (
-         clk          => sysClk156,
+         clk          => sysClk156
 --       trig_out_ack => '1',
 --       trig_in      => '0',
-         probe0(0)    => muxedSignals.txMasters(0).tValid ,
-         probe0(1)    => muxedSignals.txSlaves(0).tReady  ,
-         probe0(2)    => muxedSignals.txMasters(0).tLast  ,
-         probe0(3)    => muxedSignals.rxMasters(0).tValid ,
-         probe0(4)    => muxedSignals.rxSlaves(0).tReady  ,
-         probe0(5)    => muxedSignals.rxMasters(0).tLast  ,
-         probe0(255 downto 6) => (others => '0')
       );
 
 end top_level;
