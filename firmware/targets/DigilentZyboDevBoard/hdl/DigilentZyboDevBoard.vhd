@@ -66,6 +66,8 @@ end DigilentZybo;
 
 architecture top_level of DigilentZybo is
 
+  constant NUM_IRQS_C  : natural          := 1;
+
   component ProcessingSystem is
   port (
     ENET0_PTP_DELAY_REQ_RX : out STD_LOGIC;
@@ -130,7 +132,7 @@ architecture top_level of DigilentZybo is
     M_AXI_GP0_BRESP : in STD_LOGIC_VECTOR ( 1 downto 0 );
     M_AXI_GP0_RRESP : in STD_LOGIC_VECTOR ( 1 downto 0 );
     M_AXI_GP0_RDATA : in STD_LOGIC_VECTOR ( 31 downto 0 );
-    IRQ_F2P : in STD_LOGIC_VECTOR ( 15 downto 0 );
+    IRQ_F2P : in STD_LOGIC_VECTOR ( NUM_IRQS_C - 1 downto 0 );
     FCLK_CLK0 : out STD_LOGIC;
     FCLK_RESET0_N : out STD_LOGIC;
     MIO : inout STD_LOGIC_VECTOR ( 53 downto 0 );
@@ -160,6 +162,7 @@ architecture top_level of DigilentZybo is
    constant AXIS_SIZE_C : positive         := 1;
 
    signal   sysClk          : sl;
+   signal   sysClkNB        : sl;
    signal   sysRst          : sl;
    signal   sysRstN         : sl;
 
@@ -169,7 +172,7 @@ architecture top_level of DigilentZybo is
    signal   iicSdaI, iicSdaO, iicSdaT : sl;
 
 
-   signal   irq             : slv(15 downto 0) := (others => '0');
+   signal   irq             : slv(NUM_IRQS_C - 1 downto 0) := (others => '0');
 
    signal   axilWriteMaster : AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
    signal   axilReadMaster  : AxiLiteReadMasterType  := AXI_LITE_READ_MASTER_INIT_C;
@@ -186,22 +189,28 @@ begin
 
    gpioI  <= (others => '0');
 
-   sysRst <= sysRstN;
+   sysRst <= not sysRstN;
 
    U_Scl : component IOBUF
       port map (
          IO => iic_scl_io,
-         I  => iicSclI,
-         O  => iicSclO,
+         I  => iicSclO,
+         O  => iicSclI,
          T  => iicSclT
       );
 
    U_Sda : component IOBUF
       port map (
          IO => iic_sda_io,
-         I  => iicSdaI,
-         O  => iicSdaO,
+         I  => iicSdaO,
+         O  => iicSdaI,
          T  => iicSdaT
+      );
+      
+   U_Buf : component BUFG
+      port map (
+         I  => sysClkNB,
+         O  => sysClk
       );
 
    U_Sys : component ProcessingSystem
@@ -233,7 +242,7 @@ begin
          ENET0_PTP_SYNC_FRAME_TX       => open,
          ENET0_SOF_RX                  => open,
          ENET0_SOF_TX                  => open,
-         FCLK_CLK0                     => sysClk,
+         FCLK_CLK0                     => sysClkNB,
          FCLK_RESET0_N                 => sysRstN,
          GPIO_I(31 downto 0)           => gpioI,
          GPIO_O(31 downto 0)           => gpioO,
@@ -244,46 +253,46 @@ begin
          I2C0_SDA_I                    => iicSdaI,
          I2C0_SDA_O                    => iicSdaO,
          I2C0_SDA_T                    => iicSdaT,
-         IRQ_F2P(15 downto 0)          => irq,
+         IRQ_F2P                       => irq,
          MIO(53 downto 0)              => FIXED_IO_mio,
          M_AXI_GP0_ACLK                => sysClk,
-         M_AXI_GP0_ARADDR(31 downto 0) => axiReadMaster.araddr,
+         M_AXI_GP0_ARADDR(31 downto 0) => axiReadMaster.araddr(31 downto 0),
          M_AXI_GP0_ARBURST(1 downto 0) => axiReadMaster.arburst,
          M_AXI_GP0_ARCACHE(3 downto 0) => axiReadMaster.arcache,
-         M_AXI_GP0_ARID(11 downto 0)   => axiReadMaster.arid,
-         M_AXI_GP0_ARLEN(3 downto 0)   => axiReadMaster.arlen,
+         M_AXI_GP0_ARID(11 downto 0)   => axiReadMaster.arid(11 downto 0),
+         M_AXI_GP0_ARLEN(3 downto 0)   => axiReadMaster.arlen(3 downto 0),
          M_AXI_GP0_ARLOCK(1 downto 0)  => axiReadMaster.arlock,
          M_AXI_GP0_ARPROT(2 downto 0)  => axiReadMaster.arprot,
          M_AXI_GP0_ARQOS(3 downto 0)   => axiReadMaster.arqos,
          M_AXI_GP0_ARREADY             => axiReadSlave.arready,
          M_AXI_GP0_ARSIZE(2 downto 0)  => axiReadMaster.arsize,
          M_AXI_GP0_ARVALID             => axiReadMaster.arvalid,
-         M_AXI_GP0_AWADDR(31 downto 0) => axiWriteMaster.awaddr,
+         M_AXI_GP0_AWADDR(31 downto 0) => axiWriteMaster.awaddr(31 downto 0),
          M_AXI_GP0_AWBURST(1 downto 0) => axiWriteMaster.awburst,
          M_AXI_GP0_AWCACHE(3 downto 0) => axiWriteMaster.awcache,
-         M_AXI_GP0_AWID(11 downto 0)   => axiWriteMaster.awid,
-         M_AXI_GP0_AWLEN(3 downto 0)   => axiWriteMaster.awlen,
+         M_AXI_GP0_AWID(11 downto 0)   => axiWriteMaster.awid(11 downto 0),
+         M_AXI_GP0_AWLEN(3 downto 0)   => axiWriteMaster.awlen(3 downto 0),
          M_AXI_GP0_AWLOCK(1 downto 0)  => axiWriteMaster.awlock,
          M_AXI_GP0_AWPROT(2 downto 0)  => axiWriteMaster.awprot,
          M_AXI_GP0_AWQOS(3 downto 0)   => axiWriteMaster.awqos,
          M_AXI_GP0_AWREADY             => axiWriteSlave.awready,
          M_AXI_GP0_AWSIZE(2 downto 0)  => axiWriteMaster.awsize,
          M_AXI_GP0_AWVALID             => axiWriteMaster.awvalid,
-         M_AXI_GP0_BID(11 downto 0)    => axiWriteSlave.bid,
+         M_AXI_GP0_BID(11 downto 0)    => axiWriteSlave.bid(11 downto 0),
          M_AXI_GP0_BREADY              => axiWriteMaster.bready,
          M_AXI_GP0_BRESP(1 downto 0)   => axiWriteSlave.bresp,
          M_AXI_GP0_BVALID              => axiWriteSlave.bvalid,
-         M_AXI_GP0_RDATA(31 downto 0)  => axiReadSlave.rdata,
-         M_AXI_GP0_RID(11 downto 0)    => axiReadSlave.rid,
+         M_AXI_GP0_RDATA(31 downto 0)  => axiReadSlave.rdata(31 downto 0),
+         M_AXI_GP0_RID(11 downto 0)    => axiReadSlave.rid(11 downto 0),
          M_AXI_GP0_RLAST               => axiReadSlave.rlast,
          M_AXI_GP0_RREADY              => axiReadMaster.rready,
          M_AXI_GP0_RRESP(1 downto 0)   => axiReadSlave.rresp,
          M_AXI_GP0_RVALID              => axiReadSlave.rvalid,
-         M_AXI_GP0_WDATA(31 downto 0)  => axiWriteMaster.wdata,
-         M_AXI_GP0_WID(11 downto 0)    => axiWriteMaster.wid,
+         M_AXI_GP0_WDATA(31 downto 0)  => axiWriteMaster.wdata(31 downto 0),
+         M_AXI_GP0_WID(11 downto 0)    => axiWriteMaster.wid(11 downto 0),
          M_AXI_GP0_WLAST               => axiWriteMaster.wlast,
          M_AXI_GP0_WREADY              => axiWriteSlave.wready,
-         M_AXI_GP0_WSTRB(3 downto 0)   => axiWriteMaster.wstrb,
+         M_AXI_GP0_WSTRB(3 downto 0)   => axiWriteMaster.wstrb(3 downto 0),
          M_AXI_GP0_WVALID              => axiWriteMaster.wvalid,
          PS_CLK                        => FIXED_IO_ps_clk,
          PS_PORB                       => FIXED_IO_ps_porb,
@@ -293,6 +302,9 @@ begin
          USB0_VBUS_PWRFAULT            => '0',
          USB0_VBUS_PWRSELECT           => open
       );
+      
+   -- axiReadSlave  <= AXI_READ_SLAVE_FORCE_C;
+   -- axiWriteSlave <= AXI_WRITE_SLAVE_FORCE_C;
 
    U_A2A : entity work.AxiToAxiLite
       generic map (
@@ -320,8 +332,10 @@ begin
       generic map (
          TPD_G            => TPD_G,
          BUILD_INFO_G     => BUILD_INFO_G,
-         XIL_DEVICE_G     => "7Series",
-         AXI_ERROR_RESP_G => AXI_RESP_DECERR_C)
+         XIL_DEVICE_G     => "7SERIES",
+         AXI_ERROR_RESP_G => AXI_RESP_DECERR_C,
+         AXIL_BASE_ADDR_G => x"43c00000",
+         USE_SLOWCLK_G    => true)
       port map (
          -- Clock and Reset
          clk             => sysClk,
