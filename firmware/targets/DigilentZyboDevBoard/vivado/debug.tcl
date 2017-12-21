@@ -10,3 +10,5 @@ ConfigProbe ila1 [get_nets {M_AXI_GP0_RREADY}]
 
 ConfigProbe ila1 [get_nets {M_AXI_GP0_ARVALID}]
 ConfigProbe ila1 [get_nets {M_AXI_GP0_ARADDR*}]
+
+WriteDebugProbes ila1
