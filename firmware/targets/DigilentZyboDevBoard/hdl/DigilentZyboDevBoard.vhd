@@ -66,7 +66,7 @@ end DigilentZybo;
 
 architecture top_level of DigilentZybo is
 
-  constant NUM_IRQS_C  : natural          := 1;
+  constant NUM_IRQS_C  : natural          := 16;
 
   component ProcessingSystem is
   port (
