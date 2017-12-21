@@ -27,10 +27,12 @@ use work.SsiPkg.all;
 
 entity AppReg is
    generic (
-      TPD_G            : time            := 1 ns;
+      TPD_G            : time             := 1 ns;
       BUILD_INFO_G     : BuildInfoType;
-      XIL_DEVICE_G     : string          := "7SERIES";
-      AXI_ERROR_RESP_G : slv(1 downto 0) := AXI_RESP_DECERR_C);
+      XIL_DEVICE_G     : string           := "7SERIES";
+      AXI_ERROR_RESP_G : slv( 1 downto 0) := AXI_RESP_DECERR_C;
+      AXIL_BASE_ADDR_G : slv(31 downto 0) := x"00000000";
+      USE_SLOWCLK_G    : boolean          := false);
    port (
       -- Clock and Reset
       clk             : in  sl;
@@ -73,35 +75,9 @@ architecture mapping of AppReg is
    constant PRBS_RX_INDEX_C : natural := 5;
    constant HLS_INDEX_C     : natural := 6;
 
-   constant AXI_CROSSBAR_MASTERS_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := (
-      VERSION_INDEX_C => (
-         baseAddr     => x"0000_0000",
-         addrBits     => 16,
-         connectivity => X"FFFF"),
-      XADC_INDEX_C    => (
-         baseAddr     => x"0001_0000",
-         addrBits     => 16,
-         connectivity => X"FFFF"),
-      SYS_MON_INDEX_C => (
-         baseAddr     => x"0002_0000",
-         addrBits     => 16,
-         connectivity => X"FFFF"),
-      MEM_INDEX_C     => (
-         baseAddr     => x"0003_0000",
-         addrBits     => 16,
-         connectivity => X"FFFF"),
-      PRBS_TX_INDEX_C => (
-         baseAddr     => x"0004_0000",
-         addrBits     => 16,
-         connectivity => X"FFFF"),
-      PRBS_RX_INDEX_C => (
-         baseAddr     => x"0005_0000",
-         addrBits     => 16,
-         connectivity => X"FFFF"),
-      HLS_INDEX_C     => (
-         baseAddr     => x"0006_0000",
-         addrBits     => 16,
-         connectivity => X"FFFF"));
+   constant AXI_CROSSBAR_MASTERS_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := 
+      genAxiLiteConfig( NUM_AXI_MASTERS_C, AXIL_BASE_ADDR_G, 16, 16 );
+
 
    signal mAxilWriteMaster : AxiLiteWriteMasterType;
    signal mAxilWriteSlave  : AxiLiteWriteSlaveType;
@@ -208,7 +184,8 @@ begin
          BUILD_INFO_G     => BUILD_INFO_G,
          AXI_ERROR_RESP_G => AXI_ERROR_RESP_G,
          XIL_DEVICE_G     => XIL_DEVICE_G,
-         EN_DEVICE_DNA_G  => true)
+         EN_DEVICE_DNA_G  => true,
+         USE_SLOWCLK_G    => USE_SLOWCLK_G)
       port map (
          axiReadMaster  => mAxilReadMasters(VERSION_INDEX_C),
          axiReadSlave   => mAxilReadSlaves(VERSION_INDEX_C),
