@@ -9,4 +9,5 @@ if { [VersionCheck 2016.4] < 0 } {
 
 # Load ruckus files
 loadRuckusTcl "$::DIR_PATH/submodules/surf"
+loadRuckusTcl "$::DIR_PATH/submodules/axiVlg"
 loadRuckusTcl "$::DIR_PATH/common"

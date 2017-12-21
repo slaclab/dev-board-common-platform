@@ -28,7 +28,7 @@ use work.EthMacPkg.all;
 library unisim;
 use unisim.vcomponents.all;
 
-entity DigilentZybo is
+entity DigilentZyboDevBoard is
    generic (
       TPD_G         : time    := 1 ns;
       BUILD_INFO_G  : BuildInfoType;
@@ -62,11 +62,12 @@ entity DigilentZybo is
       led               : out STD_LOGIC_VECTOR ( 3 downto 0 );
       sw         :        in STD_LOGIC_VECTOR ( 3 downto 0 )
    );
-end DigilentZybo;
+end DigilentZyboDevBoard;
 
-architecture top_level of DigilentZybo is
+architecture top_level of DigilentZyboDevBoard is
 
   constant NUM_IRQS_C  : natural          := 16;
+  constant CLK_FREQ_C  : real             := 100.0E6;
 
   component ProcessingSystem is
   port (
@@ -161,10 +162,16 @@ architecture top_level of DigilentZybo is
 
    constant AXIS_SIZE_C : positive         := 1;
 
+   constant AXIS_WIDTH_C    : positive     := 4;
+   constant FIFO_DEPTH_C    : natural      := 512;
+
    signal   sysClk          : sl;
-   signal   sysClkNB        : sl;
    signal   sysRst          : sl;
    signal   sysRstN         : sl;
+
+   signal   appIrqs         : slv(7 downto 0);
+
+   constant IRQ_MAX_C       : natural := ite( NUM_IRQS_C > 8, 8, NUM_IRQS_C );
 
    signal   gpioI, gpioO, gpioT : slv(31 downto 0);
 
@@ -172,18 +179,22 @@ architecture top_level of DigilentZybo is
    signal   iicSdaI, iicSdaO, iicSdaT : sl;
 
 
-   signal   irq             : slv(NUM_IRQS_C - 1 downto 0) := (others => '0');
+   signal   cpuIrqs         : slv(NUM_IRQS_C - 1 downto 0) := (others => '0');
 
    signal   axilWriteMaster : AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
    signal   axilReadMaster  : AxiLiteReadMasterType  := AXI_LITE_READ_MASTER_INIT_C;
    signal   axilWriteSlave  : AxiLiteWriteSlaveType  := AXI_LITE_WRITE_SLAVE_INIT_C;
    signal   axilReadSlave   : AxiLiteReadSlaveType   := AXI_LITE_READ_SLAVE_INIT_C;
 
-   signal   axiWriteMaster  : AxiWriteMasterType      := AXI_WRITE_MASTER_INIT_C;
-   signal   axiReadMaster   : AxiReadMasterType       := AXI_READ_MASTER_INIT_C;
-   signal   axiWriteSlave   : AxiWriteSlaveType       := AXI_WRITE_SLAVE_INIT_C;
-   signal   axiReadSlave    : AxiReadSlaveType        := AXI_READ_SLAVE_INIT_C;
+   signal   axiWriteMaster  : AxiWriteMasterType     := AXI_WRITE_MASTER_INIT_C;
+   signal   axiReadMaster   : AxiReadMasterType      := AXI_READ_MASTER_INIT_C;
+   signal   axiWriteSlave   : AxiWriteSlaveType      := AXI_WRITE_SLAVE_INIT_C;
+   signal   axiReadSlave    : AxiReadSlaveType       := AXI_READ_SLAVE_INIT_C;
 
+   signal   dbgTxMaster     : AxiStreamMasterType;
+   signal   dbgTxSlave      : AxiStreamSlaveType     := AXI_STREAM_SLAVE_FORCE_C;
+   signal   dbgRxMaster     : AxiStreamMasterType    := AXI_STREAM_MASTER_INIT_C;
+   signal   dbgRxSlave      : AxiStreamSlaveType;
 
 begin
 
@@ -207,12 +218,6 @@ begin
          T  => iicSdaT
       );
       
-   U_Buf : component BUFG
-      port map (
-         I  => sysClkNB,
-         O  => sysClk
-      );
-
    U_Sys : component ProcessingSystem
       port map (
          DDR_Addr(14 downto 0)         => DDR_addr(14 downto 0),
@@ -242,7 +247,7 @@ begin
          ENET0_PTP_SYNC_FRAME_TX       => open,
          ENET0_SOF_RX                  => open,
          ENET0_SOF_TX                  => open,
-         FCLK_CLK0                     => sysClkNB,
+         FCLK_CLK0                     => sysClk,
          FCLK_RESET0_N                 => sysRstN,
          GPIO_I(31 downto 0)           => gpioI,
          GPIO_O(31 downto 0)           => gpioO,
@@ -253,7 +258,7 @@ begin
          I2C0_SDA_I                    => iicSdaI,
          I2C0_SDA_O                    => iicSdaO,
          I2C0_SDA_T                    => iicSdaT,
-         IRQ_F2P                       => irq,
+         IRQ_F2P                       => cpuIrqs,
          MIO(53 downto 0)              => FIXED_IO_mio,
          M_AXI_GP0_ACLK                => sysClk,
          M_AXI_GP0_ARADDR(31 downto 0) => axiReadMaster.araddr(31 downto 0),
@@ -335,32 +340,57 @@ begin
          XIL_DEVICE_G     => "7SERIES",
          AXI_ERROR_RESP_G => AXI_RESP_DECERR_C,
          AXIL_BASE_ADDR_G => x"43c00000",
-         USE_SLOWCLK_G    => true)
+         USE_SLOWCLK_G    => true,
+         FIFO_DEPTH_G     => FIFO_DEPTH_C)
       port map (
          -- Clock and Reset
-         clk             => sysClk,
-         rst             => sysRst,
+         clk              => sysClk,
+         rst              => sysRst,
          -- AXI-Lite interface
-         axilWriteMaster => axilWriteMaster,
-         axilWriteSlave  => axilWriteSlave,
-         axilReadMaster  => axilReadMaster,
-         axilReadSlave   => axilReadSlave,
+         axilWriteMaster  => axilWriteMaster,
+         axilWriteSlave   => axilWriteSlave,
+         axilReadMaster   => axilReadMaster,
+         axilReadSlave    => axilReadSlave,
          -- PBRS Interface
-         pbrsTxMaster    => open,
-         pbrsTxSlave     => AXI_STREAM_SLAVE_FORCE_C,
-         pbrsRxMaster    => AXI_STREAM_MASTER_INIT_C,
-         pbrsRxSlave     => open,
+         pbrsTxMaster     => open,
+         pbrsTxSlave      => AXI_STREAM_SLAVE_FORCE_C,
+         pbrsRxMaster     => AXI_STREAM_MASTER_INIT_C,
+         pbrsRxSlave      => open,
          -- HLS Interface
-         hlsTxMaster     => open,
-         hlsTxSlave      => AXI_STREAM_SLAVE_FORCE_C,
-         hlsRxMaster     => AXI_STREAM_MASTER_INIT_C,
-         hlsRxSlave      => open,
+         hlsTxMaster      => open,
+         hlsTxSlave       => AXI_STREAM_SLAVE_FORCE_C,
+         hlsRxMaster      => AXI_STREAM_MASTER_INIT_C,
+         hlsRxSlave       => open,
          -- Microblaze stream
-         mbTxMaster      => open,
-         mbTxSlave       => AXI_STREAM_SLAVE_FORCE_C,
+         mbTxMaster       => dbgTxMaster,
+         mbTxSlave        => dbgTxSlave,
+         mbRxMaster       => dbgRxMaster,
+         mbRxSlave        => dbgRxSlave,
          -- ADC Ports
-         vPIn            => '0',
-         vNIn            => '1');
+         vPIn             => '0',
+         vNIn             => '1',
+         irqOut           => appIrqs);
+
+   cpuIrqs(IRQ_MAX_C - 1 downto 0) <= appIrqs(IRQ_MAX_C - 1 downto 0);
+
+   U_AxisBscan : entity work.AxisDebugBridge
+      generic map (
+         TPD_G        => TPD_G,
+         AXIS_WIDTH_G => 4,
+         AXIS_FREQ_G  => CLK_FREQ_C,
+         CLK_DIV2_G   => 5,
+         MEM_DEPTH_G  => (2048/EMAC_AXIS_CONFIG_C.TDATA_BYTES_C)
+      )
+      port map (
+         axisClk      => sysClk,
+         axisRst      => sysRst,
+
+         mAxisReq     => dbgTxMaster,
+         sAxisReq     => dbgTxSlave,
+
+         mAxisTdo     => dbgRxMaster,
+         sAxisTdo     => dbgRxSlave
+      );
 
    ----------------
    -- Misc. Signals

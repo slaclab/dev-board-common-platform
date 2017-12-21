@@ -4,3 +4,6 @@
 [submodule "firmware/submodules/ruckus"]
 	path = firmware/submodules/ruckus
 	url = git@github.com:/slaclab/ruckus
+[submodule "firmware/submodules/axiVlg"]
+	path = firmware/submodules/axiVlg
+	url = git@github.com:slaclab/lcls-bpm-verilog-axi4

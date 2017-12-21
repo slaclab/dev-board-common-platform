@@ -1,14 +1,12 @@
 open_run synth_1
 
 CreateDebugCore ila1
-SetDebugCoreClk ila1 [get_nets -of [get_clocks sysClk156MHz]]
+SetDebugCoreClk ila1 [get_nets -of [get_clocks clk_fpga_0]]
 
-ConfigProbe ila1 [get_nets {muxedSignals[rxMasters][0][tValid]}]
-ConfigProbe ila1 [get_nets {muxedSignals[rxMasters][0][tData]*}]
-ConfigProbe ila1 [get_nets {muxedSignals[rxSlaves][0][tReady]}]
-ConfigProbe ila1 [get_nets {muxedSignals[txMasters][0][tValid]}]
-ConfigProbe ila1 [get_nets {muxedSignals[txMasters][0][tData]*}]
-ConfigProbe ila1 [get_nets {muxedSignals[txSlaves][0][tReady]}]
+ConfigProbe ila1 [get_nets {axilReadSlave[arready]}]
+ConfigProbe ila1 [get_nets {axilReadSlave[rvalid]}]
+ConfigProbe ila1 [get_nets {axilReadSlave[rdata]*}]
+ConfigProbe ila1 [get_nets {M_AXI_GP0_RREADY}]
 
-# clip unused ports
-WriteDebugProbes ila1 debugProbes.ltx
+ConfigProbe ila1 [get_nets {M_AXI_GP0_ARVALID}]
+ConfigProbe ila1 [get_nets {M_AXI_GP0_ARADDR*}]

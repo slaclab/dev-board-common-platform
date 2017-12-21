@@ -170,7 +170,8 @@ CONFIG.PCW_I2C_RESET_SELECT {<Select>} \
 CONFIG.PCW_IMPORT_BOARD_PRESET {/home/vivado/zybo/ZYBO_zynq_def.xml} \
 CONFIG.PCW_IOPLL_CTRL_FBDIV {20} \
 CONFIG.PCW_IO_IO_PLL_FREQMHZ {1000.000} \
-CONFIG.PCW_IRQ_F2P_INTR {16} \
+CONFIG.PCW_IRQ_F2P_INTR {1} \
+CONFIG.PCW_NUM_F2P_INTR_INPUTS {16} \
 CONFIG.PCW_MIO_0_DIRECTION {<Select>} \
 CONFIG.PCW_MIO_0_IOTYPE {<Select>} \
 CONFIG.PCW_MIO_0_PULLUP {<Select>} \
@@ -667,10 +668,10 @@ CONFIG.PCW_WDT_WDT_IO {<Select>} \
  ] [get_ips ProcessingSystem]
 }
 
-if { [llength [get_ips ProcSysReset]] == 0 } {
-	create_ip -name proc_sys_reset -vendor xilinx.com -library ip -module_name ProcSysReset
-}
+#if { [llength [get_ips ProcSysReset]] == 0 } {
+#	create_ip -name proc_sys_reset -vendor xilinx.com -library ip -module_name ProcSysReset
+#}
 
 # Load local source Code and constraints
-#loadSource      -dir "$::DIR_PATH/hdl/"
-#loadConstraints -dir "$::DIR_PATH/hdl/"
+loadSource      -dir "$::DIR_PATH/hdl/"
+loadConstraints -dir "$::DIR_PATH/hdl/"

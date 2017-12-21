@@ -32,7 +32,8 @@ entity AppReg is
       XIL_DEVICE_G     : string           := "7SERIES";
       AXI_ERROR_RESP_G : slv( 1 downto 0) := AXI_RESP_DECERR_C;
       AXIL_BASE_ADDR_G : slv(31 downto 0) := x"00000000";
-      USE_SLOWCLK_G    : boolean          := false);
+      USE_SLOWCLK_G    : boolean          := false;
+      FIFO_DEPTH_G     : natural          := 0);
    port (
       -- Clock and Reset
       clk             : in  sl;
@@ -53,11 +54,15 @@ entity AppReg is
       hlsRxMaster     : in  AxiStreamMasterType;
       hlsRxSlave      : out AxiStreamSlaveType;
       -- MB Interface
-      mbTxMaster      : out AxiStreamMasterType;
+      mbTxMaster      : out AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
       mbTxSlave       : in  AxiStreamSlaveType;
+      mbRxMaster      : in  AxiStreamMasterType;
+      mbRxSlave       : out AxiStreamSlaveType  := AXI_STREAM_SLAVE_FORCE_C;
       -- ADC Ports
       vPIn            : in  sl;
-      vNIn            : in  sl);
+      vNIn            : in  sl;
+      -- IRQ
+      irqOut          : out slv(7 downto 0)    := (others => '0'));
 end AppReg;
 
 architecture mapping of AppReg is
@@ -65,7 +70,7 @@ architecture mapping of AppReg is
    constant SHARED_MEM_WIDTH_C : positive                           := 10;
    constant IRQ_ADDR_C         : slv(SHARED_MEM_WIDTH_C-1 downto 0) := (others => '1');
 
-   constant NUM_AXI_MASTERS_C : natural := 7;
+   constant NUM_AXI_MASTERS_C : natural := 8;
 
    constant VERSION_INDEX_C : natural := 0;
    constant XADC_INDEX_C    : natural := 1;
@@ -74,6 +79,7 @@ architecture mapping of AppReg is
    constant PRBS_TX_INDEX_C : natural := 4;
    constant PRBS_RX_INDEX_C : natural := 5;
    constant HLS_INDEX_C     : natural := 6;
+   constant FIFO_INDEX_C    : natural := 7;
 
    constant AXI_CROSSBAR_MASTERS_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := 
       genAxiLiteConfig( NUM_AXI_MASTERS_C, AXIL_BASE_ADDR_G, 16, 16 );
@@ -85,19 +91,25 @@ architecture mapping of AppReg is
    signal mAxilReadSlave   : AxiLiteReadSlaveType;
 
    signal mAxilWriteMasters : AxiLiteWriteMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal mAxilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
+   signal mAxilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXI_MASTERS_C-1 downto 0) := ( others => AXI_LITE_WRITE_SLAVE_INIT_C );
    signal mAxilReadMasters  : AxiLiteReadMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal mAxilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
+   signal mAxilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0)  := ( others => AXI_LITE_READ_SLAVE_INIT_C );
 
    signal axiWrValid : sl;
    signal axiWrAddr  : slv(SHARED_MEM_WIDTH_C-1 downto 0);
 
-   signal irqReq   : slv(7 downto 0);
-   signal irqCount : slv(27 downto 0);
+   signal irqReq     : slv(7 downto 0);
+   signal irqCount   : slv(27 downto 0);
 
-   constant GEN_MB_C : boolean := false;
+   signal irq        : sl := '0';
+
+   signal rstN       : sl;
+
+   constant GEN_MB_C : boolean := false and FIFO_DEPTH_G = 0;
 
 begin
+
+   rstN <= not rst;
 
    GEN_MB : if ( GEN_MB_C ) generate
 
@@ -143,8 +155,7 @@ begin
 
    end generate;
 
-   NOT_GEN_MB : if ( not GEN_MB_C ) generate
-      mbTxMaster <= AXI_STREAM_MASTER_INIT_C;
+   NOT_GEN_MB : if ( not GEN_MB_C and FIFO_DEPTH_G = 0 ) generate
       mAxilWriteMaster <= AXI_LITE_WRITE_MASTER_INIT_C;
       mAxilReadMaster  <= AXI_LITE_READ_MASTER_INIT_C;
    end generate;
@@ -358,5 +369,39 @@ begin
          -- Master Port
          mAxisMaster => hlsTxMaster,
          mAxisSlave  => hlsTxSlave);
+
+   GEN_FIFO : if ( FIFO_DEPTH_G > 0 ) generate
+
+   U_AxiStreamFifo : entity work.AxilFifoWrapper
+      generic map (
+         FIFO_DEPTH_G => FIFO_DEPTH_G
+      )
+      port map (
+         ACLK               => clk,
+         ARESETn            => rstN,
+
+         axiStreamMasterOb  => mbTxMaster,
+         axiStreamSlaveOb   => mbTxSlave,
+         axiStreamMasterIb  => mbRxMaster,
+         axiStreamSlaveIb   => mbRxSlave,
+
+         irq                => irqOut(0),
+
+         AXI_S_ACLK         => clk,
+         AXI_S_ARESETn      => rstN,
+
+         axiLiteReadMaster  => mAxilReadMasters(FIFO_INDEX_C),
+         axiLiteReadSlave   => mAxilReadSlaves(FIFO_INDEX_C),
+         axiLiteWriteMaster => mAxilWriteMasters(FIFO_INDEX_C),
+         axiLiteWriteSlave  => mAxilWriteSlaves(FIFO_INDEX_C)
+      );
+
+   end generate;
+
+   NOT_GEN_FIFO : if ( FIFO_DEPTH_G = 0 ) generate
+      mAxilReadSlaves(FIFO_INDEX_C).arready  <= '1';
+      mAxilWriteSlaves(FIFO_INDEX_C).awready <= '1';
+      mAxilWriteSlaves(FIFO_INDEX_C).wready  <= '1';
+   end generate;
 
 end mapping;
