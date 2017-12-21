@@ -82,7 +82,7 @@ architecture mapping of AppReg is
    constant FIFO_INDEX_C    : natural := 7;
 
    constant AXI_CROSSBAR_MASTERS_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := 
-      genAxiLiteConfig( NUM_AXI_MASTERS_C, AXIL_BASE_ADDR_G, 16, 16 );
+      genAxiLiteConfig( NUM_AXI_MASTERS_C, AXIL_BASE_ADDR_G, 20, 16 );
 
 
    signal mAxilWriteMaster : AxiLiteWriteMasterType;
