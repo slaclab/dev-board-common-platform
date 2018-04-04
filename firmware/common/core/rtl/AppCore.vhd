@@ -21,6 +21,7 @@ use ieee.std_logic_1164.all;
 use work.StdRtlPkg.all;
 use work.AxiStreamPkg.all;
 use work.AxiLitePkg.all;
+use work.SsiPkg.all;
 
 entity AppCore is
    generic (
@@ -33,20 +34,26 @@ entity AppCore is
       MAC_ADDR_G       : slv(47 downto 0) := x"010300564400";  -- 00:44:56:00:03:01 (ETH only)
       IP_ADDR_G        : slv(31 downto 0) := x"0A02A8C0";  -- 192.168.2.10 (ETH only)
       DHCP_G           : boolean          := true;
-      JUMBO_G          : boolean          := false);
+      JUMBO_G          : boolean          := false;
+      APP_STRM_CFG_G   : AxiStreamConfigType := ssiAxiStreamConfig(4));
    port (
       -- Clock and Reset
-      clk       : in  sl;
-      rst       : in  sl;
+      clk             : in  sl;
+      rst             : in  sl;
       -- AXIS interface
-      txMasters : out AxiStreamMasterArray(AXIS_SIZE_G-1 downto 0);
-      txSlaves  : in  AxiStreamSlaveArray(AXIS_SIZE_G-1 downto 0);
-      rxMasters : in  AxiStreamMasterArray(AXIS_SIZE_G-1 downto 0);
-      rxSlaves  : out AxiStreamSlaveArray(AXIS_SIZE_G-1 downto 0);
-      rxCtrl    : out AxiStreamCtrlArray(AXIS_SIZE_G-1 downto 0);
+      txMasters       : out AxiStreamMasterArray(AXIS_SIZE_G-1 downto 0);
+      txSlaves        : in  AxiStreamSlaveArray(AXIS_SIZE_G-1 downto 0);
+      rxMasters       : in  AxiStreamMasterArray(AXIS_SIZE_G-1 downto 0);
+      rxSlaves        : out AxiStreamSlaveArray(AXIS_SIZE_G-1 downto 0);
+      rxCtrl          : out AxiStreamCtrlArray(AXIS_SIZE_G-1 downto 0);
+      -- App Stream Interface
+      appTxMaster     : in  AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
+      appTxSlave      : out AxiStreamSlaveType;
+      appRxMaster     : out AxiStreamMasterType;
+      appRxSlave      : in  AxiStreamSlaveType  := AXI_STREAM_SLAVE_FORCE_C;
       -- ADC Ports
-      vPIn      : in  sl;
-      vNIn      : in  sl);
+      vPIn            : in  sl;
+      vNIn            : in  sl);
 end AppCore;
 
 architecture mapping of AppCore is
@@ -77,11 +84,12 @@ begin
       --------------------------
       U_EthPortMapping : entity work.EthPortMapping
          generic map (
-            TPD_G      => TPD_G,
-            MAC_ADDR_G => MAC_ADDR_G,
-            IP_ADDR_G  => IP_ADDR_G,
-            DHCP_G     => DHCP_G,
-            JUMBO_G    => JUMBO_G)
+            TPD_G           => TPD_G,
+            MAC_ADDR_G      => MAC_ADDR_G,
+            IP_ADDR_G       => IP_ADDR_G,
+            DHCP_G          => DHCP_G,
+            JUMBO_G         => JUMBO_G,
+            APP_STRM_CFG_G  => APP_STRM_CFG_G)
          port map (
             -- Clock and Reset
             clk             => clk,
@@ -102,6 +110,11 @@ begin
             hlsTxSlave      => hlsTxSlave,
             hlsRxMaster     => hlsRxMaster,
             hlsRxSlave      => hlsRxSlave,
+            -- App Interface
+            appTxMaster     => appTxMaster,
+            appTxSlave      => appTxSlave,
+            appRxMaster     => appRxMaster,
+            appRxSlave      => appRxSlave,
             -- AXI-Lite interface
             axilWriteMaster => axilWriteMaster,
             axilWriteSlave  => axilWriteSlave,

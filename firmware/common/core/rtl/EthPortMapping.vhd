@@ -31,7 +31,8 @@ entity EthPortMapping is
       MAC_ADDR_G      : slv(47 downto 0) := x"010300564400";  -- 00:44:56:00:03:01 (ETH only)   
       IP_ADDR_G       : slv(31 downto 0) := x"0A02A8C0";  -- 192.168.2.10 (ETH only)
       DHCP_G          : boolean          := true;
-      JUMBO_G         : boolean          := false);
+      JUMBO_G         : boolean          := false;
+      APP_STRM_CFG_G  : AxiStreamConfigType);
    port (
       -- Clock and Reset
       clk             : in  sl;
@@ -52,6 +53,11 @@ entity EthPortMapping is
       hlsTxSlave      : out AxiStreamSlaveType;
       hlsRxMaster     : out AxiStreamMasterType;
       hlsRxSlave      : in  AxiStreamSlaveType;
+      -- App Interface
+      appTxMaster     : in  AxiStreamMasterType;
+      appTxSlave      : out AxiStreamSlaveType;
+      appRxMaster     : out AxiStreamMasterType;
+      appRxSlave      : in  AxiStreamSlaveType;
       -- MB Interface
       mbTxMaster      : in  AxiStreamMasterType;
       mbTxSlave       : out AxiStreamSlaveType;
@@ -85,12 +91,13 @@ architecture mapping of EthPortMapping is
    constant NUM_SERVERS_C  : integer                                 := 2;
    constant SERVER_PORTS_C : PositiveArray(NUM_SERVERS_C-1 downto 0) := (0 => 8192, 1 => 2542);
 
-   constant RSSI_SIZE_C : positive := 4;
+   constant RSSI_SIZE_C : positive := 5;
    constant AXIS_CONFIG_C : AxiStreamConfigArray(RSSI_SIZE_C-1 downto 0) := (
       0 => ssiAxiStreamConfig(4),
       1 => ssiAxiStreamConfig(4),
       2 => ssiAxiStreamConfig(4),
-      3 => MB_STREAM_CONFIG_C);
+      3 => MB_STREAM_CONFIG_C,
+      4 => APP_STRM_CFG_G);
 
    signal ibServerMasters : AxiStreamMasterArray(NUM_SERVERS_C-1 downto 0);
    signal ibServerSlaves  : AxiStreamSlaveArray(NUM_SERVERS_C-1 downto 0);
@@ -156,7 +163,8 @@ begin
             0                => X"00",
             1                => X"01",
             2                => X"02",
-            3                => X"03"),
+            3                => X"03",
+            4                => X"04"),
          CLK_FREQUENCY_G     => CLK_FREQUENCY_G,
          TIMEOUT_UNIT_G      => 1.0E-3,  -- In units of seconds
          SERVER_G            => true,
@@ -231,6 +239,14 @@ begin
    --------------------------
    rssiIbMasters(3) <= mbTxMaster;
    mbTxSlave        <= rssiIbSlaves(3);
+
+   --------------------------
+   -- TDEST = 0x4: APP Stream
+   --------------------------
+   rssiIbMasters(4) <= appTxMaster;
+   appTxSlave       <= rssiIbSlaves(4);
+   appRxMaster      <= rssiObMasters(4);
+   rssiObSlaves(4)  <= appRxSlave;
 
    ------------------------------
    -- Terminate Unused interfaces  

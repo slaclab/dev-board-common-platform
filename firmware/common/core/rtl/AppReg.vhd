@@ -56,7 +56,7 @@ entity AppReg is
       -- MB Interface
       mbTxMaster      : out AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
       mbTxSlave       : in  AxiStreamSlaveType;
-      mbRxMaster      : in  AxiStreamMasterType;
+      mbRxMaster      : in  AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
       mbRxSlave       : out AxiStreamSlaveType  := AXI_STREAM_SLAVE_FORCE_C;
       -- ADC Ports
       vPIn            : in  sl;
