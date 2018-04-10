@@ -111,7 +111,7 @@ architecture mapping of EthPortMapping is
 
    signal spliceSOF       : AxiStreamMasterType;
 
-   constant USE_JTAG_C    : boolean := true;
+   constant USE_JTAG_C    : boolean := false;
 
 begin
 

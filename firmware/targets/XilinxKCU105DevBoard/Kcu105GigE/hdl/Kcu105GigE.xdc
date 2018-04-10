@@ -100,4 +100,9 @@ set_clock_groups -asynchronous -group [get_clocks {gtClkP}] -group [get_clocks {
 set_clock_groups -asynchronous -group [get_clocks {gtClkP}] -group [get_clocks {gthClk62p5MHz}] 
 set_clock_groups -asynchronous -group [get_clocks {sysClk156MHz}] -group [get_clocks {dnaClk}]
 
+set_clock_groups -asynchronous -group [get_clocks mmcm_clkout0] -group [get_clocks sysClk156MHz]
+set_clock_groups -asynchronous -group [get_clocks sysClk300P]   -group [get_clocks sysClk156MHz]
+
 set_false_path -through [get_nets {muxedSignals[phyReady]*}]
+
+set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets -hier -filter {NAME=~*/ddrClk300}]

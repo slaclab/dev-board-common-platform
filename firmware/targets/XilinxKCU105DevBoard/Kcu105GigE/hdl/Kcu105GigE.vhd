@@ -7,11 +7,11 @@
 -- Description: Example using 1000BASE-SX Protocol
 -------------------------------------------------------------------------------
 -- This file is part of 'Example Project Firmware'.
--- It is subject to the license terms in the LICENSE.txt file found in the 
--- top-level directory of this distribution and at: 
---    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
--- No part of 'Example Project Firmware', including this file, 
--- may be copied, modified, propagated, or distributed except according to 
+-- It is subject to the license terms in the LICENSE.txt file found in the
+-- top-level directory of this distribution and at:
+--    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+-- No part of 'Example Project Firmware', including this file,
+-- may be copied, modified, propagated, or distributed except according to
 -- the terms contained in the LICENSE.txt file.
 -------------------------------------------------------------------------------
 
@@ -22,7 +22,9 @@ use ieee.numeric_std.all;
 use work.StdRtlPkg.all;
 use work.AxiStreamPkg.all;
 use work.AxiLitePkg.all;
+use work.AxiPkg.all;
 use work.EthMacPkg.all;
+use work.SsiPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -62,15 +64,42 @@ entity Kcu105GigE is
       phyIrqN    : in  sl; -- active low
       -- 300Mhz System Clock
       sysClk300P : in sl;
-      sysClk300N : in sl);
+      sysClk300N : in sl;
+      -- DDR4 Ports
+      c0_ddr4_adr : OUT STD_LOGIC_VECTOR(16 DOWNTO 0);
+      c0_ddr4_dq : INOUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+      c0_ddr4_dm_dbi_n : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+      c0_ddr4_dqs_c : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+      c0_ddr4_dqs_t : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+      c0_ddr4_ba : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+      c0_ddr4_bg : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+      c0_ddr4_cke : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+      c0_ddr4_cs_n : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+      c0_ddr4_odt : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+      c0_ddr4_reset_n : OUT STD_LOGIC;
+      c0_ddr4_act_n : OUT STD_LOGIC;
+      c0_ddr4_ck_c : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+      c0_ddr4_ck_t : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+      c0_ddr4_alert_n : IN STD_LOGIC
+   );
 end Kcu105GigE;
 
 architecture top_level of Kcu105GigE is
 
    constant AXIS_SIZE_C : positive         := 1;
-   constant IP_ADDR_C   : slv(31 downto 0) := x"0A02A8C0";          -- 192.168.2.10  
+   constant IP_ADDR_C   : slv(31 downto 0) := x"0A02A8C0";          -- 192.168.2.10
    constant MAC_ADDR_C  : slv(47 downto 0) := x"010300564400";      -- 00:44:56:00:03:01
    constant RST_DEL_C   : slv(22 downto 0) := toSlv(16#3FFFFF#,23); -- ~ 2*10ms @ 156MHz
+
+   -- Mem read word size is 32 bits
+   constant MEM_AXI_CONFIG_C : AxiConfigType := (
+      ADDR_WIDTH_C => 31,
+      DATA_BYTES_C => 4,
+      ID_BITS_C    => 4,
+      LEN_BITS_C   => 8);
+
+   constant AXI_STRM_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(8);
+
 
    type MuxedSignalsType is record
       txMasters     : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
@@ -108,7 +137,11 @@ architecture top_level of Kcu105GigE is
 
    signal phyMdo        : sl := '1';
 
+   signal axiClk        : sl;
+   signal axiRst        : sl;
+
    signal sysClk300NB   : sl;
+   signal ddrClk300     : sl;
    signal sysClk156     : sl;
    signal sysRst156     : sl;
    signal sysMmcmLocked : sl;
@@ -124,12 +157,23 @@ architecture top_level of Kcu105GigE is
    signal phyIrq        : sl;
    signal phyMdi        : sl;
 
+   signal appTxMaster   : AxiStreamMasterType;
+   signal appRxMaster   : AxiStreamMasterType;
+   signal appTxSlave    : AxiStreamSlaveType;
+   signal appRxSlave    : AxiStreamSlaveType;
 
    signal initDone      : sl := '0';
 
+   signal memReady      : sl;
+
+   signal memAxiWriteMaster    : AxiWriteMasterType;
+   signal memAxiWriteSlave     : AxiWriteSlaveType;
+   signal memAxiReadMaster     : AxiReadMasterType;
+   signal memAxiReadSlave      : AxiReadSlaveType;
 
    attribute dont_touch                 : string;
    attribute dont_touch of muxedSignals : signal is "TRUE";
+   attribute dont_touch of ddrClk300    : signal is "TRUE";
 
    component Ila_256 is
       port (
@@ -143,11 +187,11 @@ architecture top_level of Kcu105GigE is
          probe2         : in  slv(63 downto 0) := (others => '0');
          probe3         : in  slv(63 downto 0) := (others => '0')
       );
-   end component ila_0;
+   end component Ila_256;
 
 begin
 
-   -- hold unused ethernet in reset so it doesn't ARP or 
+   -- hold unused ethernet in reset so it doesn't ARP or
    -- communicate otherwise
    gthRstExt   <= extRst or selSGMII;
    sgmiiRstExt <= extRst or not selSGMII;
@@ -167,11 +211,17 @@ begin
          O            => sysClk300NB
       );
 
+   U_Sysclk300 : BUFG
+      port map (
+         I            => sysClk300NB,
+         O            => ddrClk300
+      );
+
    U_SysPll : entity work.ClockManagerUltrascale
       generic map (
          TPD_G            => TPD_G,
-         INPUT_BUFG_G     => false,
-         FB_BUFG_G        => false,
+         INPUT_BUFG_G     => true,
+         FB_BUFG_G        => true,
          NUM_CLOCKS_G     => 1,
          CLKIN_PERIOD_G   => 3.3333, -- 300MHz
          DIVCLK_DIVIDE_G  => 12,     -- VCO_in   25MHz
@@ -183,7 +233,7 @@ begin
          rstIn            => extRst,
 
          clkOut(0)        => sysClk156,
-       
+
          rstOut(0)        => sysRst156,
 
          locked           => sysMmcmLocked
@@ -203,13 +253,13 @@ begin
          CLKIN_PERIOD_G     => 6.4,     -- 156.25 MHz
          DIVCLK_DIVIDE_G    => 5,       -- 31.25 MHz = (156.25 MHz/5)
          CLKFBOUT_MULT_F_G  => 32.0,    -- 1 GHz = (32 x 31.25 MHz)
-         CLKOUT0_DIVIDE_F_G => 8.0,     -- 125 MHz = (1.0 GHz/8)         
+         CLKOUT0_DIVIDE_F_G => 8.0,     -- 125 MHz = (1.0 GHz/8)
          -- AXI Streaming Configurations
          AXIS_CONFIG_G      => (others => EMAC_AXIS_CONFIG_C))
       port map (
          -- Local Configurations
          localMac     => (others => MAC_ADDR_C),
-         -- Streaming DMA Interface 
+         -- Streaming DMA Interface
          dmaClk       => (others => sysClk156),
          dmaRst       => (others => gthDmaRst),
          dmaIbMasters => rxMastersGTH,
@@ -325,7 +375,7 @@ begin
       port map (
          -- Local Configurations
          localMac           => (others => MAC_ADDR_C),
-         -- Streaming DMA Interface 
+         -- Streaming DMA Interface
          dmaClk             => (others => sysClk156),
          dmaRst             => (others => sgmiiDmaRst),
          dmaIbMasters       => rxMastersSGMII,
@@ -365,25 +415,111 @@ begin
    -------------------
    U_App : entity work.AppCore
       generic map (
-         TPD_G        => TPD_G,
-         BUILD_INFO_G => BUILD_INFO_G,
-         XIL_DEVICE_G => "ULTRASCALE",
-         APP_TYPE_G   => "ETH",
-         AXIS_SIZE_G  => AXIS_SIZE_C,
-         MAC_ADDR_G   => MAC_ADDR_C,
-         IP_ADDR_G    => IP_ADDR_C)
+         TPD_G          => TPD_G,
+         BUILD_INFO_G   => BUILD_INFO_G,
+         XIL_DEVICE_G   => "ULTRASCALE",
+         APP_TYPE_G     => "ETH",
+         AXIS_SIZE_G    => AXIS_SIZE_C,
+         MAC_ADDR_G     => MAC_ADDR_C,
+         IP_ADDR_G      => IP_ADDR_C,
+         APP_STRM_CFG_G => AXI_STRM_CONFIG_C)
       port map (
          -- Clock and Reset
-         clk       => sysClk156,
-         rst       => sysRst156,
+         clk            => sysClk156,
+         rst            => sysRst156,
          -- AXIS interface
-         txMasters => muxedSignals.txMasters,
-         txSlaves  => muxedSignals.txSlaves,
-         rxMasters => muxedSignals.rxMasters,
-         rxSlaves  => muxedSignals.rxSlaves,
+         txMasters      => muxedSignals.txMasters,
+         txSlaves       => muxedSignals.txSlaves,
+         rxMasters      => muxedSignals.rxMasters,
+         rxSlaves       => muxedSignals.rxSlaves,
+
+         -- App Stream Interface
+         appTxMaster    => appTxMaster,    -- in  AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
+         appTxSlave     => appTxSlave,     -- out AxiStreamSlaveType;
+         appRxMaster    => appRxMaster,    -- out AxiStreamMasterType;
+         appRxSlave     => appRxSlave,     -- in  AxiStreamSlaveType  := AXI_STREAM_SLAVE_FORCE_C;
+
          -- ADC Ports
-         vPIn      => vPIn,
-         vNIn      => vNIn);
+         vPIn           => vPIn,
+         vNIn           => vNIn);
+
+   U_SrpV3Axi_1 : entity work.SrpV3Axi
+      generic map (
+         TPD_G               => TPD_G,
+         PIPE_STAGES_G       => 1,
+         FIFO_PAUSE_THRESH_G => 128,
+         TX_VALID_THOLD_G    => 256,-- Pre-cache threshold set 256 out of 512 (prevent holding the ETH link during AXI-lite transactions)
+         SLAVE_READY_EN_G    => true,
+         GEN_SYNC_FIFO_G     => false,
+         AXI_CLK_FREQ_G      => 200.0E+6,
+         AXI_CONFIG_G        => MEM_AXI_CONFIG_C,
+--          AXI_BURST_G         => AXI_BURST_G,
+--          AXI_CACHE_G         => AXI_CACHE_G,
+         ACK_WAIT_BVALID_G   => false,
+         AXI_STREAM_CONFIG_G => AXI_STRM_CONFIG_C,
+         UNALIGNED_ACCESS_G  => false,
+         BYTE_ACCESS_G       => false,
+         WRITE_EN_G          => true,
+         READ_EN_G           => true)
+      port map (
+         sAxisClk       => sysClk156,                           -- [in]
+         sAxisRst       => sysRst156,                           -- [in]
+         sAxisMaster    => appRxMaster,                         -- [in]
+         sAxisSlave     => appRxSlave,                          -- [out]
+         sAxisCtrl      => open,                                -- [out]
+         mAxisClk       => sysClk156,                           -- [in]
+         mAxisRst       => sysRst156,                           -- [in]
+         mAxisMaster    => appTxMaster,                         -- [out]
+         mAxisSlave     => appTxSlave,                          -- [in]
+
+         axiClk         => axiClk,                              -- [in]
+         axiRst         => axiRst,                              -- [in]
+         axiWriteMaster => memAxiWriteMaster,                   -- [out]
+         axiWriteSlave  => memAxiWriteSlave,                    -- [in]
+         axiReadMaster  => memAxiReadMaster,                    -- [out]
+         axiReadSlave   => memAxiReadSlave);                    -- [in]
+
+   U_DdrMem : entity work.AmcCarrierDdrMem
+   port map (
+      -- AXI-Lite Interface
+      axilClk           => sysClk156,
+      axilRst           => sysRst156,
+      axilReadMaster    => AXI_LITE_READ_MASTER_INIT_C,
+      axilReadSlave     => open,
+      axilWriteMaster   => AXI_LITE_WRITE_MASTER_INIT_C,
+      axilWriteSlave    => open,
+
+      memReady          => memReady,
+      memError          => open,
+
+      -- AXI4 Interface
+      axiClk           => axiClk,
+      axiRst           => axiRst,
+      axiWriteMaster   => memAxiWriteMaster,
+      axiWriteSlave    => memAxiWriteSlave,
+      axiReadMaster    => memAxiReadMaster,
+      axiReadSlave     => memAxiReadSlave,
+      ----------------
+      -- Core Ports --
+      ----------------
+      -- DDR4 Ports
+      refClk           => ddrClk300,
+      c0_ddr4_adr      => c0_ddr4_adr,
+      c0_ddr4_dq       => c0_ddr4_dq,
+      c0_ddr4_dm_dbi_n => c0_ddr4_dm_dbi_n,
+      c0_ddr4_dqs_c    => c0_ddr4_dqs_c,
+      c0_ddr4_dqs_t    => c0_ddr4_dqs_t,
+      c0_ddr4_ba       => c0_ddr4_ba,
+      c0_ddr4_bg       => c0_ddr4_bg,
+      c0_ddr4_cke      => c0_ddr4_cke,
+      c0_ddr4_cs_n     => c0_ddr4_cs_n,
+      c0_ddr4_odt      => c0_ddr4_odt,
+      c0_ddr4_reset_n  => c0_ddr4_reset_n,
+      c0_ddr4_act_n    => c0_ddr4_act_n,
+      c0_ddr4_ck_c     => c0_ddr4_ck_c,
+      c0_ddr4_ck_t     => c0_ddr4_ck_t,
+      c0_ddr4_alert_n  => c0_ddr4_alert_n
+   );
 
    ----------------
    -- Misc. Signals
@@ -392,7 +528,7 @@ begin
    led(6) <= not speed10_100;             -- lit when 1Gb
    led(5) <= not speed10_100 or speed100; -- lit when 1Gb or 100Mb
    led(4) <= extPhyRstN;
-   led(3) <= phyIrqN;
+   led(3) <= memReady;
    led(2) <= initDone;
    led(1) <= muxedSignals.phyReady;
    led(0) <= muxedSignals.phyReady;
