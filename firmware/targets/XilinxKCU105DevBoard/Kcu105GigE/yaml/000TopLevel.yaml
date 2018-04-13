@@ -1,0 +1,140 @@
+##############################################################################
+## This file is part of 'LCLS2 Common Carrier Core'.
+## It is subject to the license terms in the LICENSE.txt file found in the 
+## top-level directory of this distribution and at: 
+##    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
+## No part of 'LCLS2 Common Carrier Core', including this file, 
+## may be copied, modified, propagated, or distributed except according to 
+## the terms contained in the LICENSE.txt file.
+##############################################################################
+#schemaversion 3.0.0
+#once 000TopLevel.yaml
+#
+#include AxiVersion.yaml
+#include AxiXadc.yaml
+#include AxiSysMonUltraScale.yaml
+#include SsiPrbsTx.yaml
+#include SsiPrbsRx.yaml
+#include AxiStreamFifo.yaml
+
+AppReg: &AppReg
+  size: 0x00800000
+  class: MMIODev
+  children:
+    AxiVersion:
+      <<: *AxiVersion
+      at: { offset: 0x00000000 }
+    AxiSysMonUltraScale:
+      <<: *AxiSysMonUltraScale
+      at: { offset: 0x00020000 }
+    GenericMemory:
+      description: Generic Memory Module
+      class:       MMIODev
+      size:        1024
+      at: { offset: 0x00030000, nelms: 256 }
+      children:
+        MemoryArray:
+          description: MemoryArray
+          class:       IntField
+          sizeBits:    32
+          at: { offset: 0x00000000, nelms: 256 }
+    SsiPrbsTx:
+      <<: *SsiPrbsTx
+      at: { offset: 0x00040000 }
+    SsiPrbsRx:
+      <<: *SsiPrbsRx
+      at: { offset: 0x00050000 }
+    AxiStreamFifo:
+      <<: *AxiStreamFifoTx
+      at: { offset: 0x00070000 }
+      <<: *AxiStreamFifoRx
+      at: { offset: 0x00070020 }
+    IIC:
+      class: MMIODev
+      size: 0x10000
+      at: { offset: 0x00080000 }
+      children:
+        Tca9548:
+          class: IntField
+          sizeBits:  8
+          at: { offset: 0 }
+        Si570:
+          class: IntField
+          # Declare as 32-bit so read/write access are collapsed by SRP
+          sizeBits: 32
+          at: { offset: 0x400, nelms: 256, stride: 4 }
+        Pca9544:
+          class: IntField
+          sizeBits: 8
+          at: { offset: 0x800 }
+        SFP:
+          class: IntField
+          # Declare as 32-bit so read/write access are collapsed by SRP
+          sizeBits: 32
+          at: { offset: 0xc00, nelms: 256, stride: 4 }
+       
+
+#MMIO range, will be attached to FPGA
+mmio: &mmio
+  size: 0x100000000 # 4GB of address space
+  class: MMIODev
+  configPrio: 1
+  ########
+  children:
+  ########
+    AppReg:
+        <<: *AppReg
+        at:
+          offset: 0x00000000  
+  
+IpAddr: &IpAddr 192.168.2.10
+
+DbgNetIODev:
+  ipAddr: *IpAddr
+  class: NetIODev
+  configPrio: 1
+  children:
+     mmio:
+       <<: *mmio
+       at:
+         SRP:
+           protocolVersion: SRP_UDP_V2
+         UDP:
+           port: 8192
+    
+NetIODev:
+  ipAddr: *IpAddr
+  class: NetIODev
+  configPrio: 1
+  children:
+     mmio:
+       <<: *mmio
+       at:
+         SRP:
+           protocolVersion: SRP_UDP_V3
+           dynTimeout:      false
+           timeoutUS:       800000
+         UDP:
+           port: 8193
+         RSSI:
+         depack:
+         TDESTMux:
+           TDEST: 0
+     axi4:
+       class: MMIODev
+       size:  0x100000000
+       at:
+         SRP:
+           protocolVersion: SRP_UDP_V3
+           dynTimeout:      false
+           timeoutUS:       800000
+         UDP:
+           port: 8193
+         RSSI:
+         depack:
+         TDESTMux:
+           TDEST: 4
+       children:
+         dram:
+           class: IntField
+           at: { offset: 0, nelms: 20 }
