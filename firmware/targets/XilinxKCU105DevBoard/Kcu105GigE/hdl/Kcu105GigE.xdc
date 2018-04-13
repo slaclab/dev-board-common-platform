@@ -106,3 +106,4 @@ set_clock_groups -asynchronous -group [get_clocks sysClk300P]   -group [get_cloc
 set_false_path -through [get_nets {muxedSignals[phyReady]*}]
 
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets -hier -filter {NAME=~*/ddrClk300}]
+set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets U_SysPll/CLKIN1]

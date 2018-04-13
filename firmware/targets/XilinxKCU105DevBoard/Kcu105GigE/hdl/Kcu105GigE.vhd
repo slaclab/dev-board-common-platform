@@ -80,7 +80,11 @@ entity Kcu105GigE is
       c0_ddr4_act_n : OUT STD_LOGIC;
       c0_ddr4_ck_c : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
       c0_ddr4_ck_t : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-      c0_ddr4_alert_n : IN STD_LOGIC
+      c0_ddr4_alert_n : IN STD_LOGIC;
+      -- I2C Bus
+      iicScl     : inout sl;
+      iicSda     : inout sl;
+      iicMuxRstL : out   sl
    );
 end Kcu105GigE;
 
@@ -90,6 +94,8 @@ architecture top_level of Kcu105GigE is
    constant IP_ADDR_C   : slv(31 downto 0) := x"0A02A8C0";          -- 192.168.2.10
    constant MAC_ADDR_C  : slv(47 downto 0) := x"010300564400";      -- 00:44:56:00:03:01
    constant RST_DEL_C   : slv(22 downto 0) := toSlv(16#3FFFFF#,23); -- ~ 2*10ms @ 156MHz
+
+   constant AXIL_CLK_FRQ_C : real := 156.25E6;
 
    -- Mem read word size is 32 bits
    constant MEM_AXI_CONFIG_C : AxiConfigType := (
@@ -422,7 +428,8 @@ begin
          AXIS_SIZE_G    => AXIS_SIZE_C,
          MAC_ADDR_G     => MAC_ADDR_C,
          IP_ADDR_G      => IP_ADDR_C,
-         APP_STRM_CFG_G => AXI_STRM_CONFIG_C)
+         APP_STRM_CFG_G => AXI_STRM_CONFIG_C,
+         AXIL_CLK_FRQ_G => AXIL_CLK_FRQ_C)
       port map (
          -- Clock and Reset
          clk            => sysClk156,
@@ -441,7 +448,12 @@ begin
 
          -- ADC Ports
          vPIn           => vPIn,
-         vNIn           => vNIn);
+         vNIn           => vNIn,
+
+         -- IIC Port
+         iicScl         => iicScl,
+         iicSda         => iicSda
+         );
 
    U_SrpV3Axi_1 : entity work.SrpV3Axi
       generic map (
@@ -520,6 +532,12 @@ begin
       c0_ddr4_ck_t     => c0_ddr4_ck_t,
       c0_ddr4_alert_n  => c0_ddr4_alert_n
    );
+
+   ----------------
+   -- IIC Bus (deassert MUX/Switch reset)
+   ----------------
+
+   iicMuxRstL <= '1';
 
    ----------------
    -- Misc. Signals

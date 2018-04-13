@@ -24,6 +24,7 @@ use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
 use work.SsiPkg.all;
+use work.I2cPkg.all;
 
 entity AppReg is
    generic (
@@ -33,7 +34,8 @@ entity AppReg is
       AXI_ERROR_RESP_G : slv( 1 downto 0) := AXI_RESP_DECERR_C;
       AXIL_BASE_ADDR_G : slv(31 downto 0) := x"00000000";
       USE_SLOWCLK_G    : boolean          := false;
-      FIFO_DEPTH_G     : natural          := 0);
+      FIFO_DEPTH_G     : natural          := 0;
+      AXIL_CLK_FRQ_G   : real             := 156.25E6);
    port (
       -- Clock and Reset
       clk             : in  sl;
@@ -61,6 +63,9 @@ entity AppReg is
       -- ADC Ports
       vPIn            : in  sl;
       vNIn            : in  sl;
+      -- IIC Port
+      iicScl          : inout sl;
+      iicSda          : inout sl;
       -- IRQ
       irqOut          : out slv(7 downto 0)    := (others => '0'));
 end AppReg;
@@ -70,7 +75,7 @@ architecture mapping of AppReg is
    constant SHARED_MEM_WIDTH_C : positive                           := 10;
    constant IRQ_ADDR_C         : slv(SHARED_MEM_WIDTH_C-1 downto 0) := (others => '1');
 
-   constant NUM_AXI_MASTERS_C : natural := 8;
+   constant NUM_AXI_MASTERS_C : natural := 9;
 
    constant VERSION_INDEX_C : natural := 0;
    constant XADC_INDEX_C    : natural := 1;
@@ -80,6 +85,7 @@ architecture mapping of AppReg is
    constant PRBS_RX_INDEX_C : natural := 5;
    constant HLS_INDEX_C     : natural := 6;
    constant FIFO_INDEX_C    : natural := 7;
+   constant IIC_MAS_INDEX_C : natural := 8;
 
    constant AXI_CROSSBAR_MASTERS_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := 
       genAxiLiteConfig( NUM_AXI_MASTERS_C, AXIL_BASE_ADDR_G, 20, 16 );
@@ -107,9 +113,18 @@ architecture mapping of AppReg is
 
    constant GEN_MB_C : boolean := false and FIFO_DEPTH_G = 0;
 
+   constant NUM_I2C_DEVS_C   : natural := 4;
+
+   constant I2C_DEVICE_MAP_C : I2cAxiLiteDevArray(0 to NUM_I2C_DEVS_C-1) := (
+      0 => (MakeI2cAxiLiteDevType("1110100", 8, 0, '1')), -- TCA9548
+      1 => (MakeI2cAxiLiteDevType("1011101", 8, 8, '1')), -- SI570
+      2 => (MakeI2cAxiLiteDevType("1110101", 8, 0, '1')), -- PCA9544
+      3 => (MakeI2cAxiLiteDevType("1010000", 8, 8, '1')) -- SFP 0/1
+   );
+
 begin
 
-   rstN <= not rst;
+   rstN      <= not rst;
 
    GEN_MB : if ( GEN_MB_C ) generate
 
@@ -403,5 +418,25 @@ begin
       mAxilWriteSlaves(FIFO_INDEX_C).awready <= '1';
       mAxilWriteSlaves(FIFO_INDEX_C).wready  <= '1';
    end generate;
+
+   -- IIC Master
+   U_AxiI2cRegMaster : entity work.AxiI2cRegMaster
+      generic map (
+         TPD_G              => TPD_G,
+         DEVICE_MAP_G       => I2C_DEVICE_MAP_C,
+         AXI_CLK_FREQ_G     => AXIL_CLK_FRQ_G
+      )
+      port map (
+         scl                => iicScl,
+         sda                => iicSda,
+
+         axiClk             => clk,
+         axiRst             => rst,
+
+         axiReadMaster      => mAxilReadMasters(IIC_MAS_INDEX_C),
+         axiReadSlave       => mAxilReadSlaves(IIC_MAS_INDEX_C),
+         axiWriteMaster     => mAxilWriteMasters(IIC_MAS_INDEX_C),
+         axiWriteSlave      => mAxilWriteSlaves(IIC_MAS_INDEX_C)
+      );
 
 end mapping;

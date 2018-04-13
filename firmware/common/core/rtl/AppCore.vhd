@@ -35,7 +35,8 @@ entity AppCore is
       IP_ADDR_G        : slv(31 downto 0) := x"0A02A8C0";  -- 192.168.2.10 (ETH only)
       DHCP_G           : boolean          := true;
       JUMBO_G          : boolean          := false;
-      APP_STRM_CFG_G   : AxiStreamConfigType := ssiAxiStreamConfig(4));
+      APP_STRM_CFG_G   : AxiStreamConfigType := ssiAxiStreamConfig(4);
+      AXIL_CLK_FRQ_G   : real             := 156.25E6);
    port (
       -- Clock and Reset
       clk             : in  sl;
@@ -53,7 +54,11 @@ entity AppCore is
       appRxSlave      : in  AxiStreamSlaveType  := AXI_STREAM_SLAVE_FORCE_C;
       -- ADC Ports
       vPIn            : in  sl;
-      vNIn            : in  sl);
+      vNIn            : in  sl;
+      -- IIC Port
+      iicScl          : inout sl;
+      iicSda          : inout sl
+      );
 end AppCore;
 
 architecture mapping of AppCore is
@@ -171,7 +176,8 @@ begin
          TPD_G            => TPD_G,
          BUILD_INFO_G     => BUILD_INFO_G,
          XIL_DEVICE_G     => XIL_DEVICE_G,
-         AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
+         AXI_ERROR_RESP_G => AXI_ERROR_RESP_G,
+         AXIL_CLK_FRQ_G   => AXIL_CLK_FRQ_G)
       port map (
          -- Clock and Reset
          clk             => clk,
@@ -196,6 +202,10 @@ begin
          mbTxSlave       => mbTxSlave,
          -- ADC Ports
          vPIn            => vPIn,
-         vNIn            => vNIn);
+         vNIn            => vNIn,
+         -- IIC Port
+         iicScl          => iicScl,
+         iicSda          => iicSda
+         );
 
 end mapping;
