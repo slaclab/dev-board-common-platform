@@ -25,6 +25,7 @@ use work.AxiLitePkg.all;
 use work.AxiPkg.all;
 use work.EthMacPkg.all;
 use work.SsiPkg.all;
+use work.TimingPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -117,13 +118,13 @@ architecture top_level of Kcu105GigE is
 
    signal muxedSignals  : MuxedSignalsType;
 
-   signal txMastersGTH  : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
+   signal txMastersGTH  : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
    signal txSlavesGTH   : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
-   signal rxMastersGTH  : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
+   signal rxMastersGTH  : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
    signal rxSlavesGTH   : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
-   signal txMastersSGMII: AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
+   signal txMastersSGMII: AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
    signal txSlavesSGMII : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
-   signal rxMastersSGMII: AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
+   signal rxMastersSGMII: AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
    signal rxSlavesSGMII : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
 
 
@@ -134,7 +135,7 @@ architecture top_level of Kcu105GigE is
    signal sgmiiRstExt   : sl;
 
    signal sgmiiPhyReady : sl;
-   signal gthPhyReady   : sl;
+   signal gthPhyReady   : sl := '0';
 
    signal selSGMII      : sl;
 
@@ -176,6 +177,19 @@ architecture top_level of Kcu105GigE is
    signal memAxiWriteSlave     : AxiWriteSlaveType;
    signal memAxiReadMaster     : AxiReadMasterType;
    signal memAxiReadSlave      : AxiReadSlaveType;
+
+   signal timingRefDiv2        : sl;
+   signal timingRefClk         : sl := '0';
+   signal timingRefClkDiv2     : sl := '0';
+   signal timingRecClkGt       : sl := '0';
+   signal timingTxUsrClk       : sl := '0';
+   signal timingCdrStable      : sl;
+   signal timingLoopback       : slv(2 downto 0) := "000";
+
+   constant CNT_LEN_C          : natural := 28;
+   signal rxClkCnt             : slv(CNT_LEN_C-1 downto 0) := (others => '0');
+   signal txClkCnt             : slv(CNT_LEN_C-1 downto 0) := (others => '0');
+
 
    attribute dont_touch                 : string;
    attribute dont_touch of muxedSignals : signal is "TRUE";
@@ -246,45 +260,80 @@ begin
       );
 
    ---------------------
-   -- 1 GigE XAUI Module
+   -- Timing Receiver
    ---------------------
 
-   U_1GigE_GTH : entity work.GigEthGthUltraScaleWrapper
+   U_TimingRefClk_IBUFDS : IBUFDS_GTE3
       generic map (
-         TPD_G              => TPD_G,
-         -- DMA/MAC Configurations
-         NUM_LANE_G         => 1,
-         -- QUAD PLL Configurations
-         USE_GTREFCLK_G     => false,
-         CLKIN_PERIOD_G     => 6.4,     -- 156.25 MHz
-         DIVCLK_DIVIDE_G    => 5,       -- 31.25 MHz = (156.25 MHz/5)
-         CLKFBOUT_MULT_F_G  => 32.0,    -- 1 GHz = (32 x 31.25 MHz)
-         CLKOUT0_DIVIDE_F_G => 8.0,     -- 125 MHz = (1.0 GHz/8)
-         -- AXI Streaming Configurations
-         AXIS_CONFIG_G      => (others => EMAC_AXIS_CONFIG_C))
+         REFCLK_EN_TX_PATH  => '0',
+         REFCLK_HROW_CK_SEL => "01",
+         REFCLK_ICNTL_RX    => "00"
+      )
       port map (
-         -- Local Configurations
-         localMac     => (others => MAC_ADDR_C),
-         -- Streaming DMA Interface
-         dmaClk       => (others => sysClk156),
-         dmaRst       => (others => gthDmaRst),
-         dmaIbMasters => rxMastersGTH,
-         dmaIbSlaves  => rxSlavesGTH,
-         dmaObMasters => txMastersGTH,
-         dmaObSlaves  => txSlavesGTH,
-         -- Misc. Signals
-         extRst       => gthRstExt,
-         phyClk       => open,
-         phyRst       => open,
-         phyReady(0)  => gthPhyReady,
-         -- MGT Clock Port
-         gtClkP       => ethClkP,
-         gtClkN       => ethClkN,
-         -- MGT Ports
-         gtTxP(0)     => ethTxP,
-         gtTxN(0)     => ethTxN,
-         gtRxP(0)     => ethRxP,
-         gtRxN(0)     => ethRxN);
+         I                => ethClkP,
+         IB               => ethClkN,
+         CEB              => '0',
+         ODIV2            => timingRefDiv2,
+         O                => timingRefClk
+      );
+
+   U_TimingRefClkDiv2_BUFG : BUFG_GT
+      port map (
+         I                => timingRefDiv2,
+         CE               => '1',
+         CEMASK           => '1',
+         CLR              => '0',
+         CLRMASK          => '1',
+         DIV              => "000",
+         O                => timingRefClkDiv2
+      );
+
+   U_TimingGTH : entity work.TimingGthCoreWrapper
+      generic map (
+         TPD_G            => TPD_G,
+         AXIL_BASE_ADDR_G => x"0000_0000"
+      )
+      port map (
+         axilClk          => sysClk156,
+         axilRst          => sysRst156,
+
+         axilReadMaster   => AXI_LITE_READ_MASTER_INIT_C,
+         axilReadSlave    => open,
+         axilWriteMaster  => AXI_LITE_WRITE_MASTER_INIT_C,
+         axilWriteSlave   => open,
+
+         stableClk        => sysClk156,
+
+         gtRefClk         => timingRefClk,
+         gtRefClkDiv2     => timingRefClkDiv2,
+
+         gtRxP            => ethRxP,
+         gtRxN            => ethRxN,
+         gtTxP            => ethTxP,
+         gtTxN            => ethTxN,
+
+         rxControl        => TIMING_PHY_CONTROL_INIT_C,
+         rxStatus         => open,
+         rxUsrClkActive   => '1',
+         rxCdrStable      => timingCdrStable,
+         rxUsrClk         => timingRecClkGt,
+         rxData           => open,
+         rxDataK          => open,
+         rxDispErr        => open,
+         rxDecErr         => open,
+         rxOutClk         => timingRecClkGt,
+
+         txControl        => TIMING_PHY_CONTROL_INIT_C,
+         txStatus         => open,
+         txUsrClk         => timingTxUsrClk,
+         txUsrClkActive   => '1',
+         txData           => x"0000",
+         txDataK          => "00",
+         txOutClk         => timingTxUsrClk,
+         loopback         => timingLoopback
+      );
+
+   timingLoopback(1) <= gpioDip(1);
 
    -- Main clock is derived from the PHY refclock. However,
    -- while it is in reset there is no clock coming in;
@@ -539,17 +588,31 @@ begin
 
    iicMuxRstL <= '1';
 
+   P_CNT_TX : process( timingTxUsrClk ) is
+   begin
+      if ( rising_edge( timingTxUsrClk ) ) then
+         txClkCnt <= slv( unsigned( txClkCnt ) + 1 );
+      end if;
+   end process P_CNT_TX;
+
+   P_CNT_RX : process( timingRecClkGt ) is
+   begin
+      if ( rising_edge( timingRecClkGt ) ) then
+         rxClkCnt <= slv( unsigned( rxClkCnt ) + 1 );
+      end if;
+   end process P_CNT_RX;
+
    ----------------
    -- Misc. Signals
    ----------------
    led(7) <= linkIsUp;
    led(6) <= not speed10_100;             -- lit when 1Gb
    led(5) <= not speed10_100 or speed100; -- lit when 1Gb or 100Mb
-   led(4) <= extPhyRstN;
-   led(3) <= memReady;
-   led(2) <= initDone;
-   led(1) <= muxedSignals.phyReady;
-   led(0) <= muxedSignals.phyReady;
+   led(4) <= memReady;
+   led(3) <= initDone;
+   led(2) <= rxClkCnt( rxClkCnt'left );
+   led(1) <= txClkCnt( txClkCnt'left );
+   led(0) <= timingCdrStable;
 
    U_SyncSel : entity work.Synchronizer
       port map (
