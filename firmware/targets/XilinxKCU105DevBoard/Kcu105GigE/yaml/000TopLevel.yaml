@@ -19,7 +19,7 @@
 #include Gthe3Channel.yaml
 
 AppReg: &AppReg
-  size: 0x00800000
+  size: 0x10000000
   class: MMIODev
   children:
     AxiVersion:
@@ -62,12 +62,12 @@ AppReg: &AppReg
     Gthe3Channel:
       <<: *Gthe3Channel
       at:
-        offset: 0x05000000
+        offset: 0x05400000
     ##################################################
     GthRxAlignCheck:
       <<: *GthRxAlignCheck
       at:
-        offset: 0x05400000
+        offset: 0x05000000
     ##################################################      
     EvrV2CoreTriggers:
       <<: *EvrV2CoreTriggers
