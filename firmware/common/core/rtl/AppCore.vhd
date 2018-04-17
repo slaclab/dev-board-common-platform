@@ -57,29 +57,35 @@ entity AppCore is
       vNIn            : in  sl;
       -- IIC Port
       iicScl          : inout sl;
-      iicSda          : inout sl
+      iicSda          : inout sl;
+      -- Timing
+      timingRefClkP   : in  sl := '0';
+      timingRefClkN   : in  sl := '1';
+      timingRxP       : in  sl := '0';
+      timingRxN       : in  sl := '0';
+      timingTxP       : out sl := '0';
+      timingTxN       : out sl := '1';
+      appTimingClk    : out sl;
+      appTimingRst    : out sl;
+      dbg             : out slv(1 downto 0);
+      dbgi            : in  slv(1 downto 0) := (others => '0')
       );
 end AppCore;
 
 architecture mapping of AppCore is
 
-   signal axilReadMaster  : AxiLiteReadMasterType;
-   signal axilReadSlave   : AxiLiteReadSlaveType;
-   signal axilWriteMaster : AxiLiteWriteMasterType;
-   signal axilWriteSlave  : AxiLiteWriteSlaveType;
+   signal axilReadMaster    : AxiLiteReadMasterType;
+   signal axilReadSlave     : AxiLiteReadSlaveType;
+   signal axilWriteMaster   : AxiLiteWriteMasterType;
+   signal axilWriteSlave    : AxiLiteWriteSlaveType;
 
-   signal pbrsTxMaster : AxiStreamMasterType;
-   signal pbrsTxSlave  : AxiStreamSlaveType;
-   signal pbrsRxMaster : AxiStreamMasterType;
-   signal pbrsRxSlave  : AxiStreamSlaveType;
+   signal ibTimingEthMaster : AxiStreamMasterType;
+   signal ibTimingEthSlave  : AxiStreamSlaveType;
+   signal obTimingEthMaster : AxiStreamMasterType;
+   signal obTimingEthSlave  : AxiStreamSlaveType;
 
-   signal hlsTxMaster : AxiStreamMasterType;
-   signal hlsTxSlave  : AxiStreamSlaveType;
-   signal hlsRxMaster : AxiStreamMasterType;
-   signal hlsRxSlave  : AxiStreamSlaveType;
-
-   signal mbTxMaster : AxiStreamMasterType;
-   signal mbTxSlave  : AxiStreamSlaveType;
+   signal timingClk         : sl;
+   signal timingRst         : sl;
 
 begin
 
@@ -106,66 +112,29 @@ begin
             rxSlave         => rxSlaves(0),
             rxCtrl          => rxCtrl(0),
             -- PBRS Interface
-            pbrsTxMaster    => pbrsTxMaster,
-            pbrsTxSlave     => pbrsTxSlave,
-            pbrsRxMaster    => pbrsRxMaster,
-            pbrsRxSlave     => pbrsRxSlave,
+            pbrsTxMaster    => AXI_STREAM_MASTER_INIT_C,
+            pbrsTxSlave     => open,
+            pbrsRxMaster    => open,
+            pbrsRxSlave     => AXI_STREAM_SLAVE_FORCE_C,
             -- HLS Interface
-            hlsTxMaster     => hlsTxMaster,
-            hlsTxSlave      => hlsTxSlave,
-            hlsRxMaster     => hlsRxMaster,
-            hlsRxSlave      => hlsRxSlave,
+            hlsTxMaster     => AXI_STREAM_MASTER_INIT_C,
+            hlsTxSlave      => open,
+            hlsRxMaster     => open,
+            hlsRxSlave      => AXI_STREAM_SLAVE_FORCE_C,
             -- App Interface
-            appTxMaster     => appTxMaster,
-            appTxSlave      => appTxSlave,
-            appRxMaster     => appRxMaster,
-            appRxSlave      => appRxSlave,
+            appTxMaster     => obTimingEthMaster,
+            appTxSlave      => obTimingEthSlave,
+            appRxMaster     => ibTimingEthMaster,
+            appRxSlave      => ibTimingEthSlave,
             -- AXI-Lite interface
             axilWriteMaster => axilWriteMaster,
             axilWriteSlave  => axilWriteSlave,
             axilReadMaster  => axilReadMaster,
             axilReadSlave   => axilReadSlave,
             -- Microblaze stream
-            mbTxMaster      => mbTxMaster,
-            mbTxSlave       => mbTxSlave);
+            mbTxMaster      => AXI_STREAM_MASTER_INIT_C,
+            mbTxSlave       => open);
 
-   end generate;
-
-   GEN_PGP : if (APP_TYPE_G = "PGP") generate
-      ---------------------------------
-      -- Virtual Channel Mapping Module
-      ---------------------------------         
-      U_PgpVcMapping : entity work.PgpVcMapping
-         generic map (
-            TPD_G => TPD_G)
-         port map (
-            -- Clock and Reset
-            clk             => clk,
-            rst             => rst,
-            -- AXIS interface
-            txMasters       => txMasters,
-            txSlaves        => txSlaves,
-            rxMasters       => rxMasters,
-            rxSlaves        => rxSlaves,
-            rxCtrl          => rxCtrl,
-            -- PBRS Interface
-            pbrsTxMaster    => pbrsTxMaster,
-            pbrsTxSlave     => pbrsTxSlave,
-            pbrsRxMaster    => pbrsRxMaster,
-            pbrsRxSlave     => pbrsRxSlave,
-            -- HLS Interface
-            hlsTxMaster     => hlsTxMaster,
-            hlsTxSlave      => hlsTxSlave,
-            hlsRxMaster     => hlsRxMaster,
-            hlsRxSlave      => hlsRxSlave,
-            -- AXI-Lite interface
-            axilWriteMaster => axilWriteMaster,
-            axilWriteSlave  => axilWriteSlave,
-            axilReadMaster  => axilReadMaster,
-            axilReadSlave   => axilReadSlave,
-            -- Microblaze stream
-            mbTxMaster      => mbTxMaster,
-            mbTxSlave       => mbTxSlave);
    end generate;
 
    -------------------
@@ -187,25 +156,39 @@ begin
          axilWriteSlave  => axilWriteSlave,
          axilReadMaster  => axilReadMaster,
          axilReadSlave   => axilReadSlave,
-         -- PBRS Interface
-         pbrsTxMaster    => pbrsTxMaster,
-         pbrsTxSlave     => pbrsTxSlave,
-         pbrsRxMaster    => pbrsRxMaster,
-         pbrsRxSlave     => pbrsRxSlave,
-         -- HLS Interface
-         hlsTxMaster     => hlsTxMaster,
-         hlsTxSlave      => hlsTxSlave,
-         hlsRxMaster     => hlsRxMaster,
-         hlsRxSlave      => hlsRxSlave,
-         -- Microblaze stream
-         mbTxMaster      => mbTxMaster,
-         mbTxSlave       => mbTxSlave,
+
+         obTimingEthMaster => obTimingEthMaster,
+         obTimingEthSlave  => obTimingEthSlave,
+         ibTimingEthMaster => ibTimingEthMaster,
+         ibTimingEthSlave  => ibTimingEthSlave,
+
          -- ADC Ports
          vPIn            => vPIn,
          vNIn            => vNIn,
          -- IIC Port
          iicScl          => iicScl,
-         iicSda          => iicSda
+         iicSda          => iicSda,
+         -- Timing
+         timingRefClkP   => timingRefClkP,
+         timingRefClkN   => timingRefClkN,
+         timingRxP       => timingRxP,
+         timingRxN       => timingRxN,
+         timingTxP       => timingTxP,
+         timingTxN       => timingTxN,
+
+         recTimingClk    => timingClk,
+         recTimingRst    => timingRst,
+
+         appTimingClk    => timingClk,
+         appTimingRst    => timingRst,
+
+         appTimingBus    => open,
+         appTimingTrig   => open,
+         dbg             => dbg,
+         dbgi            => dbgi
          );
+         
+      appTimingClk <= timingClk;
+      appTimingRst <= timingRst;
 
 end mapping;

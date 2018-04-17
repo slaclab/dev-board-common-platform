@@ -11,11 +11,12 @@
 #once 000TopLevel.yaml
 #
 #include AxiVersion.yaml
-#include AxiXadc.yaml
 #include AxiSysMonUltraScale.yaml
-#include SsiPrbsTx.yaml
-#include SsiPrbsRx.yaml
-#include AxiStreamFifo.yaml
+#include TimingFrameRx.yaml
+#include TPGMiniCore.yaml
+#include EvrV2CoreTriggers.yaml
+#include GthRxAlignCheck.yaml
+#include Gthe3Channel.yaml
 
 AppReg: &AppReg
   size: 0x00800000
@@ -26,41 +27,18 @@ AppReg: &AppReg
       at: { offset: 0x00000000 }
     AxiSysMonUltraScale:
       <<: *AxiSysMonUltraScale
-      at: { offset: 0x00020000 }
-    GenericMemory:
-      description: Generic Memory Module
-      class:       MMIODev
-      size:        1024
-      at: { offset: 0x00030000, nelms: 256 }
-      children:
-        MemoryArray:
-          description: MemoryArray
-          class:       IntField
-          sizeBits:    32
-          at: { offset: 0x00000000, nelms: 256 }
-    SsiPrbsTx:
-      <<: *SsiPrbsTx
-      at: { offset: 0x00040000 }
-    SsiPrbsRx:
-      <<: *SsiPrbsRx
-      at: { offset: 0x00050000 }
-    AxiStreamFifo:
-      <<: *AxiStreamFifoTx
-      at: { offset: 0x00070000 }
-      <<: *AxiStreamFifoRx
-      at: { offset: 0x00070020 }
+      at: { offset: 0x02000000 }
     IIC:
       class: MMIODev
       size: 0x10000
-      at: { offset: 0x00080000 }
+      at: { offset: 0x03000000 }
       children:
         Tca9548:
           class: IntField
-          sizeBits:  8
+          sizeBits: 8
           at: { offset: 0 }
         Si570:
           class: IntField
-          # Declare as 32-bit so read/write access are collapsed by SRP
           sizeBits: 32
           at: { offset: 0x400, nelms: 256, stride: 4 }
         Pca9544:
@@ -69,10 +47,32 @@ AppReg: &AppReg
           at: { offset: 0x800 }
         SFP:
           class: IntField
-          # Declare as 32-bit so read/write access are collapsed by SRP
           sizeBits: 32
           at: { offset: 0xc00, nelms: 256, stride: 4 }
-       
+    TimingFrameRx:
+      <<: *TimingFrameRx
+      at:
+        offset: 0x04000000
+    ##################################################
+    TPGMiniCore:
+      <<: *TPGMiniCore
+      at:
+        offset: 0x04030000
+    ##################################################
+    Gthe3Channel:
+      <<: *Gthe3Channel
+      at:
+        offset: 0x05000000
+    ##################################################
+    GthRxAlignCheck:
+      <<: *GthRxAlignCheck
+      at:
+        offset: 0x05400000
+    ##################################################      
+    EvrV2CoreTriggers:
+      <<: *EvrV2CoreTriggers
+      at:
+        offset: 0x06000000
 
 #MMIO range, will be attached to FPGA
 mmio: &mmio
@@ -89,19 +89,6 @@ mmio: &mmio
   
 IpAddr: &IpAddr 192.168.2.10
 
-DbgNetIODev:
-  ipAddr: *IpAddr
-  class: NetIODev
-  configPrio: 1
-  children:
-     mmio:
-       <<: *mmio
-       at:
-         SRP:
-           protocolVersion: SRP_UDP_V2
-         UDP:
-           port: 8192
-    
 NetIODev:
   ipAddr: *IpAddr
   class: NetIODev
@@ -115,7 +102,7 @@ NetIODev:
            dynTimeout:      false
            timeoutUS:       800000
          UDP:
-           port: 8193
+           port: 8192
          RSSI:
          depack:
          TDESTMux:
@@ -129,7 +116,7 @@ NetIODev:
            dynTimeout:      false
            timeoutUS:       800000
          UDP:
-           port: 8193
+           port: 8192
          RSSI:
          depack:
          TDESTMux:

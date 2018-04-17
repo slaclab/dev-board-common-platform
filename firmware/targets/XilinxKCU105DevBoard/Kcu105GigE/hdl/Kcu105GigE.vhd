@@ -177,18 +177,21 @@ architecture top_level of Kcu105GigE is
    signal memAxiWriteSlave     : AxiWriteSlaveType;
    signal memAxiReadMaster     : AxiReadMasterType;
    signal memAxiReadSlave      : AxiReadSlaveType;
-
-   signal timingRefDiv2        : sl;
-   signal timingRefClk         : sl := '0';
-   signal timingRefClkDiv2     : sl := '0';
-   signal timingRecClkGt       : sl := '0';
-   signal timingTxUsrClk       : sl := '0';
-   signal timingCdrStable      : sl;
-   signal timingLoopback       : slv(2 downto 0) := "000";
+   
+   signal appTimingClk         : sl;
+   signal appTimingRst         : sl;
 
    constant CNT_LEN_C          : natural := 28;
    signal rxClkCnt             : slv(CNT_LEN_C-1 downto 0) := (others => '0');
    signal txClkCnt             : slv(CNT_LEN_C-1 downto 0) := (others => '0');
+
+   constant NUM_LANE_C         : natural := 1;
+   
+   signal    dmaClk            : slv(NUM_LANE_C-1 downto 0);
+   signal    dmaRst            : slv(NUM_LANE_C-1 downto 0);
+
+   signal    dbg               : slv(1 downto 0);
+   signal    dbgi              : slv(1 downto 0);
 
 
    attribute dont_touch                 : string;
@@ -258,82 +261,6 @@ begin
 
          locked           => sysMmcmLocked
       );
-
-   ---------------------
-   -- Timing Receiver
-   ---------------------
-
-   U_TimingRefClk_IBUFDS : IBUFDS_GTE3
-      generic map (
-         REFCLK_EN_TX_PATH  => '0',
-         REFCLK_HROW_CK_SEL => "01",
-         REFCLK_ICNTL_RX    => "00"
-      )
-      port map (
-         I                => ethClkP,
-         IB               => ethClkN,
-         CEB              => '0',
-         ODIV2            => timingRefDiv2,
-         O                => timingRefClk
-      );
-
-   U_TimingRefClkDiv2_BUFG : BUFG_GT
-      port map (
-         I                => timingRefDiv2,
-         CE               => '1',
-         CEMASK           => '1',
-         CLR              => '0',
-         CLRMASK          => '1',
-         DIV              => "000",
-         O                => timingRefClkDiv2
-      );
-
-   U_TimingGTH : entity work.TimingGthCoreWrapper
-      generic map (
-         TPD_G            => TPD_G,
-         AXIL_BASE_ADDR_G => x"0000_0000"
-      )
-      port map (
-         axilClk          => sysClk156,
-         axilRst          => sysRst156,
-
-         axilReadMaster   => AXI_LITE_READ_MASTER_INIT_C,
-         axilReadSlave    => open,
-         axilWriteMaster  => AXI_LITE_WRITE_MASTER_INIT_C,
-         axilWriteSlave   => open,
-
-         stableClk        => sysClk156,
-
-         gtRefClk         => timingRefClk,
-         gtRefClkDiv2     => timingRefClkDiv2,
-
-         gtRxP            => ethRxP,
-         gtRxN            => ethRxN,
-         gtTxP            => ethTxP,
-         gtTxN            => ethTxN,
-
-         rxControl        => TIMING_PHY_CONTROL_INIT_C,
-         rxStatus         => open,
-         rxUsrClkActive   => '1',
-         rxCdrStable      => timingCdrStable,
-         rxUsrClk         => timingRecClkGt,
-         rxData           => open,
-         rxDataK          => open,
-         rxDispErr        => open,
-         rxDecErr         => open,
-         rxOutClk         => timingRecClkGt,
-
-         txControl        => TIMING_PHY_CONTROL_INIT_C,
-         txStatus         => open,
-         txUsrClk         => timingTxUsrClk,
-         txUsrClkActive   => '1',
-         txData           => x"0000",
-         txDataK          => "00",
-         txOutClk         => timingTxUsrClk,
-         loopback         => timingLoopback
-      );
-
-   timingLoopback(1) <= gpioDip(1);
 
    -- Main clock is derived from the PHY refclock. However,
    -- while it is in reset there is no clock coming in;
@@ -414,6 +341,9 @@ begin
          dataIn    => phyIrqN,
          dataOut   => phyIrq
       );
+      
+   dmaClk <= (others => sysClk156);
+   dmaRst <= (others => sgmiiDmaRst);
 
    U_1GigE_SGMII : entity work.GigEthLVDSUltraScaleWrapper
       generic map (
@@ -431,8 +361,8 @@ begin
          -- Local Configurations
          localMac           => (others => MAC_ADDR_C),
          -- Streaming DMA Interface
-         dmaClk             => (others => sysClk156),
-         dmaRst             => (others => sgmiiDmaRst),
+         dmaClk             => dmaClk,
+         dmaRst             => dmaRst,
          dmaIbMasters       => rxMastersSGMII,
          dmaIbSlaves        => rxSlavesSGMII,
          dmaObMasters       => txMastersSGMII,
@@ -501,8 +431,22 @@ begin
 
          -- IIC Port
          iicScl         => iicScl,
-         iicSda         => iicSda
+         iicSda         => iicSda,
+
+         timingRefClkP  => ethClkP,
+         timingRefClkN  => ethClkN,
+         timingRxP      => ethRxP,
+         timingRxN      => ethRxN,
+         timingTxP      => ethTxP,
+         timingTxN      => ethTxN,
+         appTimingClk   => appTimingClk,
+         appTimingRst   => appTimingRst,
+         dbg            => dbg,
+         dbgi           => dbgi
          );
+
+   dbgi(1) <= '0';
+   dbgi(0) <= gpioDip(1);
 
    U_SrpV3Axi_1 : entity work.SrpV3Axi
       generic map (
@@ -588,19 +532,20 @@ begin
 
    iicMuxRstL <= '1';
 
-   P_CNT_TX : process( timingTxUsrClk ) is
+   P_CNT_RX : process( appTimingClk ) is
    begin
-      if ( rising_edge( timingTxUsrClk ) ) then
+      if ( rising_edge( appTimingClk ) ) then
+         rxClkCnt <= slv( unsigned( rxClkCnt ) + 1 );
+      end if;
+   end process P_CNT_RX;
+
+   P_CNT_TX : process( dbg(1) ) is
+   begin
+      if ( rising_edge( dbg(1) ) ) then
          txClkCnt <= slv( unsigned( txClkCnt ) + 1 );
       end if;
    end process P_CNT_TX;
 
-   P_CNT_RX : process( timingRecClkGt ) is
-   begin
-      if ( rising_edge( timingRecClkGt ) ) then
-         rxClkCnt <= slv( unsigned( rxClkCnt ) + 1 );
-      end if;
-   end process P_CNT_RX;
 
    ----------------
    -- Misc. Signals
@@ -612,7 +557,7 @@ begin
    led(3) <= initDone;
    led(2) <= rxClkCnt( rxClkCnt'left );
    led(1) <= txClkCnt( txClkCnt'left );
-   led(0) <= timingCdrStable;
+   led(0) <= dbg(0);
 
    U_SyncSel : entity work.Synchronizer
       port map (
