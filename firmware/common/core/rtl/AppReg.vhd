@@ -7,11 +7,11 @@
 -- Description:
 -------------------------------------------------------------------------------
 -- This file is part of 'Example Project Firmware'.
--- It is subject to the license terms in the LICENSE.txt file found in the 
--- top-level directory of this distribution and at: 
---    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
--- No part of 'Example Project Firmware', including this file, 
--- may be copied, modified, propagated, or distributed except according to 
+-- It is subject to the license terms in the LICENSE.txt file found in the
+-- top-level directory of this distribution and at:
+--    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+-- No part of 'Example Project Firmware', including this file,
+-- may be copied, modified, propagated, or distributed except according to
 -- the terms contained in the LICENSE.txt file.
 -------------------------------------------------------------------------------
 
@@ -88,7 +88,7 @@ architecture mapping of AppReg is
    constant SHARED_MEM_WIDTH_C : positive                           := 10;
    constant IRQ_ADDR_C         : slv(SHARED_MEM_WIDTH_C-1 downto 0) := (others => '1');
 
-   constant NUM_AXI_MASTERS_C : natural := 7;
+   constant NUM_AXI_MASTERS_C : natural := 8;
 
    constant VERSION_INDEX_C : natural := 0;
    constant XADC_INDEX_C    : natural := 1;
@@ -97,14 +97,15 @@ architecture mapping of AppReg is
    constant TIMCORE_INDEX_C : natural := 4;
    constant TIM_GTH_INDEX_C : natural := 5;
    constant TIM_TRG_INDEX_C : natural := 6;
+   constant TCLKSWI_INDEX_C : natural := 7;
 
-   constant AXI_CROSSBAR_MASTERS_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := 
+   constant AXI_CROSSBAR_MASTERS_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) :=
       genAxiLiteConfig( NUM_AXI_MASTERS_C, AXIL_BASE_ADDR_G, 28, 24 );
 
 
-   signal mAxilWriteMaster  : AxiLiteWriteMasterType;
+   signal mAxilWriteMaster  : AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
    signal mAxilWriteSlave   : AxiLiteWriteSlaveType;
-   signal mAxilReadMaster   : AxiLiteReadMasterType;
+   signal mAxilReadMaster   : AxiLiteReadMasterType  := AXI_LITE_READ_MASTER_INIT_C;
    signal mAxilReadSlave    : AxiLiteReadSlaveType;
 
    signal mAxilWriteMasters : AxiLiteWriteMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
@@ -130,7 +131,7 @@ architecture mapping of AppReg is
    signal timingRxControl   : TimingPhyControlType;
    signal timingRxStatus    : TimingPhyStatusType := TIMING_PHY_STATUS_INIT_C;
    signal timingTxStatus    : TimingPhyStatusType := TIMING_PHY_STATUS_INIT_C;
-   signal timingTxReset     : sl;
+   signal timingTxRstAsync  : sl;
 
    signal timingBus         : TimingBusType;
    signal exptBus           : ExptBusType;
@@ -146,11 +147,16 @@ architecture mapping of AppReg is
       3 => (MakeI2cAxiLiteDevType("1010000", 8, 8, '1')) -- SFP 0/1
    );
 
+   constant TCASW_AXIL_BASE_ADDR_C : slv(31 downto 0) :=
+         unsigned(AXI_CROSSBAR_MASTERS_CONFIG_C(IIC_MAS_INDEX_C).baseAddr) + 0*1024;
+   constant SI570_AXIL_BASE_ADDR_C : slv(31 downto 0) :=
+         unsigned(AXI_CROSSBAR_MASTERS_CONFIG_C(IIC_MAS_INDEX_C).baseAddr) + 1*1024;
+
 begin
 
    ---------------------------
    -- AXI-Lite Crossbar Module
-   ---------------------------         
+   ---------------------------
    U_XBAR : entity work.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
@@ -176,7 +182,7 @@ begin
 
    ---------------------------
    -- AXI-Lite: Version Module
-   ---------------------------            
+   ---------------------------
    U_AxiVersion : entity work.AxiVersion
       generic map (
          TPD_G            => TPD_G,
@@ -298,7 +304,7 @@ begin
          gtRxDecErr          => timingRxPhy.decErr,
          gtRxControl         => timingRxControl,
          gtRxStatus          => timingRxStatus,
-         gtTxReset           => timingTxReset,
+         gtTxReset           => open, -- not useful; if the TX is reset the TPGMini regs dont' work
          gtLoopback          => timingLoopbackSel,
 
          timingPhy           => timingTxPhy,
@@ -352,11 +358,11 @@ begin
          evrModeSel          => appTimingMode
       );
 
-   P_TIMING_PHY : process( timingTxPhy, dbgi(0) ) is
+   P_TIMING_PHY : process( timingTxPhy, dbgi(0), timingTxRstAsync ) is
       variable v : TimingPhyType;
    begin
       v                  := timingTxPhy;
-      v.control.pllReset := dbgi(0);
+      v.control.pllReset := dbgi(0) or timingTxRstAsync;
 
       timingTxPhyLoc     <= v;
    end process P_TIMING_PHY;
@@ -436,6 +442,32 @@ begin
       timingTxUsrRst <= not(timingTxStatus.resetDone);
       timingRecRst   <= not(timingRxStatus.resetDone);
 
+      U_TimingClkSwitcher : entity work.TimingClkSwitcher
+         generic map (
+            TPD_G                  => TPD_G,
+            SI570_AXIL_BASE_ADDR_G => SI570_AXIL_BASE_ADDR_C,
+            TCASW_AXIL_BASE_ADDR_G => TCASW_AXIL_BASE_ADDR_C,
+            AXIL_FREQ_G            => AXIL_CLK_FRQ_G
+         )
+         port map (
+            axilClk                => clk,
+            axilRst                => rst,
+
+            clkSel                 => timingClkSel, -- timingClkSel already in AXIL domain
+
+            txRst                  => timingTxRstAsync,
+
+            mAxilReadMaster        => mAxilReadMaster,
+            mAxilReadSlave         => mAxilReadSlave,
+            mAxilWriteMaster       => mAxilWriteMaster,
+            mAxilWriteSlave        => mAxilWriteSlave,
+
+            sAxilReadMaster        => mAxilReadMasters (TCLKSWI_INDEX_C),
+            sAxilReadSlave         => mAxilReadSlaves  (TCLKSWI_INDEX_C),
+            sAxilWriteMaster       => mAxilWriteMasters(TCLKSWI_INDEX_C),
+            sAxilWriteSlave        => mAxilWriteSlaves (TCLKSWI_INDEX_C)
+          );
+
    end generate;
 
    NO_GEN_TIMING_GTH : if (not GEN_TIMING_GTH_G) generate
@@ -485,6 +517,8 @@ begin
 
    timingRecClk             <= timingTxUsrClk;
    timingRecRst             <= timingTxUsrRst;
+
+   timingTxRstAsync         <= '0';
 
    end generate;
 

@@ -4,14 +4,14 @@
 -- Created    : 2015-01-30
 -- Last update: 2017-03-17
 -------------------------------------------------------------------------------
--- Description: 
+-- Description:
 -------------------------------------------------------------------------------
 -- This file is part of 'Example Project Firmware'.
--- It is subject to the license terms in the LICENSE.txt file found in the 
--- top-level directory of this distribution and at: 
---    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
--- No part of 'Example Project Firmware', including this file, 
--- may be copied, modified, propagated, or distributed except according to 
+-- It is subject to the license terms in the LICENSE.txt file found in the
+-- top-level directory of this distribution and at:
+--    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+-- No part of 'Example Project Firmware', including this file,
+-- may be copied, modified, propagated, or distributed except according to
 -- the terms contained in the LICENSE.txt file.
 -------------------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ entity EthPortMapping is
    generic (
       TPD_G           : time             := 1 ns;
       CLK_FREQUENCY_G : real             := 125.0E+6;
-      MAC_ADDR_G      : slv(47 downto 0) := x"010300564400";  -- 00:44:56:00:03:01 (ETH only)   
+      MAC_ADDR_G      : slv(47 downto 0) := x"010300564400";  -- 00:44:56:00:03:01 (ETH only)
       IP_ADDR_G       : slv(31 downto 0) := x"0A02A8C0";  -- 192.168.2.10 (ETH only)
       DHCP_G          : boolean          := true;
       JUMBO_G         : boolean          := false;
@@ -111,7 +111,7 @@ architecture mapping of EthPortMapping is
 
    signal spliceSOF       : AxiStreamMasterType;
 
-   constant USE_JTAG_C    : boolean := false;
+   constant USE_JTAG_C    : boolean := true;
 
 begin
 
@@ -191,7 +191,7 @@ begin
          mTspAxisSlave_i   => ibServerSlaves(0));
 
    ---------------------------------------
-   -- TDEST = 0x0: Register access control   
+   -- TDEST = 0x0: Register access control
    ---------------------------------------
    U_SRPv3 : entity work.SrpV3AxiLite
       generic map (
@@ -200,7 +200,7 @@ begin
          GEN_SYNC_FIFO_G     => true,
          AXI_STREAM_CONFIG_G => AXIS_CONFIG_C(0))
       port map (
-         -- Streaming Slave (Rx) Interface (sAxisClk domain) 
+         -- Streaming Slave (Rx) Interface (sAxisClk domain)
          sAxisClk         => clk,
          sAxisRst         => rst,
          sAxisMaster      => rssiObMasters(0),
@@ -219,7 +219,7 @@ begin
          mAxilWriteSlave  => axilWriteSlave);
 
    --------------------------
-   -- TDEST = 0x1: TX/RX PBRS   
+   -- TDEST = 0x1: TX/RX PBRS
    --------------------------
    rssiIbMasters(1) <= pbrsTxMaster;
    pbrsTxSlave      <= rssiIbSlaves(1);
@@ -235,7 +235,7 @@ begin
    rssiObSlaves(2)  <= hlsRxSlave;
 
    --------------------------
-   -- TDEST = 0x3: TX/RX PBRS   
+   -- TDEST = 0x3: TX/RX PBRS
    --------------------------
    rssiIbMasters(3) <= mbTxMaster;
    mbTxSlave        <= rssiIbSlaves(3);
@@ -249,7 +249,7 @@ begin
    rssiObSlaves(4)  <= appRxSlave;
 
    ------------------------------
-   -- Terminate Unused interfaces  
+   -- Terminate Unused interfaces
    ------------------------------
    rssiObSlaves(3) <= AXI_STREAM_SLAVE_FORCE_C;
    rxCtrl          <= AXI_STREAM_CTRL_UNUSED_C;
@@ -262,22 +262,15 @@ begin
       ibServerMasters(1)  <= v;
    end process P_SPLICE;
 
-   NO_JTAG  : if ( not USE_JTAG_C ) generate
-
-   spliceSOF          <= AXI_STREAM_MASTER_INIT_C;
-   obServerSlaves(1)  <= AXI_STREAM_SLAVE_FORCE_C;
-
-   end generate;
-
    GEN_JTAG : if ( USE_JTAG_C ) generate
 
-   U_AxisBscan : entity work.AxisDebugBridge
+   U_AxisBscan : entity work.AxisJtagDebugBridge(AxisJtagDebugBridgeImpl)
       generic map (
          TPD_G        => TPD_G,
          AXIS_WIDTH_G => EMAC_AXIS_CONFIG_C.TDATA_BYTES_C,
          AXIS_FREQ_G  => CLK_FREQUENCY_G,
          CLK_DIV2_G   => 5,
-         MEM_DEPTH_G  => (2048/EMAC_AXIS_CONFIG_C.TDATA_BYTES_C) 
+         MEM_DEPTH_G  => (2048/EMAC_AXIS_CONFIG_C.TDATA_BYTES_C)
       )
       port map (
          axisClk      => clk,
@@ -285,11 +278,35 @@ begin
 
          mAxisReq     => obServerMasters(1),
          sAxisReq     => obServerSlaves(1),
- 
+
          mAxisTdo     => spliceSOF,
          sAxisTdo     => ibServerSlaves(1)
       );
 
    end generate;
+
+   GEN_JTAG_STUB : if ( not USE_JTAG_C ) generate
+
+   U_AxisBscan : entity work.AxisJtagDebugBridge(AxisJtagDebugBridgeStub)
+      generic map (
+         TPD_G        => TPD_G,
+         AXIS_WIDTH_G => EMAC_AXIS_CONFIG_C.TDATA_BYTES_C,
+         AXIS_FREQ_G  => CLK_FREQUENCY_G,
+         CLK_DIV2_G   => 5,
+         MEM_DEPTH_G  => (2048/EMAC_AXIS_CONFIG_C.TDATA_BYTES_C)
+      )
+      port map (
+         axisClk      => clk,
+         axisRst      => rst,
+
+         mAxisReq     => obServerMasters(1),
+         sAxisReq     => obServerSlaves(1),
+
+         mAxisTdo     => spliceSOF,
+         sAxisTdo     => ibServerSlaves(1)
+      );
+
+   end generate;
+
 
 end mapping;
