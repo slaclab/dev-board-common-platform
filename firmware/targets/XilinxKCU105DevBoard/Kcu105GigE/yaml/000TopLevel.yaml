@@ -73,6 +73,54 @@ AppReg: &AppReg
       <<: *EvrV2CoreTriggers
       at:
         offset: 0x06000000
+    LocReg:
+      class:    MMIODev
+      size:     0x1000
+      at:
+        offset: 0x07000000
+      children:
+        RFREQRef:
+          class: IntField
+          description: Si570 Freq. Multiplier; Factory calibration
+          sizeBits: 64
+          mode: RO
+          at:
+            offset: 0x00
+        RFREQLcls1:
+          class: IntField
+          description: Si570 Freq. Multiplier for LCLS1 Timing
+          sizeBits: 64
+          mode: RO
+          at:
+            offset: 0x08
+        RFREQLcls2:
+          class: IntField
+          description: Si570 Freq. Multiplier for LCLS2 Timing
+          sizeBits: 64
+          mode: RO
+          at:
+            offset: 0x10
+        TimingTxReset:
+          description: Reset Timing GTH Transmitter
+          class:    IntField
+          sizeBits: 1
+          lsBit:    1
+          enums:
+            - {name: Run,   value: 0}
+            - {name: Reset, value: 1}
+          at:
+            offset: 0x100
+        Si570NewFreq:
+          description: "Clear Si570 lock bit and set 'New Freq' in < 10ms"
+          class:    IntField
+          sizeBits: 1
+          lsBit:    0
+          enums:
+            - {name: Ready,   value: 0}
+            - {name: NewFreq, value: 1}
+          at:
+            offset: 0x100
+       
 
 #MMIO range, will be attached to FPGA
 mmio: &mmio
@@ -102,7 +150,7 @@ NetIODev:
            dynTimeout:      false
            timeoutUS:       800000
          UDP:
-           port: 8192
+           port: 8193
          RSSI:
          depack:
          TDESTMux:
@@ -116,7 +164,7 @@ NetIODev:
            dynTimeout:      false
            timeoutUS:       800000
          UDP:
-           port: 8192
+           port: 8193
          RSSI:
          depack:
          TDESTMux:

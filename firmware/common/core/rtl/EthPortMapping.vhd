@@ -32,7 +32,12 @@ entity EthPortMapping is
       IP_ADDR_G       : slv(31 downto 0) := x"0A02A8C0";  -- 192.168.2.10 (ETH only)
       DHCP_G          : boolean          := true;
       JUMBO_G         : boolean          := false;
-      APP_STRM_CFG_G  : AxiStreamConfigType);
+      RSSI_SIZE_G     : natural          := 0;
+      RSSI_STRM_CFG_G : AxiStreamConfigArray;
+      RSSI_ROUTES_G   : Slv8Array;
+      UDP_SRV_SIZE_G  : natural          := 0;
+      UDP_SRV_PORTS_G : PositiveArray
+   );
    port (
       -- Clock and Reset
       clk             : in  sl;
@@ -43,24 +48,16 @@ entity EthPortMapping is
       rxMaster        : in  AxiStreamMasterType;
       rxSlave         : out AxiStreamSlaveType;
       rxCtrl          : out AxiStreamCtrlType;
-      -- PBRS Interface
-      pbrsTxMaster    : in  AxiStreamMasterType;
-      pbrsTxSlave     : out AxiStreamSlaveType;
-      pbrsRxMaster    : out AxiStreamMasterType;
-      pbrsRxSlave     : in  AxiStreamSlaveType;
-      -- HLS Interface
-      hlsTxMaster     : in  AxiStreamMasterType;
-      hlsTxSlave      : out AxiStreamSlaveType;
-      hlsRxMaster     : out AxiStreamMasterType;
-      hlsRxSlave      : in  AxiStreamSlaveType;
-      -- App Interface
-      appTxMaster     : in  AxiStreamMasterType;
-      appTxSlave      : out AxiStreamSlaveType;
-      appRxMaster     : out AxiStreamMasterType;
-      appRxSlave      : in  AxiStreamSlaveType;
-      -- MB Interface
-      mbTxMaster      : in  AxiStreamMasterType;
-      mbTxSlave       : out AxiStreamSlaveType;
+      -- RSSI Streams
+      rssiIbMasters   : in  AxiStreamMasterArray(RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+      rssiIbSlaves    : out AxiStreamSlaveArray (RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
+      rssiObMasters   : out AxiStreamMasterArray(RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+      rssiObSlaves    : in  AxiStreamSlaveArray (RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
+      -- UDP Streams
+      udpIbMasters    : in  AxiStreamMasterArray(UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+      udpIbSlaves     : out AxiStreamSlaveArray (UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
+      udpObMasters    : out AxiStreamMasterArray(UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+      udpObSlaves     : in  AxiStreamSlaveArray (UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
       -- AXI-Lite Interface
       axilWriteMaster : out AxiLiteWriteMasterType;
       axilWriteSlave  : in  AxiLiteWriteSlaveType;
@@ -70,14 +67,31 @@ end EthPortMapping;
 
 architecture mapping of EthPortMapping is
 
-   constant MB_STREAM_CONFIG_C : AxiStreamConfigType := (
-      TSTRB_EN_C    => false,
-      TDATA_BYTES_C => 4,
-      TDEST_BITS_C  => 4,
-      TID_BITS_C    => 4,
-      TKEEP_MODE_C  => TKEEP_NORMAL_C,
-      TUSER_BITS_C  => 4,
-      TUSER_MODE_C  => TUSER_LAST_C);
+   -- assume descending arrays with right index 0
+   function cat(a,b : PositiveArray) return PositiveArray is
+      variable c : PositiveArray(a'length+b'length-1 downto 0);
+   begin
+      c(a'range)                := a;
+      c(c'left-1 downto a'left) := b;
+      return c;
+   end function cat;
+
+   function cat(a,b : AxiStreamConfigArray) return AxiStreamConfigArray is
+      variable c : AxiStreamConfigArray(a'length+b'length-1 downto 0);
+   begin
+      c(a'range)                := a;
+      c(c'left-1 downto a'left) := b;
+      return c;
+   end function cat;
+
+   function cat(a,b : Slv8Array) return Slv8Array is
+      variable c : Slv8Array(a'length+b'length-1 downto 0);
+   begin
+      c(a'range)                := a;
+      c(c'left-1 downto a'left) := b;
+      return c;
+   end function cat;
+
 
    constant JTAG_AXIS_CONFIG_C : AxiStreamConfigType := (
       TSTRB_EN_C    => false,
@@ -88,31 +102,40 @@ architecture mapping of EthPortMapping is
       TUSER_BITS_C  => 0,
       TUSER_MODE_C  => TUSER_NONE_C);
 
-   constant NUM_SERVERS_C  : integer                                 := 2;
-   constant SERVER_PORTS_C : PositiveArray(NUM_SERVERS_C-1 downto 0) := (0 => 8192, 1 => 2542);
+   constant NUM_INT_SERVERS_C  : integer                                     := 2;
+   constant INT_SERVER_PORTS_C : PositiveArray(NUM_INT_SERVERS_C-1 downto 0) := (0 => 8193, 1 => 2542);
+   constant NUM_SERVERS_C      : integer                                     := NUM_INT_SERVERS_C + UDP_SRV_SIZE_G;
+   constant SERVER_PORTS_C     : PositiveArray(NUM_SERVERS_C-1 downto 0)     :=
+      cat(INT_SERVER_PORTS_C, UDP_SRV_PORTS_G);
 
-   constant RSSI_SIZE_C : positive := 5;
-   constant AXIS_CONFIG_C : AxiStreamConfigArray(RSSI_SIZE_C-1 downto 0) := (
-      0 => ssiAxiStreamConfig(4),
-      1 => ssiAxiStreamConfig(4),
-      2 => ssiAxiStreamConfig(4),
-      3 => MB_STREAM_CONFIG_C,
-      4 => APP_STRM_CFG_G);
+   constant INT_RSSI_SIZE_C : positive := 1;
+   constant RSSI_SIZE_C     : positive := RSSI_SIZE_G + INT_RSSI_SIZE_C;
+   constant SRP_RSSI_CFG_C  : AxiStreamConfigArray(INT_RSSI_SIZE_C - 1 downto 0) := (
+      0 => ssiAxiStreamConfig(4)
+   );
+   constant AXIS_CONFIG_C : AxiStreamConfigArray(RSSI_SIZE_C-1 downto 0) :=
+      cat( SRP_RSSI_CFG_C, RSSI_STRM_CFG_G );
+
+   constant INT_RSSI_ROUTES_C : Slv8Array(INT_RSSI_SIZE_C - 1 downto 0) := (
+      0 => x"00"
+   );
+   constant RSSI_ROUTES_C : Slv8Array(RSSI_SIZE_C-1 downto 0) :=
+      cat( INT_RSSI_ROUTES_C, RSSI_ROUTES_G );
 
    signal ibServerMasters : AxiStreamMasterArray(NUM_SERVERS_C-1 downto 0);
    signal ibServerSlaves  : AxiStreamSlaveArray(NUM_SERVERS_C-1 downto 0);
    signal obServerMasters : AxiStreamMasterArray(NUM_SERVERS_C-1 downto 0);
    signal obServerSlaves  : AxiStreamSlaveArray(NUM_SERVERS_C-1 downto 0);
 
-   signal rssiIbMasters   : AxiStreamMasterArray(RSSI_SIZE_C-1 downto 0);
-   signal rssiIbSlaves    : AxiStreamSlaveArray(RSSI_SIZE_C-1 downto 0);
-   signal rssiObMasters   : AxiStreamMasterArray(RSSI_SIZE_C-1 downto 0);
-   signal rssiObSlaves    : AxiStreamSlaveArray(RSSI_SIZE_C-1 downto 0);
+   signal rssiIbMastersLoc: AxiStreamMasterArray(RSSI_SIZE_C-1 downto 0);
+   signal rssiIbSlavesLoc : AxiStreamSlaveArray(RSSI_SIZE_C-1 downto 0);
+   signal rssiObMastersLoc: AxiStreamMasterArray(RSSI_SIZE_C-1 downto 0);
+   signal rssiObSlavesLoc : AxiStreamSlaveArray(RSSI_SIZE_C-1 downto 0);
 
    signal spliceSOF       : AxiStreamMasterType;
 
    constant USE_JTAG_C    : boolean := true;
-
+   
 begin
 
    ----------------------
@@ -151,7 +174,7 @@ begin
          rst             => rst);
 
    ------------------------------------------
-   -- Software's RSSI Server Interface @ 8192
+   -- Software's RSSI Server Interface @ 8193
    ------------------------------------------
    U_RssiServer : entity work.RssiCoreWrapper
       generic map (
@@ -159,12 +182,7 @@ begin
          MAX_SEG_SIZE_G      => 1024,
          SEGMENT_ADDR_SIZE_G => 7,
          APP_STREAMS_G       => RSSI_SIZE_C,
-         APP_STREAM_ROUTES_G => (
-            0                => X"00",
-            1                => X"01",
-            2                => X"02",
-            3                => X"03",
-            4                => X"04"),
+         APP_STREAM_ROUTES_G => RSSI_ROUTES_C,
          CLK_FREQUENCY_G     => CLK_FREQUENCY_G,
          TIMEOUT_UNIT_G      => 1.0E-3,  -- In units of seconds
          SERVER_G            => true,
@@ -180,10 +198,10 @@ begin
          rst_i             => rst,
          openRq_i          => '1',
          -- Application Layer Interface
-         sAppAxisMasters_i => rssiIbMasters,
-         sAppAxisSlaves_o  => rssiIbSlaves,
-         mAppAxisMasters_o => rssiObMasters,
-         mAppAxisSlaves_i  => rssiObSlaves,
+         sAppAxisMasters_i => rssiIbMastersLoc,
+         sAppAxisSlaves_o  => rssiIbSlavesLoc,
+         mAppAxisMasters_o => rssiObMastersLoc,
+         mAppAxisSlaves_i  => rssiObSlavesLoc,
          -- Transport Layer Interface
          sTspAxisMaster_i  => obServerMasters(0),
          sTspAxisSlave_o   => obServerSlaves(0),
@@ -203,13 +221,13 @@ begin
          -- Streaming Slave (Rx) Interface (sAxisClk domain)
          sAxisClk         => clk,
          sAxisRst         => rst,
-         sAxisMaster      => rssiObMasters(0),
-         sAxisSlave       => rssiObSlaves(0),
+         sAxisMaster      => rssiObMastersLoc(0),
+         sAxisSlave       => rssiObSlavesLoc(0),
          -- Streaming Master (Tx) Data Interface (mAxisClk domain)
          mAxisClk         => clk,
          mAxisRst         => rst,
-         mAxisMaster      => rssiIbMasters(0),
-         mAxisSlave       => rssiIbSlaves(0),
+         mAxisMaster      => rssiIbMastersLoc(0),
+         mAxisSlave       => rssiIbSlavesLoc(0),
          -- Master AXI-Lite Interface (axilClk domain)
          axilClk          => clk,
          axilRst          => rst,
@@ -218,41 +236,20 @@ begin
          mAxilWriteMaster => axilWriteMaster,
          mAxilWriteSlave  => axilWriteSlave);
 
-   --------------------------
-   -- TDEST = 0x1: TX/RX PBRS
-   --------------------------
-   rssiIbMasters(1) <= pbrsTxMaster;
-   pbrsTxSlave      <= rssiIbSlaves(1);
-   pbrsRxMaster     <= rssiObMasters(1);
-   rssiObSlaves(1)  <= pbrsRxSlave;
+   GEN_MAP_1 : for i in RSSI_SIZE_G - 1 downto 0 generate
+      rssiIbMastersLoc(i + INT_RSSI_SIZE_C) <= rssiIbMasters(i);
+      rssiIbSlaves(i)                       <= rssiIbSlavesLoc (i + INT_RSSI_SIZE_C);
+      rssiObMasters(i)                      <= rssiObMastersLoc(i + INT_RSSI_SIZE_C);
+      rssiObSlavesLoc(i + INT_RSSI_SIZE_C)  <= rssiObSlaves(i);
+   end generate;
 
-   ------------------------
-   -- TDEST = 0x2: HLS AXIS
-   ------------------------
-   rssiIbMasters(2) <= hlsTxMaster;
-   hlsTxSlave       <= rssiIbSlaves(2);
-   hlsRxMaster      <= rssiObMasters(2);
-   rssiObSlaves(2)  <= hlsRxSlave;
+   GEN_MAP_2 : for i in UDP_SRV_SIZE_G - 1 downto 0 generate
+      obServerMasters(i + NUM_INT_SERVERS_C) <= udpIbMasters(i);
+      udpIbSlaves(i)                         <= obServerSlaves  (i + NUM_INT_SERVERS_C);
+      udpObMasters(i)                        <= ibServerMasters (i + NUM_INT_SERVERS_C);
+      ibServerSlaves(i + NUM_INT_SERVERS_C)  <= udpObSlaves(i);
+   end generate;
 
-   --------------------------
-   -- TDEST = 0x3: TX/RX PBRS
-   --------------------------
-   rssiIbMasters(3) <= mbTxMaster;
-   mbTxSlave        <= rssiIbSlaves(3);
-
-   --------------------------
-   -- TDEST = 0x4: APP Stream
-   --------------------------
-   rssiIbMasters(4) <= appTxMaster;
-   appTxSlave       <= rssiIbSlaves(4);
-   appRxMaster      <= rssiObMasters(4);
-   rssiObSlaves(4)  <= appRxSlave;
-
-   ------------------------------
-   -- Terminate Unused interfaces
-   ------------------------------
-   rssiObSlaves(3) <= AXI_STREAM_SLAVE_FORCE_C;
-   rxCtrl          <= AXI_STREAM_CTRL_UNUSED_C;
 
    P_SPLICE : process(spliceSOF)
       variable v : AxiStreamMasterType;

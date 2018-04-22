@@ -87,6 +87,15 @@ architecture mapping of AppCore is
    signal timingClk         : sl;
    signal timingRst         : sl;
 
+   constant RSSI_SIZE_C     : positive := 1;
+   constant RSSI_STRM_CFG_C : AxiStreamConfigArray(RSSI_SIZE_C - 1 downto 0) := (
+      0 => APP_STRM_CFG_G
+   );
+
+   constant RSSI_ROUTES_C   : Slv8Array(RSSI_SIZE_C - 1 downto 0) := (
+      0 => x"04"
+   );
+
 begin
 
    GEN_ETH : if (APP_TYPE_G = "ETH") generate
@@ -100,7 +109,12 @@ begin
             IP_ADDR_G       => IP_ADDR_G,
             DHCP_G          => DHCP_G,
             JUMBO_G         => JUMBO_G,
-            APP_STRM_CFG_G  => APP_STRM_CFG_G)
+            RSSI_SIZE_G     => RSSI_SIZE_C,
+            RSSI_STRM_CFG_G => RSSI_STRM_CFG_C,
+            RSSI_ROUTES_G   => RSSI_ROUTES_C,
+            UDP_SRV_SIZE_G  => 1,
+            UDP_SRV_PORTS_G => (0 => 8197)
+         )
          port map (
             -- Clock and Reset
             clk             => clk,
@@ -111,29 +125,22 @@ begin
             rxMaster        => rxMasters(0),
             rxSlave         => rxSlaves(0),
             rxCtrl          => rxCtrl(0),
-            -- PBRS Interface
-            pbrsTxMaster    => AXI_STREAM_MASTER_INIT_C,
-            pbrsTxSlave     => open,
-            pbrsRxMaster    => open,
-            pbrsRxSlave     => AXI_STREAM_SLAVE_FORCE_C,
-            -- HLS Interface
-            hlsTxMaster     => AXI_STREAM_MASTER_INIT_C,
-            hlsTxSlave      => open,
-            hlsRxMaster     => open,
-            hlsRxSlave      => AXI_STREAM_SLAVE_FORCE_C,
-            -- App Interface
-            appTxMaster     => obTimingEthMaster,
-            appTxSlave      => obTimingEthSlave,
-            appRxMaster     => ibTimingEthMaster,
-            appRxSlave      => ibTimingEthSlave,
+            -- RSSI Interface
+            rssiIbMasters(0)=> appTxMaster,
+            rssiIbSlaves(0) => appTxSlave,
+            rssiObMasters(0)=> appRxMaster,
+            rssiObSlaves(0) => appRxSlave,
+            -- UDP Interface
+            udpIbMasters(0) => obTimingEthMaster,
+            udpIbSlaves(0)  => obTimingEthSlave,
+            udpObMasters(0) => ibTimingEthMaster,
+            udpObSlaves(0)  => ibTimingEthSlave,
             -- AXI-Lite interface
             axilWriteMaster => axilWriteMaster,
             axilWriteSlave  => axilWriteSlave,
             axilReadMaster  => axilReadMaster,
-            axilReadSlave   => axilReadSlave,
-            -- Microblaze stream
-            mbTxMaster      => AXI_STREAM_MASTER_INIT_C,
-            mbTxSlave       => open);
+            axilReadSlave   => axilReadSlave
+         );
 
    end generate;
 
