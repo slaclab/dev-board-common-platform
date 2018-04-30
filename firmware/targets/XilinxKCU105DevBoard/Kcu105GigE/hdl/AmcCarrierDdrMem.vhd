@@ -78,7 +78,7 @@ end AmcCarrierDdrMem;
 
 architecture mapping of AmcCarrierDdrMem is
 
-   constant AXI_NBYTES_C : natural := 4;
+   constant AXI_NBYTES_C : natural := 64;
 
    constant AXI_CONFIG_C : AxiConfigType := (
       ADDR_WIDTH_C => 31,

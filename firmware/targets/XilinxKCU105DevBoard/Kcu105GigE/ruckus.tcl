@@ -19,7 +19,7 @@ if { [llength [get_ips ddr4_0]] == 0 } {
 		CONFIG.C0.DDR4_AxiSelection     {true} \
 		CONFIG.C0.DDR4_CasLatency       {11} \
 		CONFIG.C0.DDR4_CasWriteLatency  {11} \
-		CONFIG.C0.DDR4_AxiDataWidth     {32} \
+		CONFIG.C0.DDR4_AxiDataWidth     {512} \
 		CONFIG.C0.DDR4_AxiAddressWidth  {31} \
 		CONFIG.C0.BANK_GROUP_WIDTH      {1} \
 		CONFIG.Debug_Signal             {Enable} \
