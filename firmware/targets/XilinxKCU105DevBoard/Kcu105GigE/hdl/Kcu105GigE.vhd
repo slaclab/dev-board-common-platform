@@ -164,10 +164,10 @@ architecture top_level of Kcu105GigE is
    signal phyIrq        : sl;
    signal phyMdi        : sl;
 
-   signal appTxMaster   : AxiStreamMasterType;
+   signal appTxMaster   : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
    signal appRxMaster   : AxiStreamMasterType;
    signal appTxSlave    : AxiStreamSlaveType;
-   signal appRxSlave    : AxiStreamSlaveType;
+   signal appRxSlave    : AxiStreamSlaveType  := AXI_STREAM_SLAVE_FORCE_C;
 
    signal initDone      : sl := '0';
 
@@ -177,7 +177,7 @@ architecture top_level of Kcu105GigE is
    signal memAxiWriteSlave     : AxiWriteSlaveType;
    signal memAxiReadMaster     : AxiReadMasterType;
    signal memAxiReadSlave      : AxiReadSlaveType;
-   
+
    signal appTimingClk         : sl;
    signal appTimingRst         : sl;
 
@@ -186,7 +186,7 @@ architecture top_level of Kcu105GigE is
    signal txClkCnt             : slv(CNT_LEN_C-1 downto 0) := (others => '0');
 
    constant NUM_LANE_C         : natural := 1;
-   
+
    signal    dmaClk            : slv(NUM_LANE_C-1 downto 0);
    signal    dmaRst            : slv(NUM_LANE_C-1 downto 0);
 
@@ -341,7 +341,7 @@ begin
          dataIn    => phyIrqN,
          dataOut   => phyIrq
       );
-      
+
    dmaClk <= (others => sysClk156);
    dmaRst <= (others => sgmiiDmaRst);
 
@@ -419,6 +419,14 @@ begin
          rxMasters      => muxedSignals.rxMasters,
          rxSlaves       => muxedSignals.rxSlaves,
 
+         -- AXI Memory Interface
+         axiClk         => axiClk,                              -- [in]
+         axiRst         => axiRst,                              -- [in]
+         axiWriteMaster => memAxiWriteMaster,                   -- [out]
+         axiWriteSlave  => memAxiWriteSlave,                    -- [in]
+         axiReadMaster  => memAxiReadMaster,                    -- [out]
+         axiReadSlave   => memAxiReadSlave,
+
          -- App Stream Interface
          appTxMaster    => appTxMaster,    -- in  AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
          appTxSlave     => appTxSlave,     -- out AxiStreamSlaveType;
@@ -448,41 +456,7 @@ begin
    dbgi(1) <= '0';
    dbgi(0) <= gpioDip(1);
 
-   U_SrpV3Axi_1 : entity work.SrpV3Axi
-      generic map (
-         TPD_G               => TPD_G,
-         PIPE_STAGES_G       => 1,
-         FIFO_PAUSE_THRESH_G => 128,
-         TX_VALID_THOLD_G    => 256,-- Pre-cache threshold set 256 out of 512 (prevent holding the ETH link during AXI-lite transactions)
-         SLAVE_READY_EN_G    => true,
-         GEN_SYNC_FIFO_G     => false,
-         AXI_CLK_FREQ_G      => 200.0E+6,
-         AXI_CONFIG_G        => MEM_AXI_CONFIG_C,
---          AXI_BURST_G         => AXI_BURST_G,
---          AXI_CACHE_G         => AXI_CACHE_G,
-         ACK_WAIT_BVALID_G   => false,
-         AXI_STREAM_CONFIG_G => AXI_STRM_CONFIG_C,
-         UNALIGNED_ACCESS_G  => false,
-         BYTE_ACCESS_G       => false,
-         WRITE_EN_G          => true,
-         READ_EN_G           => true)
-      port map (
-         sAxisClk       => sysClk156,                           -- [in]
-         sAxisRst       => sysRst156,                           -- [in]
-         sAxisMaster    => appRxMaster,                         -- [in]
-         sAxisSlave     => appRxSlave,                          -- [out]
-         sAxisCtrl      => open,                                -- [out]
-         mAxisClk       => sysClk156,                           -- [in]
-         mAxisRst       => sysRst156,                           -- [in]
-         mAxisMaster    => appTxMaster,                         -- [out]
-         mAxisSlave     => appTxSlave,                          -- [in]
 
-         axiClk         => axiClk,                              -- [in]
-         axiRst         => axiRst,                              -- [in]
-         axiWriteMaster => memAxiWriteMaster,                   -- [out]
-         axiWriteSlave  => memAxiWriteSlave,                    -- [in]
-         axiReadMaster  => memAxiReadMaster,                    -- [out]
-         axiReadSlave   => memAxiReadSlave);                    -- [in]
 
    U_DdrMem : entity work.AmcCarrierDdrMem
    port map (
@@ -573,7 +547,49 @@ begin
 
    U_ila     : component Ila_256
       port map (
-         clk          => sysClk156
+         clk                  => axiClk,
+         probe0(31 downto  0) => memAxiReadMaster.araddr(31 downto 0),
+         probe0(39 downto 32) => memAxiReadMaster.arlen,
+         probe0(42 downto 40) => memAxiReadMaster.arsize,
+         probe0(44 downto 43) => memAxiReadMaster.arburst,
+         probe0(46 downto 45) => memAxiReadMaster.arlock,
+         probe0(49 downto 47) => memAxiReadMaster.arprot,
+         probe0(53 downto 50) => memAxiReadMaster.arcache,
+         probe0(57 downto 54) => memAxiReadMaster.arqos,
+         probe0(58          ) => memAxiReadMaster.arvalid,
+         probe0(62 downto 59) => memAxiReadMaster.arregion,
+         probe0(63          ) => memAxiReadMaster.rready,
+
+
+         probe1(58 downto  0) => memAxiReadSlave.rdata(58 downto 0),
+         probe1(60 downto 59) => memAxiReadSlave.rresp,
+         probe1(61          ) => memAxiReadSlave.rlast,
+         probe1(62          ) => memAxiReadSlave.rvalid,
+         probe1(63          ) => memAxiReadSlave.arready,
+
+         probe2(31 downto  0) => memAxiWriteMaster.awaddr(31 downto 0),
+         probe2(39 downto 32) => memAxiWriteMaster.awlen,
+         probe2(42 downto 40) => memAxiWriteMaster.awsize,
+         probe2(44 downto 43) => memAxiWriteMaster.awburst,
+         probe2(46 downto 45) => memAxiWriteMaster.awlock,
+         probe2(49 downto 47) => memAxiWriteMaster.awprot,
+         probe2(53 downto 50) => memAxiWriteMaster.awcache,
+         probe2(57 downto 54) => memAxiWriteMaster.awqos,
+         probe2(58          ) => memAxiWriteMaster.awvalid,
+         probe2(62 downto 59) => memAxiWriteMaster.awregion,
+         probe2(63          ) => memAxiWriteMaster.bready,
+
+
+         probe3(47 downto  0) => memAxiWriteMaster.wdata(47 downto 0),
+         probe3(53 downto 48) => memAxiWriteMaster.wstrb( 5 downto 0),
+         probe3(56 downto 54) => (others => '0'),
+         probe3(57          ) => memAxiWriteMaster.wlast,
+         probe3(58          ) => memAxiWriteMaster.wvalid,
+         probe3(59          ) => memAxiWriteSlave.awready,
+         probe3(60          ) => memAxiWriteSlave.wready,
+         probe3(62 downto 61) => memAxiWriteSlave.bresp,
+         probe3(63          ) => memAxiWriteSlave.bvalid
+
 --       trig_out_ack => '1',
 --       trig_in      => '0',
       );

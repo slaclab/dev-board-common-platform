@@ -8,6 +8,9 @@ if { [VersionCheck 2016.4] < 0 } {
 }
 
 # Load ruckus files
+loadRuckusTcl "$::DIR_PATH/submodules/amc-carrier-core/BsaCore"
+loadSource -path  "$::DIR_PATH/submodules/amc-carrier-core/AmcCarrierCore/dcp/hdl/AmcCarrierBsa.vhd"
+loadSource -path  "$::DIR_PATH/submodules/amc-carrier-core/AmcCarrierCore/core/AmcCarrierPkg.vhd"
 loadRuckusTcl "$::DIR_PATH/submodules/surf"
 loadRuckusTcl "$::DIR_PATH/submodules/lcls-timing-core"
 loadRuckusTcl "$::DIR_PATH/common"

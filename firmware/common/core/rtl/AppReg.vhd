@@ -26,6 +26,7 @@ use work.AxiStreamPkg.all;
 use work.SsiPkg.all;
 use work.I2cPkg.all;
 use work.TimingPkg.all;
+use work.AmcCarrierSysRegPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -36,7 +37,6 @@ entity AppReg is
       BUILD_INFO_G     : BuildInfoType;
       XIL_DEVICE_G     : string           := "7SERIES";
       AXI_ERROR_RESP_G : slv( 1 downto 0) := AXI_RESP_DECERR_C;
-      AXIL_BASE_ADDR_G : slv(31 downto 0) := x"00000000";
       USE_SLOWCLK_G    : boolean          := false;
       FIFO_DEPTH_G     : natural          := 0;
       AXIL_CLK_FRQ_G   : real             := 156.25E6;
@@ -52,6 +52,12 @@ entity AppReg is
       axilWriteSlave  : out AxiLiteWriteSlaveType;
       axilReadMaster  : in  AxiLiteReadMasterType;
       axilReadSlave   : out AxiLiteReadSlaveType;
+
+      bsaWriteMaster  : out AxiLiteWriteMasterType;
+      bsaWriteSlave   : in  AxiLiteWriteSlaveType;
+      bsaReadMaster   : out AxiLiteReadMasterType;
+      bsaReadSlave    : in  AxiLiteReadSlaveType;
+
       -- MB Interface
       obTimingEthMaster : out AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
       obTimingEthSlave  : in  AxiStreamSlaveType;
@@ -88,7 +94,7 @@ architecture mapping of AppReg is
    constant SHARED_MEM_WIDTH_C : positive                           := 10;
    constant IRQ_ADDR_C         : slv(SHARED_MEM_WIDTH_C-1 downto 0) := (others => '1');
 
-   constant NUM_AXI_MASTERS_C : natural := 8;
+   constant NUM_AXI_MASTERS_C : natural := 9;
 
    constant VERSION_INDEX_C : natural := 0;
    constant XADC_INDEX_C    : natural := 1;
@@ -98,9 +104,7 @@ architecture mapping of AppReg is
    constant TIM_GTH_INDEX_C : natural := 5;
    constant TIM_TRG_INDEX_C : natural := 6;
    constant TCLKSWI_INDEX_C : natural := 7;
-
-   constant AXI_CROSSBAR_MASTERS_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) :=
-      genAxiLiteConfig( NUM_AXI_MASTERS_C, AXIL_BASE_ADDR_G, 28, 24 );
+   constant BSA_INDEX_C     : natural := 8;
 
 
    signal mAxilWriteMaster  : AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
@@ -148,9 +152,9 @@ architecture mapping of AppReg is
    );
 
    constant TCASW_AXIL_BASE_ADDR_C : slv(31 downto 0) :=
-         unsigned(AXI_CROSSBAR_MASTERS_CONFIG_C(IIC_MAS_INDEX_C).baseAddr) + 0*1024;
+         unsigned(SYSREG_MASTERS_CONFIG_C(IIC_MAS_INDEX_C).baseAddr) + 0*1024;
    constant SI570_AXIL_BASE_ADDR_C : slv(31 downto 0) :=
-         unsigned(AXI_CROSSBAR_MASTERS_CONFIG_C(IIC_MAS_INDEX_C).baseAddr) + 1*1024;
+         unsigned(SYSREG_MASTERS_CONFIG_C(IIC_MAS_INDEX_C).baseAddr) + 1*1024;
 
 begin
 
@@ -163,7 +167,7 @@ begin
          DEC_ERROR_RESP_G   => AXI_ERROR_RESP_G,
          NUM_SLAVE_SLOTS_G  => 2,
          NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
-         MASTERS_CONFIG_G   => AXI_CROSSBAR_MASTERS_CONFIG_C)
+         MASTERS_CONFIG_G   => SYSREG_MASTERS_CONFIG_C)
       port map (
          sAxiWriteMasters(0) => axilWriteMaster,
          sAxiWriteMasters(1) => mAxilWriteMaster,
@@ -291,7 +295,7 @@ begin
          STREAM_L1_G         => true,
          AXIL_RINGB_G        => false,
          ASYNC_G             => false,
-         AXIL_BASE_ADDR_G    => AXI_CROSSBAR_MASTERS_CONFIG_C(TIMCORE_INDEX_C).baseAddr
+         AXIL_BASE_ADDR_G    => SYSREG_MASTERS_CONFIG_C(TIMCORE_INDEX_C).baseAddr
       )
       port map (
          gtTxUsrClk          => timingTxUsrClk,
@@ -338,7 +342,7 @@ begin
          NTRIGGERS_G         => NUM_TRIGS_G,
          TRIG_DEPTH_G        => 19,
          COMMON_CLK_G        => false,
-         AXIL_BASEADDR_G     => AXI_CROSSBAR_MASTERS_CONFIG_C(TIM_TRG_INDEX_C).baseAddr
+         AXIL_BASEADDR_G     => SYSREG_MASTERS_CONFIG_C(TIM_TRG_INDEX_C).baseAddr
       )
       port map (
          -- AXI-Lite and IRQ Interface
@@ -397,7 +401,7 @@ begin
    U_TimingGTH : entity work.TimingGthCoreWrapper
       generic map (
          TPD_G            => TPD_G,
-         AXIL_BASE_ADDR_G => AXI_CROSSBAR_MASTERS_CONFIG_C(TIM_GTH_INDEX_C).baseAddr
+         AXIL_BASE_ADDR_G => SYSREG_MASTERS_CONFIG_C(TIM_GTH_INDEX_C).baseAddr
       )
       port map (
          axilClk          => clk,
@@ -529,5 +533,9 @@ begin
    recTimingRst             <= timingRecRst;
    appTimingBus             <= timingBus;
 
+   bsaWriteMaster                 <= mAxilWriteMasters(BSA_INDEX_C);
+   mAxilWriteSlaves (BSA_INDEX_C) <= bsaWriteSlave;
+   bsaReadMaster                  <= mAxilReadMasters (BSA_INDEX_C);
+   mAxilReadSlaves  (BSA_INDEX_C) <= bsaReadSlave;
 
 end mapping;

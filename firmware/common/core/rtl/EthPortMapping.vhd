@@ -62,7 +62,8 @@ entity EthPortMapping is
       axilWriteMaster : out AxiLiteWriteMasterType;
       axilWriteSlave  : in  AxiLiteWriteSlaveType;
       axilReadMaster  : out AxiLiteReadMasterType;
-      axilReadSlave   : in  AxiLiteReadSlaveType);
+      axilReadSlave   : in  AxiLiteReadSlaveType
+      );
 end EthPortMapping;
 
 architecture mapping of EthPortMapping is
@@ -72,7 +73,7 @@ architecture mapping of EthPortMapping is
       variable c : PositiveArray(a'length+b'length-1 downto 0);
    begin
       c(a'range)                := a;
-      c(c'left-1 downto a'left) := b;
+      c(c'left downto a'length) := b;
       return c;
    end function cat;
 
@@ -80,7 +81,7 @@ architecture mapping of EthPortMapping is
       variable c : AxiStreamConfigArray(a'length+b'length-1 downto 0);
    begin
       c(a'range)                := a;
-      c(c'left-1 downto a'left) := b;
+      c(c'left downto a'length) := b;
       return c;
    end function cat;
 
@@ -88,7 +89,7 @@ architecture mapping of EthPortMapping is
       variable c : Slv8Array(a'length+b'length-1 downto 0);
    begin
       c(a'range)                := a;
-      c(c'left-1 downto a'left) := b;
+      c(c'left downto a'length) := b;
       return c;
    end function cat;
 
