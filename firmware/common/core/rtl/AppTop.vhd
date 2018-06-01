@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- File       : AppCore.vhd
+-- File       : AppTop.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-02-15
 -- Last update: 2017-03-17
@@ -28,7 +28,7 @@ use work.AppTopPkg.all;
 use work.TimingPkg.all;
 use work.Jesd204bPkg.all;
 
-entity AppCore is
+entity AppTop is
    generic (
       TPD_G            : time             := 1 ns;
       BUILD_INFO_G     : BuildInfoType;
@@ -99,9 +99,9 @@ entity AppCore is
       dbg             : out slv(1 downto 0);
       dbgi            : in  slv(1 downto 0) := (others => '0')
       );
-end AppCore;
+end AppTop;
 
-architecture mapping of AppCore is
+architecture mapping of AppTop is
 
    constant RSSI_SIZE_C     : positive := 5;
    constant RSSI_STRM_CFG_C : AxiStreamConfigArray(RSSI_SIZE_C - 1 downto 0) := (

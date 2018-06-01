@@ -107,7 +107,6 @@ architecture top_level of Kcu105GigE is
 
    constant AXI_STRM_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(8);
 
-
    type MuxedSignalsType is record
       txMasters     : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
       txSlaves      : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
@@ -116,12 +115,8 @@ architecture top_level of Kcu105GigE is
       phyReady      : sl;
    end record;
 
-   signal muxedSignals  : MuxedSignalsType;
+   signal keptSignals   : MuxedSignalsType;
 
-   signal txMastersGTH  : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
-   signal txSlavesGTH   : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
-   signal rxMastersGTH  : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
-   signal rxSlavesGTH   : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
    signal txMastersSGMII: AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
    signal txSlavesSGMII : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
    signal rxMastersSGMII: AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
@@ -131,15 +126,12 @@ architecture top_level of Kcu105GigE is
 
    signal sgmiiClk      : sl;
    signal sgmiiRst      : sl;
-   signal gthRstExt     : sl;
    signal sgmiiRstExt   : sl;
 
    signal sgmiiPhyReady : sl;
    signal gthPhyReady   : sl := '0';
 
-   signal selSGMII      : sl;
 
-   signal gthDmaRst     : sl;
    signal sgmiiDmaRst   : sl;
 
    signal phyMdo        : sl := '1';
@@ -195,7 +187,7 @@ architecture top_level of Kcu105GigE is
 
 
    attribute dont_touch                 : string;
-   attribute dont_touch of muxedSignals : signal is "TRUE";
+   attribute dont_touch of keptSignals  : signal is "TRUE";
    attribute dont_touch of ddrClk300    : signal is "TRUE";
 
    component Ila_256 is
@@ -216,11 +208,8 @@ begin
 
    -- hold unused ethernet in reset so it doesn't ARP or
    -- communicate otherwise
-   gthRstExt   <= extRst or selSGMII;
-   sgmiiRstExt <= extRst or not selSGMII;
-
-   gthDmaRst   <= sysRst156 or selSGMII;
-   sgmiiDmaRst <= sysRst156 or not selSGMII;
+   sgmiiRstExt <= extRst;
+   sgmiiDmaRst <= sysRst156;
 
    -- 300MHz system clock
    U_SysClk300IBUFDS : IBUFDS
@@ -385,20 +374,18 @@ begin
          sgmiiRxP(0)        => sgmiiRxP,
          sgmiiRxN(0)        => sgmiiRxN);
 
-   txMastersGTH   <= muxedSignals.txMasters    when selSGMII = '0' else (others => AXI_STREAM_MASTER_INIT_C);
-   rxSlavesGTH    <= muxedSignals.rxSlaves     when selSGMII = '0' else (others => AXI_STREAM_SLAVE_FORCE_C);
-   txMastersSGMII <= muxedSignals.txMasters    when selSGMII = '1' else (others => AXI_STREAM_MASTER_INIT_C);
-   rxSlavesSGMII  <= muxedSignals.rxSlaves     when selSGMII = '1' else (others => AXI_STREAM_SLAVE_FORCE_C);
+   txMastersSGMII         <= keptSignals.txMasters;
+   rxSlavesSGMII          <= keptSignals.rxSlaves;
 
-   muxedSignals.txSlaves   <= txSlavesGTH  when selSGMII = '0' else txSlavesSGMII;
-   muxedSignals.rxMasters  <= rxMastersGTH when selSGMII = '0' else rxMastersSGMII;
+   keptSignals.txSlaves   <= txSlavesSGMII;
+   keptSignals.rxMasters  <= rxMastersSGMII;
 
-   muxedSignals.phyReady   <= gthPhyReady  when selSGMII = '0' else sgmiiPhyReady;
+   keptSignals.phyReady   <= sgmiiPhyReady;
 
    -------------------
    -- Application Core
    -------------------
-   U_App : entity work.AppCore
+   U_App : entity work.AppTop
       generic map (
          TPD_G          => TPD_G,
          BUILD_INFO_G   => BUILD_INFO_G,
@@ -411,13 +398,13 @@ begin
          AXIL_CLK_FRQ_G => AXIL_CLK_FRQ_C)
       port map (
          -- Clock and Reset
-         clk            => sysClk156,
-         rst            => sysRst156,
+         axilClk        => sysClk156,
+         axilRst        => sysRst156,
          -- AXIS interface
-         txMasters      => muxedSignals.txMasters,
-         txSlaves       => muxedSignals.txSlaves,
-         rxMasters      => muxedSignals.rxMasters,
-         rxSlaves       => muxedSignals.rxSlaves,
+         txMasters      => keptSignals.txMasters,
+         txSlaves       => keptSignals.txSlaves,
+         rxMasters      => keptSignals.rxMasters,
+         rxSlaves       => keptSignals.rxSlaves,
 
          -- AXI Memory Interface
          axiClk         => axiClk,                              -- [in]
@@ -455,8 +442,6 @@ begin
 
    dbgi(1) <= '0';
    dbgi(0) <= gpioDip(1);
-
-
 
    U_DdrMem : entity work.AmcCarrierDdrMem
    port map (
@@ -532,13 +517,6 @@ begin
    led(2) <= rxClkCnt( rxClkCnt'left );
    led(1) <= txClkCnt( txClkCnt'left );
    led(0) <= dbg(0);
-
-   U_SyncSel : entity work.Synchronizer
-      port map (
-         clk     => sysClk156,
-         dataIn  => gpioDip(0),
-         dataOut => selSGMII
-      );
 
    -- Tri-state driver for phyMdio
    phyMdio <= 'Z' when phyMdo = '1' else '0';
