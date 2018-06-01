@@ -36,7 +36,6 @@ entity AppReg is
       TPD_G            : time             := 1 ns;
       BUILD_INFO_G     : BuildInfoType;
       XIL_DEVICE_G     : string           := "7SERIES";
-      AXI_ERROR_RESP_G : slv( 1 downto 0) := AXI_RESP_DECERR_C;
       USE_SLOWCLK_G    : boolean          := false;
       FIFO_DEPTH_G     : natural          := 0;
       AXIL_CLK_FRQ_G   : real             := 156.25E6;
@@ -105,9 +104,9 @@ architecture mapping of AppReg is
    signal mAxilReadSlave    : AxiLiteReadSlaveType;
 
    signal mAxilWriteMasters : AxiLiteWriteMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal mAxilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXI_MASTERS_C-1 downto 0) := ( others => AXI_LITE_WRITE_SLAVE_INIT_C );
+   signal mAxilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXI_MASTERS_C-1 downto 0) := ( others => AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C );
    signal mAxilReadMasters  : AxiLiteReadMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal mAxilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0)  := ( others => AXI_LITE_READ_SLAVE_INIT_C );
+   signal mAxilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0)  := ( others => AXI_LITE_READ_SLAVE_EMPTY_DECERR_C );
 
    signal timingRefDiv2     : sl;
    signal timingRefClk      : sl := '0';
@@ -156,7 +155,6 @@ begin
    U_XBAR : entity work.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
-         DEC_ERROR_RESP_G   => AXI_ERROR_RESP_G,
          NUM_SLAVE_SLOTS_G  => 2,
          NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
          MASTERS_CONFIG_G   => SYSREG_MASTERS_CONFIG_C)
@@ -183,7 +181,6 @@ begin
       generic map (
          TPD_G            => TPD_G,
          BUILD_INFO_G     => BUILD_INFO_G,
-         AXI_ERROR_RESP_G => AXI_ERROR_RESP_G,
          XIL_DEVICE_G     => XIL_DEVICE_G,
          EN_DEVICE_DNA_G  => true,
          USE_SLOWCLK_G    => USE_SLOWCLK_G)
@@ -201,8 +198,8 @@ begin
       ------------------------
       U_XADC : entity work.AxiXadcWrapper
          generic map (
-            TPD_G            => TPD_G,
-            AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
+            TPD_G            => TPD_G
+         )
          port map (
             axiReadMaster  => mAxilReadMasters(XADC_INDEX_C),
             axiReadSlave   => mAxilReadSlaves(XADC_INDEX_C),
@@ -212,38 +209,9 @@ begin
             axiRst         => rst,
             vPIn           => vPIn,
             vNIn           => vNIn);
-      --------------------------
-      -- AXI-Lite: SYSMON Module
-      --------------------------
-      U_AxiLiteEmpty : entity work.AxiLiteEmpty
-         generic map (
-            TPD_G            => TPD_G,
-            AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
-         port map (
-            axiClk         => clk,
-            axiClkRst      => rst,
-            axiReadMaster  => mAxilReadMasters(SYS_MON_INDEX_C),
-            axiReadSlave   => mAxilReadSlaves(SYS_MON_INDEX_C),
-            axiWriteMaster => mAxilWriteMasters(SYS_MON_INDEX_C),
-            axiWriteSlave  => mAxilWriteSlaves(SYS_MON_INDEX_C));
-
    end generate;
 
    GEN_ULTRA_SCALE : if (XIL_DEVICE_G = "ULTRASCALE") generate
-      ------------------------
-      -- AXI-Lite: XADC Module
-      ------------------------
-      U_AxiLiteEmpty : entity work.AxiLiteEmpty
-         generic map (
-            TPD_G            => TPD_G,
-            AXI_ERROR_RESP_G => AXI_ERROR_RESP_G)
-         port map (
-            axiClk         => clk,
-            axiClkRst      => rst,
-            axiReadMaster  => mAxilReadMasters(XADC_INDEX_C),
-            axiReadSlave   => mAxilReadSlaves(XADC_INDEX_C),
-            axiWriteMaster => mAxilWriteMasters(XADC_INDEX_C),
-            axiWriteSlave  => mAxilWriteSlaves(XADC_INDEX_C));
       --------------------------
       -- AXI-Lite: SYSMON Module
       --------------------------

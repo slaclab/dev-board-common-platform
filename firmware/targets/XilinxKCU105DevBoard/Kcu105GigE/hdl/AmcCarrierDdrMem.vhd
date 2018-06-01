@@ -33,7 +33,6 @@ use unisim.vcomponents.all;
 entity AmcCarrierDdrMem is
    generic (
       TPD_G            : time            := 1 ns;
-      AXI_ERROR_RESP_G : slv(1 downto 0) := AXI_RESP_DECERR_C;
       SIM_SPEEDUP_G    : boolean         := false);
    port (
       -- AXI-Lite Interface
@@ -340,7 +339,7 @@ begin
       axiSlaveRegister(regCon, x"3FC", 0, v.ddrReset);
 
       -- Closeout the transaction
-      axiSlaveDefault(regCon, v.axilWriteSlave, v.axilReadSlave, AXI_ERROR_RESP_G);
+      axiSlaveDefault(regCon, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
       -- Latch the values from Synchronizers
       v.memReady := done;

@@ -35,7 +35,6 @@ entity AppTop is
       XIL_DEVICE_G     : string           := "7SERIES";
       APP_TYPE_G       : string           := "ETH";
       AXIS_SIZE_G      : positive         := 1;
-      AXI_ERROR_RESP_G : slv(1 downto 0)  := AXI_RESP_DECERR_C;
       MAC_ADDR_G       : slv(47 downto 0) := x"010300564400";  -- 00:44:56:00:03:01 (ETH only)
       IP_ADDR_G        : slv(31 downto 0) := x"0A02A8C0";  -- 192.168.2.10 (ETH only)
       DHCP_G           : boolean          := true;
@@ -129,9 +128,9 @@ architecture mapping of AppTop is
       genAxiLiteConfig(N_AXIL_MASTERS_C, x"80000000", 31, 28);
 
    signal axilReadMasters   : AxiLiteReadMasterArray (N_AXIL_MASTERS_C - 1 downto 0);
-   signal axilReadSlaves    : AxiLiteReadSlaveArray  (N_AXIL_MASTERS_C - 1 downto 0);
+   signal axilReadSlaves    : AxiLiteReadSlaveArray  (N_AXIL_MASTERS_C - 1 downto 0) := (others => AXI_LITE_READ_SLAVE_EMPTY_DECERR_C);
    signal axilWriteMasters  : AxiLiteWriteMasterArray(N_AXIL_MASTERS_C - 1 downto 0);
-   signal axilWriteSlaves   : AxiLiteWriteSlaveArray (N_AXIL_MASTERS_C - 1 downto 0);
+   signal axilWriteSlaves   : AxiLiteWriteSlaveArray (N_AXIL_MASTERS_C - 1 downto 0) := (others => AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C);
 
    signal axilReadMaster    : AxiLiteReadMasterType;
    signal axilReadSlave     : AxiLiteReadSlaveType;
@@ -139,9 +138,9 @@ architecture mapping of AppTop is
    signal axilWriteSlave    : AxiLiteWriteSlaveType;
 
    signal bsaReadMaster     : AxiLiteReadMasterType;
-   signal bsaReadSlave      : AxiLiteReadSlaveType;
+   signal bsaReadSlave      : AxiLiteReadSlaveType  := AXI_LITE_READ_SLAVE_EMPTY_DECERR_C;
    signal bsaWriteMaster    : AxiLiteWriteMasterType;
-   signal bsaWriteSlave     : AxiLiteWriteSlaveType;
+   signal bsaWriteSlave     : AxiLiteWriteSlaveType := AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C;
 
    signal appReadMaster     : AxiLiteReadMasterType;
    signal appReadSlave      : AxiLiteReadSlaveType;
@@ -319,7 +318,6 @@ begin
    U_Xbar : entity work.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
-         DEC_ERROR_RESP_G   => AXI_ERROR_RESP_G,
          NUM_SLAVE_SLOTS_G  => 1,
          NUM_MASTER_SLOTS_G => N_AXIL_MASTERS_C,
          MASTERS_CONFIG_G   => AXIL_CONFIG_C)
@@ -344,7 +342,6 @@ begin
          TPD_G             => TPD_G,
          BUILD_INFO_G      => BUILD_INFO_G,
          XIL_DEVICE_G      => XIL_DEVICE_G,
-         AXI_ERROR_RESP_G  => AXI_ERROR_RESP_G,
          AXIL_CLK_FRQ_G    => AXIL_CLK_FRQ_G)
       port map (
          -- Clock and Reset
@@ -446,20 +443,6 @@ begin
          rssiIbMasters(3 downto 0) <= (others => AXI_STREAM_MASTER_INIT_C);
 
          axiWriteMaster            <= AXI_WRITE_MASTER_INIT_C;
-
-         U_AxilBsaEmpty : entity work.AxiLiteEmpty
-            generic map (
-               TPD_G             => TPD_G,
-               AXI_ERROR_RESP_G  => AXI_RESP_OK_C
-            )
-            port map (
-               axiClk            => axilClk,
-               axiClkRst         => axilRst,
-               axiReadMaster     => bsaReadMaster,
-               axiReadSlave      => bsaReadSlave,
-               axiWriteMaster    => bsaWriteMaster,
-               axiWriteSlave     => bsaWriteSlave
-            );
       end generate;
 
       trigCascBay(NUM_BAYS_G) <= trigCascBay(0);
@@ -470,7 +453,6 @@ begin
       U_DaqMuxV2 : entity work.DaqMuxV2
          generic map (
             TPD_G                  => TPD_G,
-            AXI_ERROR_RESP_G       => AXI_ERROR_RESP_G,
             DECIMATOR_EN_G         => true,
             WAVEFORM_TDATA_BYTES_G => 4,
             BAY_INDEX_G            => ite((i = 0), '0', '1'),
@@ -543,7 +525,6 @@ begin
          generic map (
             TPD_G                => TPD_G,
             AXI_BASE_ADDR_G      => AXIL_CONFIG_C(SIGGEN0_INDEX_C+i).baseAddr,
-            AXI_ERROR_RESP_G     => AXI_ERROR_RESP_G,
             SIG_GEN_SIZE_G       => SIG_GEN_NUM_G(i),
             SIG_GEN_ADDR_WIDTH_G => SIG_GEN_ADDR_WIDTH_G(i),
             SIG_GEN_LANE_MODE_G  => SIG_GEN_LANE_MODE_G(i),
@@ -576,33 +557,6 @@ begin
       end generate;
 
       GEN_NO_BAY1 : if (NUM_BAYS_G = 1) generate
-         U_NoDac1 : entity work.AxiLiteEmpty
-            generic map (
-               TPD_G          => TPD_G
-            )
-            port map (
-               axiClk         => axilClk,
-               axiClkRst      => axilRst,
-               axiReadMaster  => axilReadMasters (SIGGEN1_INDEX_C),
-               axiReadSlave   => axilReadSlaves  (SIGGEN1_INDEX_C),
-               axiWriteMaster => axilWriteMasters(SIGGEN1_INDEX_C),
-               axiWriteSlave  => axilWriteSlaves (SIGGEN1_INDEX_C)
-            );
-
-         U_NoDaqMux1 : entity work.AxiLiteEmpty
-            generic map (
-               TPD_G          => TPD_G
-            )
-            port map (
-               axiClk         => axilClk,
-               axiClkRst      => axilRst,
-               axiReadMaster  => axilReadMasters (DAQMUX1_INDEX_C),
-               axiReadSlave   => axilReadSlaves  (DAQMUX1_INDEX_C),
-               axiWriteMaster => axilWriteMasters(DAQMUX1_INDEX_C),
-               axiWriteSlave  => axilWriteSlaves (DAQMUX1_INDEX_C)
-            );
-
-
          waveformMasters(1) <= WAVEFORM_MASTER_ARRAY_INIT_C(1);
       end generate;
 
