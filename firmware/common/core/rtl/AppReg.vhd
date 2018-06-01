@@ -58,6 +58,11 @@ entity AppReg is
       bsaReadMaster   : out AxiLiteReadMasterType;
       bsaReadSlave    : in  AxiLiteReadSlaveType;
 
+      appWriteMaster  : out AxiLiteWriteMasterType;
+      appWriteSlave   : in  AxiLiteWriteSlaveType;
+      appReadMaster   : out AxiLiteReadMasterType;
+      appReadSlave    : in  AxiLiteReadSlaveType;
+
       -- MB Interface
       obTimingEthMaster : out AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
       obTimingEthSlave  : in  AxiStreamSlaveType;
@@ -93,19 +98,6 @@ architecture mapping of AppReg is
 
    constant SHARED_MEM_WIDTH_C : positive                           := 10;
    constant IRQ_ADDR_C         : slv(SHARED_MEM_WIDTH_C-1 downto 0) := (others => '1');
-
-   constant NUM_AXI_MASTERS_C : natural := 9;
-
-   constant VERSION_INDEX_C : natural := 0;
-   constant XADC_INDEX_C    : natural := 1;
-   constant SYS_MON_INDEX_C : natural := 2;
-   constant IIC_MAS_INDEX_C : natural := 3;
-   constant TIMCORE_INDEX_C : natural := 4;
-   constant TIM_GTH_INDEX_C : natural := 5;
-   constant TIM_TRG_INDEX_C : natural := 6;
-   constant TCLKSWI_INDEX_C : natural := 7;
-   constant BSA_INDEX_C     : natural := 8;
-
 
    signal mAxilWriteMaster  : AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
    signal mAxilWriteSlave   : AxiLiteWriteSlaveType;
@@ -537,5 +529,10 @@ begin
    mAxilWriteSlaves (BSA_INDEX_C) <= bsaWriteSlave;
    bsaReadMaster                  <= mAxilReadMasters (BSA_INDEX_C);
    mAxilReadSlaves  (BSA_INDEX_C) <= bsaReadSlave;
+
+   appWriteMaster                 <= mAxilWriteMasters(APP_INDEX_C);
+   mAxilWriteSlaves (APP_INDEX_C) <= appWriteSlave;
+   appReadMaster                  <= mAxilReadMasters (APP_INDEX_C);
+   mAxilReadSlaves  (APP_INDEX_C) <= appReadSlave;
 
 end mapping;
