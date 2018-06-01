@@ -288,30 +288,28 @@ begin
 
    end generate;
 
-   U_SimJesdClock : entity work.ClockManagerUltraScale
+   U_SimJesdClock : entity work.SimJesdClkGen
       generic map (
-         NUM_CLOCKS_G       => 3,
-         CLKIN_PERIOD_G     => (1.0E9/AXIL_CLK_FRQ_G),
-         DIVCLK_DIVIDE_G    => JESD_CLK_IDIV_G,
-         CLKFBOUT_MULT_F_G  => JESD_CLK_MULT_G,
-
-         CLKOUT0_DIVIDE_G   => JESD_CLK_ODIV_G,
-         CLKOUT1_DIVIDE_G   => (2*JESD_CLK_ODIV_G),
-         CLKOUT2_DIVIDE_G   => USER_CLK_ODIV_G
+         INPT_CLK_FREQ_G    => AXIL_CLK_FRQ_G,
+         JESD_CLK_IDIV_G    => JESD_CLK_IDIV_G,
+         JESD_CLK_MULT_G    => JESD_CLK_MULT_G,
+         JESD_CLK_ODIV_G    => JESD_CLK_ODIV_G,
+         USER_CLK_ODIV_G    => USER_CLK_ODIV_G
       )
       port map (
          clkIn              => axilClk,
          rstIn              => axilRst,
 
-         clkOut(2)          => userClk,
-         clkOut(1)          => jesdClk,
-         clkOut(0)          => jesdClk2x,
+         userClk            => userClk,
+         jesdClk            => jesdClk,
+         jesdClk2x          => jesdClk2x,
 
-         rstOut(2)          => userRst,
-         rstOut(1)          => jesdRst,
-         rstOut(0)          => jesdRst2x
+         userRst            => userRst,
+         jesdRst            => jesdRst,
+         jesdRst2x          => jesdRst2x
       );
 
+   -------------------
    -- AXI-Lite Modules
    -------------------
 

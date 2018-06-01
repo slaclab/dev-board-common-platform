@@ -441,25 +441,16 @@ begin
    signal timingRstLcls2 : sl;
    begin
 
-   U_SimTimingClock : entity work.ClockManagerUltraScale
-      generic map (
-         NUM_CLOCKS_G       => 2,
-         CLKIN_PERIOD_G     => 8.0, -- 125MHz
-         DIVCLK_DIVIDE_G    => 7,
-         CLKFBOUT_MULT_F_G  => 41.625,
-
-         CLKOUT0_DIVIDE_F_G => 6.250, -- ~119MHz
-         CLKOUT1_DIVIDE_G   => 4      -- ~1300/7MHz
-      )
+   U_SimTimingClock : entity work.SimTimingClkGen
       port map (
-         clkIn              => clk,
-         rstIn              => rst,
+         clk156p25          => clk,
+         rst156p25          => rst,
 
-         clkOut(0)          => timingClkLcls1,
-         clkOut(1)          => timingClkLcls2,
+         timingClkLcls1     => timingClkLcls1,
+         timingClkLcls2     => timingClkLcls2,
 
-         rstOut(0)          => timingRstLcls1,
-         rstOut(1)          => timingRstLcls2
+         timingRstLcls1     => timingRstLcls1,
+         timingRstLcls2     => timingRstLcls2
       );
 
    U_TimingClkMux : BUFGMUX_CTRL
