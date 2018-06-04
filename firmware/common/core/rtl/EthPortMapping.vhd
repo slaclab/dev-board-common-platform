@@ -37,7 +37,9 @@ entity EthPortMapping is
       RSSI_STRM_CFG_G : AxiStreamConfigArray;
       RSSI_ROUTES_G   : Slv8Array;
       UDP_SRV_SIZE_G  : natural          := 0;
-      UDP_SRV_PORTS_G : PositiveArray
+      UDP_SRV_PORTS_G : PositiveArray;
+      UDP_CLT_SIZE_G  : natural          := 0;
+      UDP_CLT_PORTS_G : PositiveArray
    );
    port (
       -- Clock and Reset
@@ -55,10 +57,15 @@ entity EthPortMapping is
       rssiObMasters   : out AxiStreamMasterArray(RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
       rssiObSlaves    : in  AxiStreamSlaveArray (RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
       -- UDP Streams
-      udpIbMasters    : in  AxiStreamMasterArray(UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
-      udpIbSlaves     : out AxiStreamSlaveArray (UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
-      udpObMasters    : out AxiStreamMasterArray(UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
-      udpObSlaves     : in  AxiStreamSlaveArray (UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
+      udpIbSrvMasters : in  AxiStreamMasterArray(UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+      udpIbSrvSlaves  : out AxiStreamSlaveArray (UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
+      udpObSrvMasters : out AxiStreamMasterArray(UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+      udpObSrvSlaves  : in  AxiStreamSlaveArray (UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
+
+      udpIbCltMasters : in  AxiStreamMasterArray(UDP_CLT_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+      udpIbCltSlaves  : out AxiStreamSlaveArray (UDP_CLT_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
+      udpObCltMasters : out AxiStreamMasterArray(UDP_CLT_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+      udpObCltSlaves  : in  AxiStreamSlaveArray (UDP_CLT_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
       -- AXI-Lite Interface
       axilWriteMaster : out AxiLiteWriteMasterType;
       axilWriteSlave  : in  AxiLiteWriteSlaveType;
@@ -110,6 +117,8 @@ architecture mapping of EthPortMapping is
    constant SERVER_PORTS_C     : PositiveArray(NUM_SERVERS_C-1 downto 0)     :=
       cat(INT_SERVER_PORTS_C, UDP_SRV_PORTS_G);
 
+   constant CLIENT_EN_C     : boolean  := (UDP_CLT_SIZE_G /= 0);
+
    constant INT_RSSI_SIZE_C : positive := 1;
    constant RSSI_SIZE_C     : positive := RSSI_SIZE_G + INT_RSSI_SIZE_C;
    constant SRP_RSSI_CFG_C  : AxiStreamConfigArray(INT_RSSI_SIZE_C - 1 downto 0) := (
@@ -150,7 +159,9 @@ begin
          SERVER_SIZE_G  => NUM_SERVERS_C,
          SERVER_PORTS_G => SERVER_PORTS_C,
          -- UDP Client Generics
-         CLIENT_EN_G    => false,
+         CLIENT_EN_G    => CLIENT_EN_C,
+         CLIENT_SIZE_G  => UDP_CLT_SIZE_G,
+         CLIENT_PORTS_G => UDP_CLT_PORTS_G,
          -- General IPv4/ARP/DHCP Generics
          DHCP_G         => DHCP_G,
          CLK_FREQ_G     => CLK_FREQUENCY_G,
@@ -169,6 +180,11 @@ begin
          obServerSlaves  => obServerSlaves,
          ibServerMasters => ibServerMasters,
          ibServerSlaves  => ibServerSlaves,
+         -- Interface to UDP Client engine(s)
+         obClientMasters => udpObCltMasters,
+         obClientSlaves  => udpObCltSlaves,
+         ibClientMasters => udpIbCltMasters,
+         ibClientSlaves  => udpIbCltSlaves,
          -- Clock and Reset
          clk             => clk,
          rst             => rst);
@@ -244,10 +260,10 @@ begin
    end generate;
 
    GEN_MAP_2 : for i in UDP_SRV_SIZE_G - 1 downto 0 generate
-      obServerMasters(i + NUM_INT_SERVERS_C) <= udpIbMasters(i);
-      udpIbSlaves(i)                         <= obServerSlaves  (i + NUM_INT_SERVERS_C);
-      udpObMasters(i)                        <= ibServerMasters (i + NUM_INT_SERVERS_C);
-      ibServerSlaves(i + NUM_INT_SERVERS_C)  <= udpObSlaves(i);
+      obServerMasters(i + NUM_INT_SERVERS_C) <= udpIbSrvMasters(i);
+      udpIbSrvSlaves(i)                      <= obServerSlaves  (i + NUM_INT_SERVERS_C);
+      udpObSrvMasters(i)                     <= ibServerMasters (i + NUM_INT_SERVERS_C);
+      ibServerSlaves(i + NUM_INT_SERVERS_C)  <= udpObSrvSlaves(i);
    end generate;
 
 

@@ -99,7 +99,4 @@ create_generated_clock -name jesdClk2x  [get_pins {U_App/U_SimJesdClock/U_ClockG
 create_generated_clock -name jesdClk    [get_pins {U_App/U_SimJesdClock/U_ClockGen/MmcmGen.U_Mmcm/CLKOUT1}]
 create_generated_clock -name jesdUsrClk [get_pins {U_App/U_SimJesdClock/U_ClockGen/MmcmGen.U_Mmcm/CLKOUT2}]
 
-set_false_path -through [get_nets {muxedSignals[phyReady]*}]
-
-set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets -hier -filter {NAME=~*/ddrClk300}]
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets U_SysPll/CLKIN1]

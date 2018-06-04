@@ -156,11 +156,6 @@ architecture top_level of Kcu105GigE is
    signal phyIrq        : sl;
    signal phyMdi        : sl;
 
-   signal appTxMaster   : AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
-   signal appRxMaster   : AxiStreamMasterType;
-   signal appTxSlave    : AxiStreamSlaveType;
-   signal appRxSlave    : AxiStreamSlaveType  := AXI_STREAM_SLAVE_FORCE_C;
-
    signal initDone      : sl := '0';
 
    signal memReady      : sl;
@@ -413,12 +408,6 @@ begin
          axiWriteSlave  => memAxiWriteSlave,                    -- [in]
          axiReadMaster  => memAxiReadMaster,                    -- [out]
          axiReadSlave   => memAxiReadSlave,
-
-         -- App Stream Interface
-         appTxMaster    => appTxMaster,    -- in  AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
-         appTxSlave     => appTxSlave,     -- out AxiStreamSlaveType;
-         appRxMaster    => appRxMaster,    -- out AxiStreamMasterType;
-         appRxSlave     => appRxSlave,     -- in  AxiStreamSlaveType  := AXI_STREAM_SLAVE_FORCE_C;
 
          -- ADC Ports
          vPIn           => vPIn,

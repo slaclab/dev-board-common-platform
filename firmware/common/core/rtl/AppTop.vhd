@@ -72,11 +72,6 @@ entity AppTop is
       rxMasters       : in  AxiStreamMasterArray(AXIS_SIZE_G-1 downto 0);
       rxSlaves        : out AxiStreamSlaveArray(AXIS_SIZE_G-1 downto 0);
       rxCtrl          : out AxiStreamCtrlArray(AXIS_SIZE_G-1 downto 0);
-      -- App Stream Interface
-      appTxMaster     : in  AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
-      appTxSlave      : out AxiStreamSlaveType;
-      appRxMaster     : out AxiStreamMasterType;
-      appRxSlave      : in  AxiStreamSlaveType  := AXI_STREAM_SLAVE_FORCE_C;
       -- ADC Ports
       vPIn            : in  sl;
       vNIn            : in  sl;
@@ -127,6 +122,9 @@ architecture mapping of AppTop is
 
    constant AXIL_CONFIG_C   : AxiLiteCrossbarMasterConfigArray(N_AXIL_MASTERS_C - 1 downto 0) :=
       genAxiLiteConfig(N_AXIL_MASTERS_C, x"80000000", 31, 28);
+
+   constant APP_DEBUG_STRM_C : natural := 0;
+   constant APP_BPCLT_STRM_C : natural := 1;
 
    signal axilReadMasters   : AxiLiteReadMasterArray (N_AXIL_MASTERS_C - 1 downto 0);
    signal axilReadSlaves    : AxiLiteReadSlaveArray  (N_AXIL_MASTERS_C - 1 downto 0) := (others => AXI_LITE_READ_SLAVE_EMPTY_DECERR_C);
@@ -241,33 +239,40 @@ begin
             RSSI_STRM_CFG_G => RSSI_STRM_CFG_C,
             RSSI_ROUTES_G   => RSSI_ROUTES_C,
             UDP_SRV_SIZE_G  => 1,
-            UDP_SRV_PORTS_G => (0 => 8197)
+            UDP_SRV_PORTS_G => (0 => 8197),
+            UDP_CLT_SIZE_G  => 1,
+            UDP_CLT_PORTS_G => (0 => 8196)
          )
          port map (
             -- Clock and Reset
-            clk             => axilClk,
-            rst             => axilRst,
+            clk                => axilClk,
+            rst                => axilRst,
             -- AXIS interface
-            txMaster        => txMasters(0),
-            txSlave         => txSlaves(0),
-            rxMaster        => rxMasters(0),
-            rxSlave         => rxSlaves(0),
-            rxCtrl          => rxCtrl(0),
+            txMaster           => txMasters(0),
+            txSlave            => txSlaves(0),
+            rxMaster           => rxMasters(0),
+            rxSlave            => rxSlaves(0),
+            rxCtrl             => rxCtrl(0),
             -- RSSI Interface
-            rssiIbMasters   => rssiIbMasters,
-            rssiIbSlaves    => rssiIbSlaves,
-            rssiObMasters   => rssiObMasters,
-            rssiObSlaves    => rssiObSlaves,
+            rssiIbMasters      => rssiIbMasters,
+            rssiIbSlaves       => rssiIbSlaves,
+            rssiObMasters      => rssiObMasters,
+            rssiObSlaves       => rssiObSlaves,
             -- UDP Interface
-            udpIbMasters(0) => obTimingEthMaster,
-            udpIbSlaves(0)  => obTimingEthSlave,
-            udpObMasters(0) => ibTimingEthMaster,
-            udpObSlaves(0)  => ibTimingEthSlave,
+            udpIbSrvMasters(0) => obTimingEthMaster,
+            udpIbSrvSlaves(0)  => obTimingEthSlave,
+            udpObSrvMasters(0) => ibTimingEthMaster,
+            udpObSrvSlaves(0)  => ibTimingEthSlave,
+
+            udpIbCltMasters(0) => obAxisMasters(APP_BPCLT_STRM_C),
+            udpIbCltSlaves (0) => obAxisSlaves (APP_BPCLT_STRM_C),
+            udpObCltMasters(0) => ibAxisMasters(APP_BPCLT_STRM_C),
+            udpObCltSlaves (0) => ibAxisSlaves (APP_BPCLT_STRM_C),
             -- AXI-Lite interface
-            axilWriteMaster => mAxilWriteMasters(0),
-            axilWriteSlave  => mAxilWriteSlaves(0),
-            axilReadMaster  => mAxilReadMasters(0),
-            axilReadSlave   => mAxilReadSlaves(0)
+            axilWriteMaster    => mAxilWriteMasters(0),
+            axilWriteSlave     => mAxilWriteSlaves(0),
+            axilReadMaster     => mAxilReadMasters(0),
+            axilReadSlave      => mAxilReadSlaves(0)
          );
 
       Ila_BsaStream : component Ila_256
@@ -652,9 +657,9 @@ begin
       appTimingClk     <= timingClk;
       appTimingRst     <= timingRst;
 
-      rssiIbMasters(4) <= appTxMaster;
-      appTxSlave       <= rssiIbSlaves (4);
-      appRxMaster      <= rssiObMasters(4);
-      rssiObSlaves(4)  <= appRxSlave;
+      rssiIbMasters(4)                <= obAxisMasters(APP_DEBUG_STRM_C);
+      obAxisSlaves (APP_DEBUG_STRM_C) <= rssiIbSlaves (4);
+      ibAxisMasters(APP_DEBUG_STRM_C) <= rssiObMasters(4);
+      rssiObSlaves (4)                <= ibAxisSlaves(APP_DEBUG_STRM_C);
 
 end mapping;
