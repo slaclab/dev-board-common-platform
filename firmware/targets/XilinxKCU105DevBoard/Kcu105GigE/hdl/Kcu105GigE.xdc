@@ -83,25 +83,21 @@ resize_pblock       [get_pblocks SGMII_ETH_BLK] -add {CLOCKREGION_X2Y1:CLOCKREGI
 
 
 # Timing Constraints 
-create_clock -name sysClk300P -period 3.333 [get_ports {sysClk300P}]
-create_clock -name gtClkP     -period 6.400 [get_ports {ethClkP}   ]
-create_clock -name sgmiiClkP  -period 1.600 [get_ports {sgmiiClkP} ]
+create_clock -name sysClk300P  -period 3.333 [get_ports {sysClk300P}]
+create_clock -name lcls1RefClk -period 4.202 [get_ports {ethClkP}  ]
+create_clock -name lcls2RefClk -period 2.692 -add [get_ports {ethClkP}  ]
+
+create_clock -name sgmiiClkP   -period 1.600 [get_ports {sgmiiClkP} ]
 
 create_generated_clock -name sysClk156MHz [get_pins {U_SysPll/MmcmGen.U_Mmcm/CLKOUT0}]
-
-create_generated_clock -name gthClk125MHz    [get_pins {U_1GigE_GTH/U_MMCM/MmcmGen.U_Mmcm/CLKOUT0}] 
-create_generated_clock -name gthClk62p5MHz   [get_pins {U_1GigE_GTH/U_MMCM/MmcmGen.U_Mmcm/CLKOUT1}] 
 
 create_generated_clock -name sgmiiClk125MHz  [get_pins {U_1GigE_SGMII/U_MMCM/CLKOUT0}] 
 
 create_generated_clock -name dnaClk [get_pins {U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_ULTRA_SCALE.DeviceDnaUltraScale_Inst/BUFGCE_DIV_Inst/O}]
 
-set_clock_groups -asynchronous -group [get_clocks {gtClkP}] -group [get_clocks {gthClk125MHz}] 
-set_clock_groups -asynchronous -group [get_clocks {gtClkP}] -group [get_clocks {gthClk62p5MHz}] 
-set_clock_groups -asynchronous -group [get_clocks {sysClk156MHz}] -group [get_clocks {dnaClk}]
-
-set_clock_groups -asynchronous -group [get_clocks mmcm_clkout0] -group [get_clocks sysClk156MHz]
-set_clock_groups -asynchronous -group [get_clocks sysClk300P]   -group [get_clocks sysClk156MHz]
+create_generated_clock -name jesdClk2x  [get_pins {U_App/U_SimJesdClock/U_ClockGen/MmcmGen.U_Mmcm/CLKOUT0}]
+create_generated_clock -name jesdClk    [get_pins {U_App/U_SimJesdClock/U_ClockGen/MmcmGen.U_Mmcm/CLKOUT1}]
+create_generated_clock -name jesdUsrClk [get_pins {U_App/U_SimJesdClock/U_ClockGen/MmcmGen.U_Mmcm/CLKOUT2}]
 
 set_false_path -through [get_nets {muxedSignals[phyReady]*}]
 

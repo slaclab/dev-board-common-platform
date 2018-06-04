@@ -7,11 +7,11 @@
 -- Description:
 -------------------------------------------------------------------------------
 -- This file is part of 'Example Project Firmware'.
--- It is subject to the license terms in the LICENSE.txt file found in the 
--- top-level directory of this distribution and at: 
---    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
--- No part of 'Example Project Firmware', including this file, 
--- may be copied, modified, propagated, or distributed except according to 
+-- It is subject to the license terms in the LICENSE.txt file found in the
+-- top-level directory of this distribution and at:
+--    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+-- No part of 'Example Project Firmware', including this file,
+-- may be copied, modified, propagated, or distributed except according to
 -- the terms contained in the LICENSE.txt file.
 -------------------------------------------------------------------------------
 
@@ -30,23 +30,25 @@ use work.Jesd204bPkg.all;
 
 entity AppTop is
    generic (
-      TPD_G            : time             := 1 ns;
-      BUILD_INFO_G     : BuildInfoType;
-      XIL_DEVICE_G     : string           := "7SERIES";
-      APP_TYPE_G       : string           := "ETH";
-      AXIS_SIZE_G      : positive         := 1;
-      MAC_ADDR_G       : slv(47 downto 0) := x"010300564400";  -- 00:44:56:00:03:01 (ETH only)
-      IP_ADDR_G        : slv(31 downto 0) := x"0A02A8C0";  -- 192.168.2.10 (ETH only)
-      DHCP_G           : boolean          := true;
-      JUMBO_G          : boolean          := false;
-      APP_STRM_CFG_G   : AxiStreamConfigType := ssiAxiStreamConfig(4);
-      AXIL_CLK_FRQ_G   : real             := 156.25E6;
-      DISABLE_BSA_G    : boolean          := false;
-      JESD_CLK_IDIV_G  : positive         := 5;           -- with AXIL_CLK_FRQ_G = 125*5/4 -> 125/4MHz
-      JESD_CLK_MULT_G  : real             := 35.5;        -- 1109.375MHz
-      JESD_CLK_ODIV_G  : positive         := 3;           -- 369.79MHz; divider for jesdClk2x
-      USER_CLK_ODIV_G  : positive         := 9;           -- jesd2x / 3
-      NUM_BAYS_G       : positive range 1 to 2 := 1;
+      TPD_G                : time             := 1 ns;
+      BUILD_INFO_G         : BuildInfoType;
+      USE_TIMING_GTH_G     : integer          := 1; -- whether to use a GTH for timing (in-logic loopback otherwise)
+      USE_XVC_G            : integer          := 1; -- whether to use an XVC debug bridge
+      XIL_DEVICE_G         : string           := "7SERIES";
+      APP_TYPE_G           : string           := "ETH";
+      AXIS_SIZE_G          : positive         := 1;
+      MAC_ADDR_G           : slv(47 downto 0) := x"010300564400";  -- 00:44:56:00:03:01 (ETH only)
+      IP_ADDR_G            : slv(31 downto 0) := x"0A02A8C0";  -- 192.168.2.10 (ETH only)
+      DHCP_G               : boolean          := true;
+      JUMBO_G              : boolean          := false;
+      APP_STRM_CFG_G       : AxiStreamConfigType := ssiAxiStreamConfig(4);
+      AXIL_CLK_FRQ_G       : real             := 156.25E6;
+      DISABLE_BSA_G        : boolean          := false;
+      JESD_CLK_IDIV_G      : positive         := 5;           -- with AXIL_CLK_FRQ_G = 125*5/4 -> 125/4MHz
+      JESD_CLK_MULT_G      : real             := 35.5;        -- 1109.375MHz
+      JESD_CLK_ODIV_G      : positive         := 3;           -- 369.79MHz; divider for jesdClk2x
+      USER_CLK_ODIV_G      : positive         := 9;           -- jesd2x / 3
+      NUM_BAYS_G           : positive range 1 to 2 := 1;
       SIG_GEN_NUM_G        : NaturalArray (1 downto 0) := (others => 4); -- 0 = disabled
       SIG_GEN_ADDR_WIDTH_G : PositiveArray(1 downto 0) := (others => 9);
       SIG_GEN_LANE_MODE_G  : Slv7Array    (1 downto 0) := (others => "0000000"); -- 0: 32-bit, 1: 16-bit
@@ -88,12 +90,9 @@ entity AppTop is
       timingRxN       : in  sl := '0';
       timingTxP       : out sl := '0';
       timingTxN       : out sl := '1';
+
       appTimingClk    : out sl;
       appTimingRst    : out sl;
-      -- BSA Diagnostic
-      diagnosticClk   : in  sl := '0';
-      diagnosticRst   : in  sl := '0';
-      diagnosticBus   : in  DiagnosticBusType := DIAGNOSTIC_BUS_INIT_C;
 
       dbg             : out slv(1 downto 0);
       dbgi            : in  slv(1 downto 0) := (others => '0')
@@ -116,8 +115,10 @@ architecture mapping of AppTop is
       4 => "11------"
    );
 
+   constant NUM_APP_STRMS_C : natural := 2;
+
    constant N_AXIL_MASTERS_C: natural := 5;
-   
+
    constant CORE_INDEX_C    : natural := 0;
    constant DAQMUX0_INDEX_C : natural := 1;
    constant DAQMUX1_INDEX_C : natural := 2;
@@ -132,10 +133,10 @@ architecture mapping of AppTop is
    signal axilWriteMasters  : AxiLiteWriteMasterArray(N_AXIL_MASTERS_C - 1 downto 0);
    signal axilWriteSlaves   : AxiLiteWriteSlaveArray (N_AXIL_MASTERS_C - 1 downto 0) := (others => AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C);
 
-   signal axilReadMaster    : AxiLiteReadMasterType;
-   signal axilReadSlave     : AxiLiteReadSlaveType;
-   signal axilWriteMaster   : AxiLiteWriteMasterType;
-   signal axilWriteSlave    : AxiLiteWriteSlaveType;
+   signal mAxilReadMasters  : AxiLiteReadMasterArray (1 downto 0);
+   signal mAxilReadSlaves   : AxiLiteReadSlaveArray  (1 downto 0);
+   signal mAxilWriteMasters : AxiLiteWriteMasterArray(1 downto 0);
+   signal mAxilWriteSlaves  : AxiLiteWriteSlaveArray (1 downto 0);
 
    signal bsaReadMaster     : AxiLiteReadMasterType;
    signal bsaReadSlave      : AxiLiteReadSlaveType  := AXI_LITE_READ_SLAVE_EMPTY_DECERR_C;
@@ -152,10 +153,20 @@ architecture mapping of AppTop is
    signal obTimingEthMaster : AxiStreamMasterType;
    signal obTimingEthSlave  : AxiStreamSlaveType;
 
+   signal obAxisMasters     : AxiStreamMasterArray(NUM_APP_STRMS_C - 1 downto 0);
+   signal obAxisSlaves      : AxiStreamSlaveArray (NUM_APP_STRMS_C - 1 downto 0);
+   signal ibAxisMasters     : AxiStreamMasterArray(NUM_APP_STRMS_C - 1 downto 0);
+   signal ibAxisSlaves      : AxiStreamSlaveArray (NUM_APP_STRMS_C - 1 downto 0);
+
    signal timingClk         : sl;
    signal timingRst         : sl;
 
    signal timingTrig        : TimingTrigType;
+   signal timingBus         : TimingBusType;
+
+   signal diagnosticClk     : sl;
+   signal diagnosticRst     : sl;
+   signal diagnosticBus     : DiagnosticBusType;
 
    signal rssiIbMasters     : AxiStreamMasterArray(RSSI_SIZE_C - 1 downto 0);
    signal rssiIbSlaves      : AxiStreamSlaveArray (RSSI_SIZE_C - 1 downto 0);
@@ -172,29 +183,27 @@ architecture mapping of AppTop is
    signal userClk           : sl;
    signal userRst           : sl;
 
-   signal trigCascBay       : slv(NUM_BAYS_G     downto 0);
-   signal armCascBay        : slv(NUM_BAYS_G     downto 0);
-   signal trigHw            : slv(NUM_BAYS_G - 1 downto 0);
-   signal freezeHw          : slv(NUM_BAYS_G - 1 downto 0);
+   signal trigCascBay       : slv(2 downto 0);
+   signal armCascBay        : slv(2 downto 0);
+   signal trigHw            : slv(1 downto 0);
+   signal freezeHw          : slv(1 downto 0);
 
-   signal adcValids         : Slv7Array(NUM_BAYS_G - 1 downto 0) := (others => (others => '0' ) );
-   signal adcValues         : sampleDataVectorArray(NUM_BAYS_G - 1 downto 0, 6 downto 0) := 
+   signal adcValids         : Slv7Array            (1 downto 0) := (others => (others => '0' ) );
+   signal adcValues         : sampleDataVectorArray(1 downto 0, 6 downto 0) :=
       (others => (others => (others => '0')));
-   signal dacValids         : Slv7Array(NUM_BAYS_G - 1 downto 0) := (others => (others => '0' ) );
-   signal dacValues         : sampleDataVectorArray(NUM_BAYS_G - 1 downto 0, 6 downto 0) :=
+   signal dacValids         : Slv7Array            (1 downto 0) := (others => (others => '0' ) );
+   signal dacValues         : sampleDataVectorArray(1 downto 0, 6 downto 0) :=
          (others => (others => (others => '0')));
 
-   signal debugValids       : Slv4Array(NUM_BAYS_G - 1 downto 0) := (others => (others => '0' ) );
-   signal debugValues       : sampleDataVectorArray(NUM_BAYS_G - 1 downto 0, 3 downto 0) :=
+   signal debugValids       : Slv4Array            (1 downto 0) := (others => (others => '0' ) );
+   signal debugValues       : sampleDataVectorArray(1 downto 0, 3 downto 0) :=
          (others => (others => (others => '0')));
 
-   signal dataValids        : Slv18Array(NUM_BAYS_G - 1 downto 0) := (others => (others => '0' ) );
-   signal linkReady         : Slv18Array(NUM_BAYS_G - 1 downto 0) := (others => (others => '1' ) );
 
-   signal dacSigCtrl        : DacSigCtrlArray(NUM_BAYS_G - 1 downto 0) := (others => DAC_SIG_CTRL_INIT_C);
-   signal dacSigStatus      : DacSigStatusArray(NUM_BAYS_G - 1 downto 0);
-   signal dacSigValids      : Slv7Array(NUM_BAYS_G - 1 downto 0) := (others => (others => '0' ) );
-   signal dacSigValues      : sampleDataVectorArray(NUM_BAYS_G - 1 downto 0, 6 downto 0) :=
+   signal dacSigCtrl        : DacSigCtrlArray      (1 downto 0) := (others => DAC_SIG_CTRL_INIT_C);
+   signal dacSigStatus      : DacSigStatusArray    (1 downto 0);
+   signal dacSigValids      : Slv7Array            (1 downto 0) := (others => (others => '0' ) );
+   signal dacSigValues      : sampleDataVectorArray(1 downto 0, 6 downto 0) :=
             (others => (others => (others => '0')));
 
    component Ila_256 is
@@ -210,7 +219,10 @@ architecture mapping of AppTop is
          probe3         : in  slv(63 downto 0) := (others => '0')
       );
    end component Ila_256;
- 
+
+   attribute dont_touch : string;
+   attribute dont_touch of userClk : signal is "true";
+
 begin
 
    GEN_ETH : if (APP_TYPE_G = "ETH") generate
@@ -220,6 +232,7 @@ begin
       U_EthPortMapping : entity work.EthPortMapping
          generic map (
             TPD_G           => TPD_G,
+            USE_XVC_G       => USE_XVC_G,
             MAC_ADDR_G      => MAC_ADDR_G,
             IP_ADDR_G       => IP_ADDR_G,
             DHCP_G          => DHCP_G,
@@ -251,10 +264,10 @@ begin
             udpObMasters(0) => ibTimingEthMaster,
             udpObSlaves(0)  => ibTimingEthSlave,
             -- AXI-Lite interface
-            axilWriteMaster => axilWriteMaster,
-            axilWriteSlave  => axilWriteSlave,
-            axilReadMaster  => axilReadMaster,
-            axilReadSlave   => axilReadSlave
+            axilWriteMaster => mAxilWriteMasters(0),
+            axilWriteSlave  => mAxilWriteSlaves(0),
+            axilReadMaster  => mAxilReadMasters(0),
+            axilReadSlave   => mAxilReadSlaves(0)
          );
 
       Ila_BsaStream : component Ila_256
@@ -331,13 +344,11 @@ begin
          mAxiReadMasters     => axilReadMasters,
          mAxiReadSlaves      => axilReadSlaves);
 
-   axilWriteSlaves( CORE_INDEX_C ) <= AXI_LITE_WRITE_SLAVE_INIT_C;
-   axilReadSlaves ( CORE_INDEX_C ) <= AXI_LITE_READ_SLAVE_INIT_C;
-
 
    U_Reg : entity work.AppReg
       generic map (
          TPD_G             => TPD_G,
+         USE_TIMING_GTH_G  => USE_TIMING_GTH_G,
          BUILD_INFO_G      => BUILD_INFO_G,
          XIL_DEVICE_G      => XIL_DEVICE_G,
          AXIL_CLK_FRQ_G    => AXIL_CLK_FRQ_G)
@@ -346,11 +357,11 @@ begin
          clk               => axilClk,
          rst               => axilRst,
          -- AXI-Lite interface
-         axilWriteMaster   => axilWriteMaster,
-         axilWriteSlave    => axilWriteSlave,
-         axilReadMaster    => axilReadMaster,
-         axilReadSlave     => axilReadSlave,
-         
+         sAxilWriteMaster  => mAxilWriteMasters,
+         sAxilWriteSlave   => mAxilWriteSlaves,
+         sAxilReadMaster   => mAxilReadMasters,
+         sAxilReadSlave    => mAxilReadSlaves,
+
          -- AXI-Lite devices
          bsaReadMaster     => bsaReadMaster,
          bsaReadSlave      => bsaReadSlave,
@@ -387,7 +398,7 @@ begin
          appTimingClk      => timingClk,
          appTimingRst      => timingRst,
 
-         appTimingBus      => open,
+         appTimingBus      => timingBus,
          appTimingTrig     => timingTrig,
          dbg               => dbg,
          dbgi              => dbgi
@@ -423,7 +434,7 @@ begin
             ibBsaSlaves          => rssiObSlaves (3 downto 0),
             ----------------------
             -- Top Level Interface
-            ----------------------         
+            ----------------------
             -- Diagnostic Interface
             diagnosticClk        => diagnosticClk,
             diagnosticRst        => diagnosticRst,
@@ -434,7 +445,7 @@ begin
             obAppWaveformMasters => waveformMasters,
             obAppWaveformSlaves  => waveformSlaves
          );
-   
+
 
       NO_GEN_BSA : if ( DISABLE_BSA_G ) generate
          rssiObSlaves (3 downto 0) <= (others => AXI_STREAM_SLAVE_FORCE_C);
@@ -447,6 +458,9 @@ begin
       armCascBay (NUM_BAYS_G) <= armCascBay(0);
 
       GEN_BAY : for i in NUM_BAYS_G - 1 downto 0 generate
+         signal linkReady : slv(17 downto 0) := (others => '1');
+         signal dataValid : slv(17 downto 0) := (others => '0');
+      begin
 
       U_DaqMuxV2 : entity work.DaqMuxV2
          generic map (
@@ -467,7 +481,7 @@ begin
             -- Cascaded Sw trigger for external connection between modules
             trigCasc_i          => trigCascBay(i+1),
             trigCasc_o          => trigCascBay(i),
-            -- Cascaded Arm trigger for external connection between modules 
+            -- Cascaded Arm trigger for external connection between modules
             armCasc_i           => armCascBay(i+1),
             armCasc_o           => armCascBay(i),
             -- Freeze buffers
@@ -481,7 +495,7 @@ begin
             axilReadSlave       => axilReadSlaves(DAQMUX0_INDEX_C+i),
             axilWriteMaster     => axilWriteMasters(DAQMUX0_INDEX_C+i),
             axilWriteSlave      => axilWriteSlaves(DAQMUX0_INDEX_C+i),
-            -- Sample data input 
+            -- Sample data input
             sampleDataArr_i(0)  => adcValues(i, 0),
             sampleDataArr_i(1)  => adcValues(i, 1),
             sampleDataArr_i(2)  => adcValues(i, 2),
@@ -500,8 +514,8 @@ begin
             sampleDataArr_i(15) => debugValues(i, 1),
             sampleDataArr_i(16) => debugValues(i, 2),
             sampleDataArr_i(17) => debugValues(i, 3),
-            sampleValidVec_i    => dataValids(i),
-            linkReadyVec_i      => linkReady(i),
+            sampleValidVec_i    => dataValid,
+            linkReadyVec_i      => linkReady,
             -- Output AXI Streaming Interface (Has to be synced with waveform clk)
             wfClk_i             => axiClk,
             wfRst_i             => axiRst,
@@ -516,8 +530,8 @@ begin
             rxAxisCtrlArr_i(3)  => waveformSlaves(i)(3).ctrl
       );
 
-      dataValids(i) <= debugValids(i) & dacValids(i) & adcValids(i);
-      linkReady(i)  <= x"F" & dacValids(i) & adcValids(i);
+      dataValid <= debugValids(i) & dacValids(i) & adcValids(i);
+      linkReady <= x"F" & dacValids(i) & adcValids(i);
 
       U_DacSigGen : entity work.DacSigGen
          generic map (
@@ -558,13 +572,89 @@ begin
          waveformMasters(1) <= WAVEFORM_MASTER_ARRAY_INIT_C(1);
       end generate;
 
+      U_AppCore : entity work.AppCore
+         generic map (
+            TPD_G               => TPD_G,
+            XIL_DEVICE_G        => XIL_DEVICE_G,
+            AXIL_CLK_FRQ_G      => AXIL_CLK_FRQ_G,
+            AXI_BASE_ADDR_G     => AXIL_CONFIG_C(CORE_INDEX_C).baseAddr,
+            SIG_GEN_NUM_G       => SIG_GEN_NUM_G,
+            SIG_GEN_LANE_MODE_G => SIG_GEN_LANE_MODE_G,
+            NUM_BAYS_G          => NUM_BAYS_G
+         )
+         port map (
+            -- Clock and Reset
+            axilClk             => axilClk,
+            axilRst             => axilRst,
+            -- AXI-Lite interface
+            sAxilWriteMaster    => axilWriteMasters( CORE_INDEX_C ),
+            sAxilWriteSlave     => axilWriteSlaves ( CORE_INDEX_C ),
+            sAxilReadMaster     => axilReadMasters ( CORE_INDEX_C ),
+            sAxilReadSlave      => axilReadSlaves  ( CORE_INDEX_C ),
+
+            mAxilWriteMaster    => mAxilWriteMasters(1),
+            mAxilWriteSlave     => mAxilWriteSlaves(1),
+            mAxilReadMaster     => mAxilReadMasters(1),
+            mAxilReadSlave      => mAxilReadSlaves(1),
+
+            -- Streams
+            obAxisMasters       => obAxisMasters,
+            obAxisSlaves        => obAxisSlaves,
+            ibAxisMasters       => ibAxisMasters,
+            ibAxisSlaves        => ibAxisSlaves,
+
+            -- Timing Interface
+            timingClk           => timingClk,
+            timingRst           => timingRst,
+            timingBus           => timingBus,
+            timingTrig          => timingTrig,
+
+            -- Diagnostic Interface
+            diagnosticClk       => diagnosticClk,
+            diagnosticRst       => diagnosticRst,
+            diagnosticBus       => diagnosticBus,
+
+            -- JESD
+            jesdClk(0)          => jesdClk,
+            jesdClk(1)          => jesdClk,
+            jesdRst(0)          => jesdRst,
+            jesdRst(1)          => jesdRst,
+            jesdClk2x(0)        => jesdClk2x,
+            jesdClk2x(1)        => jesdClk2x,
+            jesdRst2x(0)        => jesdRst2x,
+            jesdRst2x(1)        => jesdRst2x,
+            jesdUsrClk(0)       => userClk,
+            jesdUsrClk(1)       => userClk,
+            jesdUsrRst(0)       => userRst,
+            jesdUsrRst(1)       => userRst,
+
+            freezeHw            => freezeHw,
+            trigHw              => trigHw,
+            trigCascBay         => trigCascBay(1 downto 0),
+
+            adcValids           => adcValids,
+            adcValues           => adcValues,
+            dacValids           => dacValids,
+            dacValues           => dacValues,
+            debugValids         => debugValids,
+            debugValues         => debugValues,
+
+            dacSigCtrl          => dacSigCtrl,
+            dacSigStatus        => dacSigStatus,
+            dacSigValids        => dacSigValids,
+            dacSigValues        => dacSigValues
+         );
+
+      -- For now just loop back
+      adcValids        <= dacValids;
+      adcValues        <= dacValues;
+
+      appTimingClk     <= timingClk;
+      appTimingRst     <= timingRst;
+
       rssiIbMasters(4) <= appTxMaster;
       appTxSlave       <= rssiIbSlaves (4);
       appRxMaster      <= rssiObMasters(4);
       rssiObSlaves(4)  <= appRxSlave;
-      
-         
-      appTimingClk <= timingClk;
-      appTimingRst <= timingRst;
 
 end mapping;

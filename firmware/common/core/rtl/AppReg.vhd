@@ -39,7 +39,7 @@ entity AppReg is
       USE_SLOWCLK_G    : boolean          := false;
       FIFO_DEPTH_G     : natural          := 0;
       AXIL_CLK_FRQ_G   : real             := 156.25E6;
-      GEN_TIMING_GTH_G : boolean          := true;
+      USE_TIMING_GTH_G : integer          := 1;
       NUM_TRIGS_G      : natural          := 16
    );
    port (
@@ -47,10 +47,10 @@ entity AppReg is
       clk             : in  sl;
       rst             : in  sl;
       -- AXI-Lite interface
-      axilWriteMaster : in  AxiLiteWriteMasterType;
-      axilWriteSlave  : out AxiLiteWriteSlaveType;
-      axilReadMaster  : in  AxiLiteReadMasterType;
-      axilReadSlave   : out AxiLiteReadSlaveType;
+      sAxilWriteMaster: in  AxiLiteWriteMasterArray(1 downto 0);
+      sAxilWriteSlave : out AxiLiteWriteSlaveArray (1 downto 0);
+      sAxilReadMaster : in  AxiLiteReadMasterArray (1 downto 0);
+      sAxilReadSlave  : out AxiLiteReadSlaveArray  (1 downto 0);
 
       bsaWriteMaster  : out AxiLiteWriteMasterType;
       bsaWriteSlave   : in  AxiLiteWriteSlaveType;
@@ -98,10 +98,10 @@ architecture mapping of AppReg is
    constant SHARED_MEM_WIDTH_C : positive                           := 10;
    constant IRQ_ADDR_C         : slv(SHARED_MEM_WIDTH_C-1 downto 0) := (others => '1');
 
-   signal mAxilWriteMaster  : AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
-   signal mAxilWriteSlave   : AxiLiteWriteSlaveType;
-   signal mAxilReadMaster   : AxiLiteReadMasterType  := AXI_LITE_READ_MASTER_INIT_C;
-   signal mAxilReadSlave    : AxiLiteReadSlaveType;
+   signal tAxilWriteMaster  : AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
+   signal tAxilWriteSlave   : AxiLiteWriteSlaveType;
+   signal tAxilReadMaster   : AxiLiteReadMasterType  := AXI_LITE_READ_MASTER_INIT_C;
+   signal tAxilReadSlave    : AxiLiteReadSlaveType;
 
    signal mAxilWriteMasters : AxiLiteWriteMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
    signal mAxilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXI_MASTERS_C-1 downto 0) := ( others => AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C );
@@ -155,18 +155,22 @@ begin
    U_XBAR : entity work.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
-         NUM_SLAVE_SLOTS_G  => 2,
+         NUM_SLAVE_SLOTS_G  => 3,
          NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
          MASTERS_CONFIG_G   => SYSREG_MASTERS_CONFIG_C)
       port map (
-         sAxiWriteMasters(0) => axilWriteMaster,
-         sAxiWriteMasters(1) => mAxilWriteMaster,
-         sAxiWriteSlaves(0)  => axilWriteSlave,
-         sAxiWriteSlaves(1)  => mAxilWriteSlave,
-         sAxiReadMasters(0)  => axilReadMaster,
-         sAxiReadMasters(1)  => mAxilReadMaster,
-         sAxiReadSlaves(0)   => axilReadSlave,
-         sAxiReadSlaves(1)   => mAxilReadSlave,
+         sAxiWriteMasters(0) => sAxilWriteMaster(0),
+         sAxiWriteMasters(1) => sAxilWriteMaster(1),
+         sAxiWriteMasters(2) => tAxilWriteMaster,
+         sAxiWriteSlaves(0)  => sAxilWriteSlave(0),
+         sAxiWriteSlaves(1)  => sAxilWriteSlave(1),
+         sAxiWriteSlaves(2)  => tAxilWriteSlave,
+         sAxiReadMasters(0)  => sAxilReadMaster(0),
+         sAxiReadMasters(1)  => sAxilReadMaster(1),
+         sAxiReadMasters(2)  => tAxilReadMaster,
+         sAxiReadSlaves(0)   => sAxilReadSlave(0),
+         sAxiReadSlaves(1)   => sAxilReadSlave(1),
+         sAxiReadSlaves(2)   => tAxilReadSlave,
          mAxiWriteMasters    => mAxilWriteMasters,
          mAxiWriteSlaves     => mAxilWriteSlaves,
          mAxiReadMasters     => mAxilReadMasters,
@@ -331,7 +335,7 @@ begin
       timingTxPhyLoc     <= v;
    end process P_TIMING_PHY;
 
-   GEN_TIMING_GTH: if (GEN_TIMING_GTH_G) generate
+   GEN_TIMING_GTH: if (USE_TIMING_GTH_G /= 0) generate
 
    U_TimingRefClk_IBUFDS : IBUFDS_GTE3
       generic map (
@@ -421,10 +425,10 @@ begin
 
             txRst                  => timingTxRstAsync,
 
-            mAxilReadMaster        => mAxilReadMaster,
-            mAxilReadSlave         => mAxilReadSlave,
-            mAxilWriteMaster       => mAxilWriteMaster,
-            mAxilWriteSlave        => mAxilWriteSlave,
+            mAxilReadMaster        => tAxilReadMaster,
+            mAxilReadSlave         => tAxilReadSlave,
+            mAxilWriteMaster       => tAxilWriteMaster,
+            mAxilWriteSlave        => tAxilWriteSlave,
 
             sAxilReadMaster        => mAxilReadMasters (TCLKSWI_INDEX_C),
             sAxilReadSlave         => mAxilReadSlaves  (TCLKSWI_INDEX_C),
@@ -434,7 +438,7 @@ begin
 
    end generate;
 
-   NO_GEN_TIMING_GTH : if (not GEN_TIMING_GTH_G) generate
+   NO_GEN_TIMING_GTH : if (USE_TIMING_GTH_G = 0) generate
    signal timingClkLcls1 : sl;
    signal timingClkLcls2 : sl;
    signal timingRstLcls1 : sl;
