@@ -2,7 +2,7 @@
 source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
 
 # Load the Core
-loadRuckusTcl "$::DIR_PATH/core"
+loadRuckusTcl "$::DIR_PATH/AppTop"
 loadSource -dir "$::DIR_PATH/lib"
 loadRuckusTcl "$::DIR_PATH/VivadoHls"
 
