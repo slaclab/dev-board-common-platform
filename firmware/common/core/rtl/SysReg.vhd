@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- File       : AppReg.vhd
+-- File       : SysReg.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2017-02-15
 -- Last update: 2017-03-17
@@ -31,7 +31,7 @@ use work.AmcCarrierSysRegPkg.all;
 library unisim;
 use unisim.vcomponents.all;
 
-entity AppReg is
+entity SysReg is
    generic (
       TPD_G            : time             := 1 ns;
       BUILD_INFO_G     : BuildInfoType;
@@ -91,9 +91,9 @@ entity AppReg is
       dbg             : out slv(1 downto 0);
       dbgi            : in  slv(1 downto 0)
       );
-end AppReg;
+end SysReg;
 
-architecture mapping of AppReg is
+architecture mapping of SysReg is
 
    constant SHARED_MEM_WIDTH_C : positive                           := 10;
    constant IRQ_ADDR_C         : slv(SHARED_MEM_WIDTH_C-1 downto 0) := (others => '1');

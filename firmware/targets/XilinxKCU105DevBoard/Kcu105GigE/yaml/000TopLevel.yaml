@@ -21,7 +21,7 @@
 #include BsaWaveformEngine.yaml
 #include BldAxiStream.yaml
 
-AppReg: &AppReg
+SysReg: &SysReg
   size: 0x10000000
   class: MMIODev
   children:
@@ -154,8 +154,8 @@ mmio: &mmio
   ########
   children:
   ########
-    AppReg:
-        <<: *AppReg
+    SysReg:
+        <<: *SysReg
         at:
           offset: 0x00000000  
   
@@ -174,9 +174,10 @@ NetIODev:
            dynTimeout:      false
            timeoutUS:       800000
          UDP:
-           port: 8193
+           port: 8198
          RSSI:
          depack:
+           protocolVersion: DEPACKETIZER_V2
          TDESTMux:
            TDEST: 0x00
      axi4:
@@ -188,9 +189,10 @@ NetIODev:
            dynTimeout:      false
            timeoutUS:       800000
          UDP:
-           port: 8193
+           port: 8198
          RSSI:
          depack:
+           protocolVersion: DEPACKETIZER_V2
          TDESTMux:
            TDEST: 0x04
        children:

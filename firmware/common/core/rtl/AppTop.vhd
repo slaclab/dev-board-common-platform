@@ -350,7 +350,7 @@ begin
          mAxiReadSlaves      => axilReadSlaves);
 
 
-   U_Reg : entity work.AppReg
+   U_Reg : entity work.SysReg
       generic map (
          TPD_G             => TPD_G,
          USE_TIMING_GTH_G  => USE_TIMING_GTH_G,

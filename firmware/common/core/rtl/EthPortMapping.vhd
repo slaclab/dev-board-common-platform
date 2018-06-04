@@ -111,8 +111,14 @@ architecture mapping of EthPortMapping is
       TUSER_BITS_C  => 0,
       TUSER_MODE_C  => TUSER_NONE_C);
 
+   constant RSSI_ILEAVE_EN_C : boolean := true;
+
+   constant RSSI_PORT_C      : positive := ite(RSSI_ILEAVE_EN_C, 8198, 8193);
+   constant XVC_PORT_C       : positive := 2542;
+
+
    constant NUM_INT_SERVERS_C  : integer                                     := 2;
-   constant INT_SERVER_PORTS_C : PositiveArray(NUM_INT_SERVERS_C-1 downto 0) := (0 => 8193, 1 => 2542);
+   constant INT_SERVER_PORTS_C : PositiveArray(NUM_INT_SERVERS_C-1 downto 0) := (0 => RSSI_PORT_C, 1 => XVC_PORT_C);
    constant NUM_SERVERS_C      : integer                                     := NUM_INT_SERVERS_C + UDP_SRV_SIZE_G;
    constant SERVER_PORTS_C     : PositiveArray(NUM_SERVERS_C-1 downto 0)     :=
       cat(INT_SERVER_PORTS_C, UDP_SRV_PORTS_G);
@@ -190,13 +196,14 @@ begin
          rst             => rst);
 
    ------------------------------------------
-   -- Software's RSSI Server Interface @ 8193
+   -- Software's RSSI Server Interface @ 8193 (non-interleaved mode)/8198 (interleaved mode)
    ------------------------------------------
    U_RssiServer : entity work.RssiCoreWrapper
       generic map (
          TPD_G               => TPD_G,
          MAX_SEG_SIZE_G      => 1024,
          SEGMENT_ADDR_SIZE_G => 7,
+         APP_ILEAVE_EN_G     => RSSI_ILEAVE_EN_C,
          APP_STREAMS_G       => RSSI_SIZE_C,
          APP_STREAM_ROUTES_G => RSSI_ROUTES_C,
          CLK_FREQUENCY_G     => CLK_FREQUENCY_G,
