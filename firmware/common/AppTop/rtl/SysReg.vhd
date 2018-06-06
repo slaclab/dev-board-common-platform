@@ -44,23 +44,28 @@ entity SysReg is
    );
    port (
       -- Clock and Reset
-      clk             : in  sl;
-      rst             : in  sl;
+      clk               : in  sl;
+      rst               : in  sl;
       -- AXI-Lite interface
-      sAxilWriteMaster: in  AxiLiteWriteMasterArray(1 downto 0);
-      sAxilWriteSlave : out AxiLiteWriteSlaveArray (1 downto 0);
-      sAxilReadMaster : in  AxiLiteReadMasterArray (1 downto 0);
-      sAxilReadSlave  : out AxiLiteReadSlaveArray  (1 downto 0);
+      sAxilWriteMaster  : in  AxiLiteWriteMasterArray(1 downto 0);
+      sAxilWriteSlave   : out AxiLiteWriteSlaveArray (1 downto 0);
+      sAxilReadMaster   : in  AxiLiteReadMasterArray (1 downto 0);
+      sAxilReadSlave    : out AxiLiteReadSlaveArray  (1 downto 0);
 
-      bsaWriteMaster  : out AxiLiteWriteMasterType;
-      bsaWriteSlave   : in  AxiLiteWriteSlaveType;
-      bsaReadMaster   : out AxiLiteReadMasterType;
-      bsaReadSlave    : in  AxiLiteReadSlaveType;
+      bsaWriteMaster    : out AxiLiteWriteMasterType;
+      bsaWriteSlave     : in  AxiLiteWriteSlaveType;
+      bsaReadMaster     : out AxiLiteReadMasterType;
+      bsaReadSlave      : in  AxiLiteReadSlaveType;
 
-      appWriteMaster  : out AxiLiteWriteMasterType;
-      appWriteSlave   : in  AxiLiteWriteSlaveType;
-      appReadMaster   : out AxiLiteReadMasterType;
-      appReadSlave    : in  AxiLiteReadSlaveType;
+      appWriteMaster    : out AxiLiteWriteMasterType;
+      appWriteSlave     : in  AxiLiteWriteSlaveType;
+      appReadMaster     : out AxiLiteReadMasterType;
+      appReadSlave      : in  AxiLiteReadSlaveType;
+
+      ethWriteMaster    : out AxiLiteWriteMasterType;
+      ethWriteSlave     : in  AxiLiteWriteSlaveType;
+      ethReadMaster     : out AxiLiteReadMasterType;
+      ethReadSlave      : in  AxiLiteReadSlaveType;
 
       -- MB Interface
       obTimingEthMaster : out AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
@@ -68,26 +73,26 @@ entity SysReg is
       ibTimingEthMaster : in  AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
       ibTimingEthSlave  : out AxiStreamSlaveType  := AXI_STREAM_SLAVE_FORCE_C;
       -- ADC Ports
-      vPIn            : in  sl;
-      vNIn            : in  sl;
+      vPIn              : in  sl;
+      vNIn              : in  sl;
       -- IIC Port
-      iicScl          : inout sl;
-      iicSda          : inout sl;
+      iicScl            : inout sl;
+      iicSda            : inout sl;
       -- Timing
-      timingRefClkP   : in  sl := '0';
-      timingRefClkN   : in  sl := '1';
-      timingRxP       : in  sl := '0';
-      timingRxN       : in  sl := '0';
-      timingTxP       : out sl := '0';
-      timingTxN       : out sl := '1';
+      timingRefClkP     : in  sl := '0';
+      timingRefClkN     : in  sl := '1';
+      timingRxP         : in  sl := '0';
+      timingRxN         : in  sl := '0';
+      timingTxP         : out sl := '0';
+      timingTxN         : out sl := '1';
 
-      recTimingClk    : out sl;
-      recTimingRst    : out sl;
+      recTimingClk      : out sl;
+      recTimingRst      : out sl;
 
-      appTimingClk    : in  sl;
-      appTimingRst    : in  sl;
-      appTimingBus    : out TimingBusType;
-      appTimingTrig   : out TimingTrigType
+      appTimingClk      : in  sl;
+      appTimingRst      : in  sl;
+      appTimingBus      : out TimingBusType;
+      appTimingTrig     : out TimingTrigType
       );
 end SysReg;
 
@@ -479,14 +484,19 @@ begin
 
    end generate;
 
-   recTimingClk             <= timingRecClk;
-   recTimingRst             <= timingRecRst;
-   appTimingBus             <= timingBus;
+   recTimingClk                   <= timingRecClk;
+   recTimingRst                   <= timingRecRst;
+   appTimingBus                   <= timingBus;
 
    bsaWriteMaster                 <= mAxilWriteMasters(BSA_INDEX_C);
    mAxilWriteSlaves (BSA_INDEX_C) <= bsaWriteSlave;
    bsaReadMaster                  <= mAxilReadMasters (BSA_INDEX_C);
    mAxilReadSlaves  (BSA_INDEX_C) <= bsaReadSlave;
+
+   ethWriteMaster                 <= mAxilWriteMasters(ETH_INDEX_C);
+   mAxilWriteSlaves (ETH_INDEX_C) <= ethWriteSlave;
+   ethReadMaster                  <= mAxilReadMasters (ETH_INDEX_C);
+   mAxilReadSlaves  (ETH_INDEX_C) <= ethReadSlave;
 
    appWriteMaster                 <= mAxilWriteMasters(APP_INDEX_C);
    mAxilWriteSlaves (APP_INDEX_C) <= appWriteSlave;

@@ -140,6 +140,11 @@ architecture mapping of AppTop is
    signal bsaWriteMaster    : AxiLiteWriteMasterType;
    signal bsaWriteSlave     : AxiLiteWriteSlaveType := AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C;
 
+   signal ethReadMaster     : AxiLiteReadMasterType;
+   signal ethReadSlave      : AxiLiteReadSlaveType  := AXI_LITE_READ_SLAVE_EMPTY_DECERR_C;
+   signal ethWriteMaster    : AxiLiteWriteMasterType;
+   signal ethWriteSlave     : AxiLiteWriteSlaveType := AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C;
+
    signal appReadMaster     : AxiLiteReadMasterType;
    signal appReadSlave      : AxiLiteReadSlaveType;
    signal appWriteMaster    : AxiLiteWriteMasterType;
@@ -223,6 +228,7 @@ architecture mapping of AppTop is
 begin
 
    GEN_ETH : if (APP_TYPE_G = "ETH") generate
+
       --------------------------
       -- UDP Port Mapping Module
       --------------------------
@@ -267,11 +273,16 @@ begin
             udpIbCltSlaves (0) => obAxisSlaves (APP_BPCLT_STRM_C),
             udpObCltMasters(0) => ibAxisMasters(APP_BPCLT_STRM_C),
             udpObCltSlaves (0) => ibAxisSlaves (APP_BPCLT_STRM_C),
-            -- AXI-Lite interface
-            axilWriteMaster    => mAxilWriteMasters(0),
-            axilWriteSlave     => mAxilWriteSlaves(0),
-            axilReadMaster     => mAxilReadMasters(0),
-            axilReadSlave      => mAxilReadSlaves(0)
+            -- AXI-Lite Master interface
+            mAxilWriteMaster   => mAxilWriteMasters(0),
+            mAxilWriteSlave    => mAxilWriteSlaves(0),
+            mAxilReadMaster    => mAxilReadMasters(0),
+            mAxilReadSlave     => mAxilReadSlaves(0),
+            -- AXI-Lite Slave interface
+            sAxilWriteMaster   => ethWriteMaster,
+            sAxilWriteSlave    => ethWriteSlave,
+            sAxilReadMaster    => ethReadMaster,
+            sAxilReadSlave     => ethReadSlave
          );
 
       Ila_BsaStream : component Ila_256
@@ -371,6 +382,11 @@ begin
          bsaReadSlave      => bsaReadSlave,
          bsaWriteMaster    => bsaWriteMaster,
          bsaWriteSlave     => bsaWriteSlave,
+
+         ethReadMaster     => ethReadMaster,
+         ethReadSlave      => ethReadSlave,
+         ethWriteMaster    => ethWriteMaster,
+         ethWriteSlave     => ethWriteSlave,
 
          appReadMaster     => appReadMaster,
          appReadSlave      => appReadSlave,
