@@ -10,141 +10,7 @@
 #schemaversion 3.0.0
 #once 000TopLevel.yaml
 #
-#include AxiVersion.yaml
-#include AxiSysMonUltraScale.yaml
-#include TimingFrameRx.yaml
-#include TPGMiniCore.yaml
-#include EvrV2CoreTriggers.yaml
-#include GthRxAlignCheck.yaml
-#include Gthe3Channel.yaml
-#include BsaBufferControl.yaml
-#include BsaWaveformEngine.yaml
-#include BldAxiStream.yaml
-
-SysReg: &SysReg
-  size: 0x10000000
-  class: MMIODev
-  children:
-    AxiVersion:
-      <<: *AxiVersion
-      at: { offset: 0x00000000 }
-    AxiSysMonUltraScale:
-      <<: *AxiSysMonUltraScale
-      at: { offset: 0x02000000 }
-    IIC:
-      class: MMIODev
-      size: 0x10000
-      at: { offset: 0x03000000 }
-      children:
-        Tca9548:
-          class: IntField
-          sizeBits: 8
-          at: { offset: 0 }
-        Si570:
-          class: IntField
-          sizeBits: 32
-          at: { offset: 0x400, nelms: 256, stride: 4 }
-        Pca9544:
-          class: IntField
-          sizeBits: 8
-          at: { offset: 0x800 }
-        SFP:
-          class: IntField
-          sizeBits: 32
-          at: { offset: 0xc00, nelms: 256, stride: 4 }
-    TimingFrameRx:
-      <<: *TimingFrameRx
-      at:
-        offset: 0x04000000
-    ##################################################
-    TPGMiniCore:
-      <<: *TPGMiniCore
-      at:
-        offset: 0x04030000
-    ##################################################
-    Gthe3Channel:
-      <<: *Gthe3Channel
-      at:
-        offset: 0x05400000
-    ##################################################
-    GthRxAlignCheck:
-      <<: *GthRxAlignCheck
-      at:
-        offset: 0x05000000
-    ##################################################      
-    EvrV2CoreTriggers:
-      <<: *EvrV2CoreTriggers
-      at:
-        offset: 0x06000000
-    LocReg:
-      class:    MMIODev
-      size:     0x1000
-      at:
-        offset: 0x07000000
-      children:
-        RFREQRef:
-          class: IntField
-          description: Si570 Freq. Multiplier; Factory calibration
-          sizeBits: 64
-          mode: RO
-          at:
-            offset: 0x00
-        RFREQLcls1:
-          class: IntField
-          description: Si570 Freq. Multiplier for LCLS1 Timing
-          sizeBits: 64
-          mode: RO
-          at:
-            offset: 0x08
-        RFREQLcls2:
-          class: IntField
-          description: Si570 Freq. Multiplier for LCLS2 Timing
-          sizeBits: 64
-          mode: RO
-          at:
-            offset: 0x10
-        TimingTxReset:
-          description: Reset Timing GTH Transmitter
-          class:    IntField
-          sizeBits: 1
-          lsBit:    1
-          enums:
-            - {name: Run,   value: 0}
-            - {name: Reset, value: 1}
-          at:
-            offset: 0x100
-        Si570NewFreq:
-          description: "Clear Si570 lock bit and set 'New Freq' in < 10ms"
-          class:    IntField
-          sizeBits: 1
-          lsBit:    0
-          enums:
-            - {name: Ready,   value: 0}
-            - {name: NewFreq, value: 1}
-          at:
-            offset: 0x100
-    AmcCarrierBsa:
-      class: MMIODev
-      configPrio: 1
-      description: BSA Module
-      size: 0x40000
-      at:
-        offset: 0x08000000
-      children:
-        BsaBufferControl:
-          <<: *BsaBufferControl
-          at:
-            offset: 0x00000000
-        BsaWaveformEngine:
-          <<: *BsaWaveformEngine
-          at:
-            offset: 0x00010000
-            nelms: 2
-            stride: 0x00010000
-        BldAxiStream:
-          <<: *BldAxiStream
-          at:
-            offset: 0x00030000
+#include AppTop.yaml
 
 #MMIO range, will be attached to FPGA
 mmio: &mmio
@@ -154,10 +20,14 @@ mmio: &mmio
   ########
   children:
   ########
-    SysReg:
-        <<: *SysReg
+    AmcCarrierCore:
+        <<: *SysRegs
         at:
           offset: 0x00000000  
+    AppTop:
+        <<: *AppTop
+        at:
+          offset: 0x80000000
   
 IpAddr: &IpAddr 192.168.2.10
 
