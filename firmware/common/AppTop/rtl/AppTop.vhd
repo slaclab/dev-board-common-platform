@@ -45,6 +45,7 @@ entity AppTop is
       APP_STRM_CFG_G       : AxiStreamConfigType := ssiAxiStreamConfig(4);
       AXIL_CLK_FRQ_G       : real             := 156.25E6;
       DISABLE_BSA_G        : boolean          := false;
+      NUM_APP_LEDS_G       : natural;
       JESD_CLK_IDIV_G      : positive         := 5;           -- with AXIL_CLK_FRQ_G = 125*5/4 -> 125/4MHz
       JESD_CLK_MULT_G      : real             := 35.5;        -- 1109.375MHz
       JESD_CLK_ODIV_G      : positive         := 3;           -- 369.79MHz; divider for jesdClk2x
@@ -90,8 +91,8 @@ entity AppTop is
       appTimingClk    : out sl;
       appTimingRst    : out sl;
 
-      dbg             : out slv(1 downto 0);
-      dbgi            : in  slv(1 downto 0) := (others => '0')
+      gpioDip         : in  slv(3 downto 0);
+      appLeds         : out slv(NUM_APP_LEDS_G - 1 downto 0) := (others => '0')
       );
 end AppTop;
 
@@ -402,10 +403,8 @@ begin
          appTimingRst      => timingRst,
 
          appTimingBus      => timingBus,
-         appTimingTrig     => timingTrig,
-         dbg               => dbg,
-         dbgi              => dbgi
-         );
+         appTimingTrig     => timingTrig
+      );
 
       U_BSA : entity work.AmcCarrierBsa
          generic map (
@@ -583,7 +582,8 @@ begin
             AXI_BASE_ADDR_G     => AXIL_CONFIG_C(CORE_INDEX_C).baseAddr,
             SIG_GEN_NUM_G       => SIG_GEN_NUM_G,
             SIG_GEN_LANE_MODE_G => SIG_GEN_LANE_MODE_G,
-            NUM_BAYS_G          => NUM_BAYS_G
+            NUM_BAYS_G          => NUM_BAYS_G,
+            NUM_APP_LEDS_G      => NUM_APP_LEDS_G
          )
          port map (
             -- Clock and Reset
@@ -645,7 +645,10 @@ begin
             dacSigCtrl          => dacSigCtrl,
             dacSigStatus        => dacSigStatus,
             dacSigValids        => dacSigValids,
-            dacSigValues        => dacSigValues
+            dacSigValues        => dacSigValues,
+            
+            gpioDip             => gpioDip,
+            appLeds             => appLeds
          );
 
       -- For now just loop back

@@ -87,9 +87,7 @@ entity SysReg is
       appTimingClk    : in  sl;
       appTimingRst    : in  sl;
       appTimingBus    : out TimingBusType;
-      appTimingTrig   : out TimingTrigType;
-      dbg             : out slv(1 downto 0);
-      dbgi            : in  slv(1 downto 0)
+      appTimingTrig   : out TimingTrigType
       );
 end SysReg;
 
@@ -326,11 +324,11 @@ begin
          evrModeSel          => appTimingMode
       );
 
-   P_TIMING_PHY : process( timingTxPhy, dbgi(0), timingTxRstAsync ) is
+   P_TIMING_PHY : process( timingTxPhy, timingTxRstAsync ) is
       variable v : TimingPhyType;
    begin
       v                  := timingTxPhy;
-      v.control.pllReset := dbgi(0) or timingTxRstAsync;
+      v.control.pllReset := timingTxRstAsync;
 
       timingTxPhyLoc     <= v;
    end process P_TIMING_PHY;
@@ -480,9 +478,6 @@ begin
    timingTxRstAsync         <= '0';
 
    end generate;
-
-   dbg(1)                   <= timingTxUsrClk;
-   dbg(0)                   <= timingTxUsrRst;
 
    recTimingClk             <= timingRecClk;
    recTimingRst             <= timingRecRst;

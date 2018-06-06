@@ -32,10 +32,12 @@ use unisim.vcomponents.all;
 
 entity Kcu105GigE is
    generic (
-      TPD_G         : time    := 1 ns;
-      BUILD_INFO_G  : BuildInfoType;
-      SIM_SPEEDUP_G : boolean := false;
-      SIMULATION_G  : boolean := false);
+      TPD_G          : time     := 1 ns;
+      BUILD_INFO_G   : BuildInfoType;
+      SIM_SPEEDUP_G  : boolean  := false;
+      SIMULATION_G   : boolean  := false;
+      NUM_APP_LEDS_G : natural range 4 to 8 := 4
+   );
    port (
       -- Misc. IOs
       extRst     : in  sl;
@@ -106,7 +108,7 @@ architecture top_level of Kcu105GigE is
       LEN_BITS_C   => 8);
 
    constant AXI_STRM_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(8);
-
+   
    type MuxedSignalsType is record
       txMasters     : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
       txSlaves      : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
@@ -168,17 +170,12 @@ architecture top_level of Kcu105GigE is
    signal appTimingClk         : sl;
    signal appTimingRst         : sl;
 
-   constant CNT_LEN_C          : natural := 28;
-   signal rxClkCnt             : slv(CNT_LEN_C-1 downto 0) := (others => '0');
-   signal txClkCnt             : slv(CNT_LEN_C-1 downto 0) := (others => '0');
-
    constant NUM_LANE_C         : natural := 1;
 
    signal    dmaClk            : slv(NUM_LANE_C-1 downto 0);
    signal    dmaRst            : slv(NUM_LANE_C-1 downto 0);
 
-   signal    dbg               : slv(1 downto 0);
-   signal    dbgi              : slv(1 downto 0);
+   signal    appLeds           : slv(NUM_APP_LEDS_G - 1 downto 0);
 
 
    attribute dont_touch                 : string;
@@ -390,7 +387,9 @@ begin
          MAC_ADDR_G     => MAC_ADDR_C,
          IP_ADDR_G      => IP_ADDR_C,
          APP_STRM_CFG_G => AXI_STRM_CONFIG_C,
-         AXIL_CLK_FRQ_G => AXIL_CLK_FRQ_C)
+         AXIL_CLK_FRQ_G => AXIL_CLK_FRQ_C,
+         NUM_APP_LEDS_G => NUM_APP_LEDS_G
+      )
       port map (
          -- Clock and Reset
          axilClk        => sysClk156,
@@ -425,12 +424,9 @@ begin
          timingTxN      => ethTxN,
          appTimingClk   => appTimingClk,
          appTimingRst   => appTimingRst,
-         dbg            => dbg,
-         dbgi           => dbgi
-         );
-
-   dbgi(1) <= '0';
-   dbgi(0) <= gpioDip(1);
+         gpioDip        => gpioDip,
+         appLeds        => appLeds
+      );
 
    U_DdrMem : entity work.AmcCarrierDdrMem
    port map (
@@ -480,32 +476,26 @@ begin
 
    iicMuxRstL <= '1';
 
-   P_CNT_RX : process( appTimingClk ) is
-   begin
-      if ( rising_edge( appTimingClk ) ) then
-         rxClkCnt <= slv( unsigned( rxClkCnt ) + 1 );
-      end if;
-   end process P_CNT_RX;
-
-   P_CNT_TX : process( dbg(1) ) is
-   begin
-      if ( rising_edge( dbg(1) ) ) then
-         txClkCnt <= slv( unsigned( txClkCnt ) + 1 );
-      end if;
-   end process P_CNT_TX;
-
-
    ----------------
    -- Misc. Signals
    ----------------
-   led(7) <= linkIsUp;
-   led(6) <= not speed10_100;             -- lit when 1Gb
-   led(5) <= not speed10_100 or speed100; -- lit when 1Gb or 100Mb
-   led(4) <= memReady;
-   led(3) <= initDone;
-   led(2) <= rxClkCnt( rxClkCnt'left );
-   led(1) <= txClkCnt( txClkCnt'left );
-   led(0) <= dbg(0);
+   GEN_LED_7 : if ( NUM_APP_LEDS_G < 8 ) generate
+      led(7) <= linkIsUp;
+   end generate;
+
+   GEN_LED_6 : if ( NUM_APP_LEDS_G < 7 ) generate
+      led(6) <= not speed10_100;             -- lit when 1Gb
+   end generate;
+
+   GEN_LED_5 : if ( NUM_APP_LEDS_G < 6 ) generate
+      led(5) <= not speed10_100 or speed100; -- lit when 1Gb or 100Mb
+   end generate;
+
+   GEN_LED_4 : if ( NUM_APP_LEDS_G < 5 ) generate
+      led(4) <= memReady;
+   end generate;
+
+   led(NUM_APP_LEDS_G - 1 downto 0) <= appLeds;
 
    -- Tri-state driver for phyMdio
    phyMdio <= 'Z' when phyMdo = '1' else '0';

@@ -34,7 +34,8 @@ entity AppCore is
       AXI_BASE_ADDR_G     : slv(31 downto 0);
       SIG_GEN_NUM_G       : NaturalArray (1 downto 0) := (others => 4); -- 0 = disabled
       SIG_GEN_LANE_MODE_G : Slv7Array    (1 downto 0) := (others => "0000000"); -- 0: 32-bit, 1: 16-bit
-      NUM_BAYS_G          : positive range 1 to 2 := 1
+      NUM_BAYS_G          : positive range 1 to 2 := 1;
+      NUM_APP_LEDS_G      : natural
    );
    port (
       -- Clock and Reset
@@ -91,8 +92,11 @@ entity AppCore is
       dacSigCtrl      : out DacSigCtrlArray(1 downto 0) := (others => DAC_SIG_CTRL_INIT_C);
       dacSigStatus    : in  DacSigStatusArray(1 downto 0);
       dacSigValids    : in  Slv7Array(1 downto 0);
-      dacSigValues    : in  sampleDataVectorArray(1 downto 0, 6 downto 0)
-      );
+      dacSigValues    : in  sampleDataVectorArray(1 downto 0, 6 downto 0);
+
+      gpioDip         : in  slv(                 3 downto 0);
+      appLeds         : out slv(NUM_APP_LEDS_G - 1 downto 0) := (others => '0')
+   );
 end entity AppCore;
 
 architecture Stub of AppCore is
