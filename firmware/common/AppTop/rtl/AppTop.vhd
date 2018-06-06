@@ -25,6 +25,7 @@ use work.AxiPkg.all;
 use work.SsiPkg.all;
 use work.AmcCarrierPkg.all;
 use work.AppTopPkg.all;
+use work.AppCorePkg.all;
 use work.TimingPkg.all;
 use work.Jesd204bPkg.all;
 
@@ -122,9 +123,6 @@ architecture mapping of AppTop is
 
    constant AXIL_CONFIG_C   : AxiLiteCrossbarMasterConfigArray(N_AXIL_MASTERS_C - 1 downto 0) :=
       genAxiLiteConfig(N_AXIL_MASTERS_C, x"80000000", 31, 28);
-
-   constant APP_DEBUG_STRM_C : natural := 0;
-   constant APP_BPCLT_STRM_C : natural := 1;
 
    signal axilReadMasters   : AxiLiteReadMasterArray (N_AXIL_MASTERS_C - 1 downto 0);
    signal axilReadSlaves    : AxiLiteReadSlaveArray  (N_AXIL_MASTERS_C - 1 downto 0) := (others => AXI_LITE_READ_SLAVE_EMPTY_DECERR_C);
