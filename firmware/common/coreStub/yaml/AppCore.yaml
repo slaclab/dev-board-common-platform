@@ -1,0 +1,6 @@
+#schemaversion 3.0.0
+#once AppCore.yaml
+
+AppCore: &AppCore
+  class: MMIODev
+  size:  0x10000000
