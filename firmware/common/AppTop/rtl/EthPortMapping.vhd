@@ -264,10 +264,6 @@ begin
       port map (
          clk_i             => clk,
          rst_i             => rst,
-         axilReadMaster    => axilReadMasters (RSSI_INDEX_C),
-         axilReadSlave     => axilReadSlaves  (RSSI_INDEX_C),
-         axilWriteMaster   => axilWriteMasters(RSSI_INDEX_C),
-         axilWriteSlave    => axilWriteSlaves (RSSI_INDEX_C),
          openRq_i          => '1',
          -- Application Layer Interface
          sAppAxisMasters_i => rssiIbMastersLoc,
@@ -278,7 +274,16 @@ begin
          sTspAxisMaster_i  => obServerMasters(0),
          sTspAxisSlave_o   => obServerSlaves(0),
          mTspAxisMaster_o  => ibServerMasters(0),
-         mTspAxisSlave_i   => ibServerSlaves(0));
+         mTspAxisSlave_i   => ibServerSlaves(0),
+
+         axiClk_i          => clk,
+         axiRst_i          => rst,
+
+         axilReadMaster    => axilReadMasters (RSSI_INDEX_C),
+         axilReadSlave     => axilReadSlaves  (RSSI_INDEX_C),
+         axilWriteMaster   => axilWriteMasters(RSSI_INDEX_C),
+         axilWriteSlave    => axilWriteSlaves (RSSI_INDEX_C)
+      );
 
    ---------------------------------------
    -- TDEST = 0x0: Register access control
