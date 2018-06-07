@@ -45,6 +45,7 @@ entity AppTop is
       APP_STRM_CFG_G       : AxiStreamConfigType := ssiAxiStreamConfig(4);
       AXIL_CLK_FRQ_G       : real             := 156.25E6;
       DISABLE_BSA_G        : boolean          := false;
+      DISABLE_BLD_G        : boolean          := false;
       NUM_APP_LEDS_G       : natural;
       JESD_CLK_IDIV_G      : positive         := 5;           -- with AXIL_CLK_FRQ_G = 125*5/4 -> 125/4MHz
       JESD_CLK_MULT_G      : real             := 35.5;        -- 1109.375MHz
@@ -427,7 +428,7 @@ begin
             TPD_G          => TPD_G,
             FSBL_G         => false,
             DISABLE_BSA_G  => DISABLE_BSA_G,
-            DISABLE_BLD_G  => true
+            DISABLE_BLD_G  => DISABLE_BLD_G
          )
          port map (
             -- AXI-Lite Interface (axilClk domain)
