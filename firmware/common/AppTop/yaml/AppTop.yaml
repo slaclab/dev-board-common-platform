@@ -20,8 +20,8 @@
 #include BsaBufferControl.yaml
 #include BsaWaveformEngine.yaml
 #include BldAxiStream.yaml
-#include UpdEngineClient.yaml
-#include UpdEngineServer.yaml
+#include UdpEngineClient.yaml
+#include UdpEngineServer.yaml
 #include RssiCore.yaml
 #include AppCore.yaml
 #include DaqMuxV2.yaml
