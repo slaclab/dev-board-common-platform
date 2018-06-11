@@ -25,4 +25,6 @@ package AppCorePkg is
    constant APP_DEBUG_STRM_C : natural := 0;
    constant APP_BPCLT_STRM_C : natural := 1;
 
+   constant APP_CORE_BASE_ADDR_C : slv(31 downto 0) := x"8000_0000";
+
 end package AppCorePkg;

@@ -117,6 +117,7 @@ architecture mapping of AppTop is
 
    constant N_AXIL_MASTERS_C: natural := 5;
 
+   -- CORE_INDEX_C *MUST* be 0 so that the (exported) APP_CORE_BASE_ADDR_C is valid!
    constant CORE_INDEX_C    : natural := 0;
    constant DAQMUX0_INDEX_C : natural := 1;
    constant DAQMUX1_INDEX_C : natural := 2;
@@ -124,7 +125,7 @@ architecture mapping of AppTop is
    constant SIGGEN1_INDEX_C : natural := 4;
 
    constant AXIL_CONFIG_C   : AxiLiteCrossbarMasterConfigArray(N_AXIL_MASTERS_C - 1 downto 0) :=
-      genAxiLiteConfig(N_AXIL_MASTERS_C, x"80000000", 31, 28);
+      genAxiLiteConfig(N_AXIL_MASTERS_C, APP_CORE_BASE_ADDR_C, 31, 28);
 
    signal axilReadMasters   : AxiLiteReadMasterArray (N_AXIL_MASTERS_C - 1 downto 0);
    signal axilReadSlaves    : AxiLiteReadSlaveArray  (N_AXIL_MASTERS_C - 1 downto 0) := (others => AXI_LITE_READ_SLAVE_EMPTY_DECERR_C);
