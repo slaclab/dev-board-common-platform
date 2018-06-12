@@ -28,7 +28,7 @@ use work.AmcCarrierSysRegPkg.all;
 entity EthPortMapping is
    generic (
       TPD_G           : time             := 1 ns;
-      USE_XVC_G       : natural          := 1;
+      USE_XVC_G       : boolean          := true;
       CLK_FREQUENCY_G : real             := 125.0E+6;
       MAC_ADDR_G      : slv(47 downto 0) := x"010300564400";  -- 00:44:56:00:03:01 (ETH only)
       IP_ADDR_G       : slv(31 downto 0) := x"0A02A8C0";  -- 192.168.2.10 (ETH only)
@@ -336,7 +336,7 @@ begin
       ibServerMasters(1)  <= v;
    end process P_SPLICE;
 
-   GEN_JTAG : if ( USE_XVC_G /= 0 ) generate
+   GEN_JTAG : if ( USE_XVC_G ) generate
 
    U_AxisBscan : entity work.AxisJtagDebugBridge(AxisJtagDebugBridgeImpl)
       generic map (
@@ -359,7 +359,7 @@ begin
 
    end generate;
 
-   GEN_JTAG_STUB : if ( USE_XVC_G = 0 ) generate
+   GEN_JTAG_STUB : if ( not USE_XVC_G ) generate
 
    U_AxisBscan : entity work.AxisJtagDebugBridge(AxisJtagDebugBridgeStub)
       generic map (

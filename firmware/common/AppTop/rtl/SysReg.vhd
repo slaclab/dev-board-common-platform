@@ -39,7 +39,7 @@ entity SysReg is
       USE_SLOWCLK_G    : boolean          := false;
       FIFO_DEPTH_G     : natural          := 0;
       AXIL_CLK_FRQ_G   : real             := 156.25E6;
-      USE_TIMING_GTH_G : integer          := 1;
+      USE_TIMING_GTH_G : boolean          := true;
       NUM_TRIGS_G      : natural          := 16
    );
    port (
@@ -338,7 +338,7 @@ begin
       timingTxPhyLoc     <= v;
    end process P_TIMING_PHY;
 
-   GEN_TIMING_GTH: if (USE_TIMING_GTH_G /= 0) generate
+   GEN_TIMING_GTH: if (USE_TIMING_GTH_G) generate
 
    U_TimingRefClk_IBUFDS : IBUFDS_GTE3
       generic map (
@@ -441,7 +441,7 @@ begin
 
    end generate;
 
-   NO_GEN_TIMING_GTH : if (USE_TIMING_GTH_G = 0) generate
+   NO_GEN_TIMING_GTH : if (not USE_TIMING_GTH_G) generate
    signal timingClkLcls1 : sl;
    signal timingClkLcls2 : sl;
    signal timingRstLcls1 : sl;

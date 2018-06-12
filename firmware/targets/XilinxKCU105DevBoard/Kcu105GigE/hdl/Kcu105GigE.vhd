@@ -26,6 +26,7 @@ use work.AxiPkg.all;
 use work.EthMacPkg.all;
 use work.SsiPkg.all;
 use work.TimingPkg.all;
+use work.AppCoreConfigPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -35,8 +36,7 @@ entity Kcu105GigE is
       TPD_G          : time     := 1 ns;
       BUILD_INFO_G   : BuildInfoType;
       SIM_SPEEDUP_G  : boolean  := false;
-      SIMULATION_G   : boolean  := false;
-      NUM_APP_LEDS_G : natural range 4 to 8 := 4
+      SIMULATION_G   : boolean  := false
    );
    port (
       -- Misc. IOs
@@ -94,8 +94,6 @@ end Kcu105GigE;
 architecture top_level of Kcu105GigE is
 
    constant AXIS_SIZE_C : positive         := 1;
-   constant IP_ADDR_C   : slv(31 downto 0) := x"0A02A8C0";          -- 192.168.2.10
-   constant MAC_ADDR_C  : slv(47 downto 0) := x"010300564400";      -- 00:44:56:00:03:01
    constant RST_DEL_C   : slv(22 downto 0) := toSlv(16#3FFFFF#,23); -- ~ 2*10ms @ 156MHz
 
    constant AXIL_CLK_FRQ_C : real := 156.25E6;
@@ -106,8 +104,6 @@ architecture top_level of Kcu105GigE is
       DATA_BYTES_C => 4,
       ID_BITS_C    => 4,
       LEN_BITS_C   => 8);
-
-   constant AXI_STRM_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(8);
    
    type MuxedSignalsType is record
       txMasters     : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
@@ -171,11 +167,12 @@ architecture top_level of Kcu105GigE is
    signal appTimingRst         : sl;
 
    constant NUM_LANE_C         : natural := 1;
+   constant NUM_APP_LEDS_C     : natural := APP_CORE_CONFIG_C.numAppLEDs;
 
    signal    dmaClk            : slv(NUM_LANE_C-1 downto 0);
    signal    dmaRst            : slv(NUM_LANE_C-1 downto 0);
 
-   signal    appLeds           : slv(NUM_APP_LEDS_G - 1 downto 0);
+   signal    appLeds           : slv(NUM_APP_LEDS_C - 1 downto 0);
 
 
    attribute dont_touch                 : string;
@@ -198,8 +195,6 @@ architecture top_level of Kcu105GigE is
 
 begin
 
-   -- hold unused ethernet in reset so it doesn't ARP or
-   -- communicate otherwise
    sgmiiRstExt <= extRst;
    sgmiiDmaRst <= sysRst156;
 
@@ -340,7 +335,7 @@ begin
          AXIS_CONFIG_G      => (others => EMAC_AXIS_CONFIG_C))
       port map (
          -- Local Configurations
-         localMac           => (others => MAC_ADDR_C),
+         localMac           => (others => APP_CORE_CONFIG_C.macAddress),
          -- Streaming DMA Interface
          dmaClk             => dmaClk,
          dmaRst             => dmaRst,
@@ -379,16 +374,11 @@ begin
    -------------------
    U_App : entity work.AppTop
       generic map (
-         TPD_G          => TPD_G,
-         BUILD_INFO_G   => BUILD_INFO_G,
-         XIL_DEVICE_G   => "ULTRASCALE",
-         APP_TYPE_G     => "ETH",
-         AXIS_SIZE_G    => AXIS_SIZE_C,
-         MAC_ADDR_G     => MAC_ADDR_C,
-         IP_ADDR_G      => IP_ADDR_C,
-         APP_STRM_CFG_G => AXI_STRM_CONFIG_C,
-         AXIL_CLK_FRQ_G => AXIL_CLK_FRQ_C,
-         NUM_APP_LEDS_G => NUM_APP_LEDS_G
+         TPD_G             => TPD_G,
+         BUILD_INFO_G      => BUILD_INFO_G,
+         XIL_DEVICE_G      => "ULTRASCALE",
+         AXIL_CLK_FRQ_G    => AXIL_CLK_FRQ_C,
+         APP_CORE_CONFIG_G => APP_CORE_CONFIG_C
       )
       port map (
          -- Clock and Reset
@@ -479,23 +469,23 @@ begin
    ----------------
    -- Misc. Signals
    ----------------
-   GEN_LED_7 : if ( NUM_APP_LEDS_G < 8 ) generate
+   GEN_LED_7 : if ( NUM_APP_LEDS_C < 8 ) generate
       led(7) <= linkIsUp;
    end generate;
 
-   GEN_LED_6 : if ( NUM_APP_LEDS_G < 7 ) generate
+   GEN_LED_6 : if ( NUM_APP_LEDS_C < 7 ) generate
       led(6) <= not speed10_100;             -- lit when 1Gb
    end generate;
 
-   GEN_LED_5 : if ( NUM_APP_LEDS_G < 6 ) generate
+   GEN_LED_5 : if ( NUM_APP_LEDS_C < 6 ) generate
       led(5) <= not speed10_100 or speed100; -- lit when 1Gb or 100Mb
    end generate;
 
-   GEN_LED_4 : if ( NUM_APP_LEDS_G < 5 ) generate
+   GEN_LED_4 : if ( NUM_APP_LEDS_C < 5 ) generate
       led(4) <= memReady;
    end generate;
 
-   led(NUM_APP_LEDS_G - 1 downto 0) <= appLeds;
+   led(NUM_APP_LEDS_C - 1 downto 0) <= appLeds;
 
    -- Tri-state driver for phyMdio
    phyMdio <= 'Z' when phyMdo = '1' else '0';

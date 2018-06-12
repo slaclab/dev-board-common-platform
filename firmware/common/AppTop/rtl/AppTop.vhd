@@ -33,29 +33,9 @@ entity AppTop is
    generic (
       TPD_G                : time             := 1 ns;
       BUILD_INFO_G         : BuildInfoType;
-      USE_TIMING_GTH_G     : integer          := 1; -- whether to use a GTH for timing (in-logic loopback otherwise)
-      USE_XVC_G            : integer          := 1; -- whether to use an XVC debug bridge
       XIL_DEVICE_G         : string           := "7SERIES";
-      APP_TYPE_G           : string           := "ETH";
-      AXIS_SIZE_G          : positive         := 1;
-      MAC_ADDR_G           : slv(47 downto 0) := x"010300564400";  -- 00:44:56:00:03:01 (ETH only)
-      IP_ADDR_G            : slv(31 downto 0) := x"0A02A8C0";  -- 192.168.2.10 (ETH only)
-      DHCP_G               : boolean          := true;
-      JUMBO_G              : boolean          := false;
-      APP_STRM_CFG_G       : AxiStreamConfigType := ssiAxiStreamConfig(4);
       AXIL_CLK_FRQ_G       : real             := 156.25E6;
-      DISABLE_BSA_G        : boolean          := false;
-      DISABLE_BLD_G        : boolean          := false;
-      NUM_APP_LEDS_G       : natural;
-      JESD_CLK_IDIV_G      : positive         := 5;           -- with AXIL_CLK_FRQ_G = 125*5/4 -> 125/4MHz
-      JESD_CLK_MULT_G      : real             := 35.5;        -- 1109.375MHz
-      JESD_CLK_ODIV_G      : positive         := 3;           -- 369.79MHz; divider for jesdClk2x
-      USER_CLK_ODIV_G      : positive         := 9;           -- jesd2x / 3
-      NUM_BAYS_G           : positive range 1 to 2 := 1;
-      SIG_GEN_NUM_G        : NaturalArray (1 downto 0) := (others => 4); -- 0 = disabled
-      SIG_GEN_ADDR_WIDTH_G : PositiveArray(1 downto 0) := (others => 9);
-      SIG_GEN_LANE_MODE_G  : Slv7Array    (1 downto 0) := (others => "0000000"); -- 0: 32-bit, 1: 16-bit
-      SIG_GEN_RAM_CLK_G    : Slv7Array    (1 downto 0) := (others => "0000000")  -- 0: jesd2x, 1: jesd1x
+      APP_CORE_CONFIG_G    : AppCoreConfigType:= APP_CORE_CONFIG_DFLT_C
    );
 
    port (
@@ -70,11 +50,11 @@ entity AppTop is
       axiReadMaster   : out AxiReadMasterType;
       axiReadSlave    : in  AxiReadSlaveType;
       -- AXIS interface
-      txMasters       : out AxiStreamMasterArray(AXIS_SIZE_G-1 downto 0);
-      txSlaves        : in  AxiStreamSlaveArray(AXIS_SIZE_G-1 downto 0);
-      rxMasters       : in  AxiStreamMasterArray(AXIS_SIZE_G-1 downto 0);
-      rxSlaves        : out AxiStreamSlaveArray(AXIS_SIZE_G-1 downto 0);
-      rxCtrl          : out AxiStreamCtrlArray(AXIS_SIZE_G-1 downto 0);
+      txMasters       : out AxiStreamMasterArray(0 downto 0);
+      txSlaves        : in  AxiStreamSlaveArray (0 downto 0);
+      rxMasters       : in  AxiStreamMasterArray(0 downto 0);
+      rxSlaves        : out AxiStreamSlaveArray (0 downto 0);
+      rxCtrl          : out AxiStreamCtrlArray  (0 downto 0);
       -- ADC Ports
       vPIn            : in  sl;
       vNIn            : in  sl;
@@ -93,7 +73,7 @@ entity AppTop is
       appTimingRst    : out sl;
 
       gpioDip         : in  slv(3 downto 0);
-      appLeds         : out slv(NUM_APP_LEDS_G - 1 downto 0) := (others => '0')
+      appLeds         : out slv(APP_CORE_CONFIG_G.numAppLEDs - 1 downto 0) := (others => '0')
       );
 end AppTop;
 
@@ -101,7 +81,7 @@ architecture mapping of AppTop is
 
    constant RSSI_SIZE_C     : positive := 5;
    constant RSSI_STRM_CFG_C : AxiStreamConfigArray(RSSI_SIZE_C - 1 downto 0) := (
-      4      => APP_STRM_CFG_G,
+      4      => APP_CORE_CONFIG_G.appStreamConfig,
       others => ETH_AXIS_CONFIG_C
    );
 
@@ -125,7 +105,7 @@ architecture mapping of AppTop is
    constant SIGGEN1_INDEX_C : natural := 4;
 
    constant AXIL_CONFIG_C   : AxiLiteCrossbarMasterConfigArray(N_AXIL_MASTERS_C - 1 downto 0) :=
-      genAxiLiteConfig(N_AXIL_MASTERS_C, APP_CORE_BASE_ADDR_C, 31, 28);
+      genAxiLiteConfig(N_AXIL_MASTERS_C, x"8000_0000", 31, 28);
 
    signal axilReadMasters   : AxiLiteReadMasterArray (N_AXIL_MASTERS_C - 1 downto 0);
    signal axilReadSlaves    : AxiLiteReadSlaveArray  (N_AXIL_MASTERS_C - 1 downto 0) := (others => AXI_LITE_READ_SLAVE_EMPTY_DECERR_C);
@@ -229,7 +209,8 @@ architecture mapping of AppTop is
 
 begin
 
-   GEN_ETH : if (APP_TYPE_G = "ETH") generate
+   -- FIXME: keep generate statement so we don't have to worry about constraints ATM
+   GEN_ETH : if (true) generate
 
       --------------------------
       -- UDP Port Mapping Module
@@ -237,11 +218,11 @@ begin
       U_EthPortMapping : entity work.EthPortMapping
          generic map (
             TPD_G           => TPD_G,
-            USE_XVC_G       => USE_XVC_G,
-            MAC_ADDR_G      => MAC_ADDR_G,
-            IP_ADDR_G       => IP_ADDR_G,
-            DHCP_G          => DHCP_G,
-            JUMBO_G         => JUMBO_G,
+            USE_XVC_G       => APP_CORE_CONFIG_G.useXvcJtagBridge,
+            MAC_ADDR_G      => APP_CORE_CONFIG_G.macAddress,
+            IP_ADDR_G       => APP_CORE_CONFIG_G.ipAddress,
+            DHCP_G          => APP_CORE_CONFIG_G.useDhcp,
+            JUMBO_G         => APP_CORE_CONFIG_G.enableEthJumboFrames,
             RSSI_SIZE_G     => RSSI_SIZE_C,
             RSSI_STRM_CFG_G => RSSI_STRM_CFG_C,
             RSSI_ROUTES_G   => RSSI_ROUTES_C,
@@ -321,10 +302,10 @@ begin
    U_SimJesdClock : entity work.SimJesdClkGen
       generic map (
          INPT_CLK_FREQ_G    => AXIL_CLK_FRQ_G,
-         JESD_CLK_IDIV_G    => JESD_CLK_IDIV_G,
-         JESD_CLK_MULT_G    => JESD_CLK_MULT_G,
-         JESD_CLK_ODIV_G    => JESD_CLK_ODIV_G,
-         USER_CLK_ODIV_G    => USER_CLK_ODIV_G
+         JESD_CLK_IDIV_G    => APP_CORE_CONFIG_G.jesdClk_IDIV,
+         JESD_CLK_MULT_G    => APP_CORE_CONFIG_G.jesdClk_MULT_F,
+         JESD_CLK_ODIV_G    => APP_CORE_CONFIG_G.jesdClk_ODIV,
+         USER_CLK_ODIV_G    => APP_CORE_CONFIG_G.jesdUsrClk_ODIV
       )
       port map (
          clkIn              => axilClk,
@@ -365,7 +346,7 @@ begin
    U_Reg : entity work.SysReg
       generic map (
          TPD_G             => TPD_G,
-         USE_TIMING_GTH_G  => USE_TIMING_GTH_G,
+         USE_TIMING_GTH_G  => APP_CORE_CONFIG_G.useTimingGth,
          BUILD_INFO_G      => BUILD_INFO_G,
          XIL_DEVICE_G      => XIL_DEVICE_G,
          AXIL_CLK_FRQ_G    => AXIL_CLK_FRQ_G)
@@ -428,8 +409,8 @@ begin
          generic map (
             TPD_G          => TPD_G,
             FSBL_G         => false,
-            DISABLE_BSA_G  => DISABLE_BSA_G,
-            DISABLE_BLD_G  => DISABLE_BLD_G
+            DISABLE_BSA_G  => APP_CORE_CONFIG_G.disableBSA,
+            DISABLE_BLD_G  => APP_CORE_CONFIG_G.disableBLD
          )
          port map (
             -- AXI-Lite Interface (axilClk domain)
@@ -467,17 +448,17 @@ begin
          );
 
 
-      NO_GEN_BSA : if ( DISABLE_BSA_G ) generate
+      NO_GEN_BSA : if ( APP_CORE_CONFIG_G.disableBSA ) generate
          rssiObSlaves (3 downto 0) <= (others => AXI_STREAM_SLAVE_FORCE_C);
          rssiIbMasters(3 downto 0) <= (others => AXI_STREAM_MASTER_INIT_C);
 
          axiWriteMaster            <= AXI_WRITE_MASTER_INIT_C;
       end generate;
 
-      trigCascBay(NUM_BAYS_G) <= trigCascBay(0);
-      armCascBay (NUM_BAYS_G) <= armCascBay(0);
+      trigCascBay(APP_CORE_CONFIG_G.numBays) <= trigCascBay(0);
+      armCascBay (APP_CORE_CONFIG_G.numBays) <= armCascBay(0);
 
-      GEN_BAY : for i in NUM_BAYS_G - 1 downto 0 generate
+      GEN_BAY : for i in APP_CORE_CONFIG_G.numBays - 1 downto 0 generate
          signal linkReady : slv(17 downto 0) := (others => '1');
          signal dataValid : slv(17 downto 0) := (others => '0');
       begin
@@ -557,10 +538,11 @@ begin
          generic map (
             TPD_G                => TPD_G,
             AXI_BASE_ADDR_G      => AXIL_CONFIG_C(SIGGEN0_INDEX_C+i).baseAddr,
-            SIG_GEN_SIZE_G       => SIG_GEN_NUM_G(i),
-            SIG_GEN_ADDR_WIDTH_G => SIG_GEN_ADDR_WIDTH_G(i),
-            SIG_GEN_LANE_MODE_G  => SIG_GEN_LANE_MODE_G(i),
-            SIG_GEN_RAM_CLK_G    => SIG_GEN_RAM_CLK_G(i))
+            SIG_GEN_SIZE_G       => APP_CORE_CONFIG_G.numSigGenerators(i),
+            SIG_GEN_ADDR_WIDTH_G => APP_CORE_CONFIG_G.sigGenAddrWidth(i),
+            SIG_GEN_LANE_MODE_G  => APP_CORE_CONFIG_G.sigGenLaneMode(i),
+            SIG_GEN_RAM_CLK_G    => APP_CORE_CONFIG_G.sigGenRamClk(i)
+         )
          port map (
             -- DAC Signal Generator Interface
             jesdClk         => jesdClk,
@@ -588,7 +570,7 @@ begin
 
       end generate;
 
-      GEN_NO_BAY1 : if (NUM_BAYS_G = 1) generate
+      GEN_NO_BAY1 : if (APP_CORE_CONFIG_G.numBays = 1) generate
          waveformMasters(1) <= WAVEFORM_MASTER_ARRAY_INIT_C(1);
       end generate;
 
@@ -597,11 +579,11 @@ begin
             TPD_G               => TPD_G,
             XIL_DEVICE_G        => XIL_DEVICE_G,
             AXIL_CLK_FRQ_G      => AXIL_CLK_FRQ_G,
-            AXI_BASE_ADDR_G     => AXIL_CONFIG_C(CORE_INDEX_C).baseAddr,
-            SIG_GEN_NUM_G       => SIG_GEN_NUM_G,
-            SIG_GEN_LANE_MODE_G => SIG_GEN_LANE_MODE_G,
-            NUM_BAYS_G          => NUM_BAYS_G,
-            NUM_APP_LEDS_G      => NUM_APP_LEDS_G
+            AXIL_BASE_ADDR_G    => AXIL_CONFIG_C(CORE_INDEX_C).baseAddr,
+            SIG_GEN_NUM_G       => APP_CORE_CONFIG_G.numSigGenerators,
+            SIG_GEN_LANE_MODE_G => APP_CORE_CONFIG_G.sigGenLaneMode,
+            NUM_BAYS_G          => APP_CORE_CONFIG_G.numBays,
+            NUM_APP_LEDS_G      => APP_CORE_CONFIG_G.numAppLEDs
          )
          port map (
             -- Clock and Reset
