@@ -32,10 +32,7 @@ entity AppCore is
       XIL_DEVICE_G        : string                := "7SERIES";
       AXIL_CLK_FRQ_G      : real                  := 156.25E6;
       AXIL_BASE_ADDR_G    : slv(31 downto 0);
-      SIG_GEN_NUM_G       : NaturalArray (1 downto 0) := (others => 4); -- 0 = disabled
-      SIG_GEN_LANE_MODE_G : Slv7Array    (1 downto 0) := (others => "0000000"); -- 0: 32-bit, 1: 16-bit
-      NUM_BAYS_G          : positive range 1 to 2 := 1;
-      NUM_APP_LEDS_G      : natural
+      APP_CORE_CONFIG_G   : AppCoreConfigType
    );
    port (
       -- Clock and Reset

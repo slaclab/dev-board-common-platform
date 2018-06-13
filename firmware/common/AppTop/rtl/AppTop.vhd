@@ -580,10 +580,7 @@ begin
             XIL_DEVICE_G        => XIL_DEVICE_G,
             AXIL_CLK_FRQ_G      => AXIL_CLK_FRQ_G,
             AXIL_BASE_ADDR_G    => AXIL_CONFIG_C(CORE_INDEX_C).baseAddr,
-            SIG_GEN_NUM_G       => APP_CORE_CONFIG_G.numSigGenerators,
-            SIG_GEN_LANE_MODE_G => APP_CORE_CONFIG_G.sigGenLaneMode,
-            NUM_BAYS_G          => APP_CORE_CONFIG_G.numBays,
-            NUM_APP_LEDS_G      => APP_CORE_CONFIG_G.numAppLEDs
+            APP_CORE_CONFIG_G   => APP_CORE_CONFIG_G
          )
          port map (
             -- Clock and Reset
