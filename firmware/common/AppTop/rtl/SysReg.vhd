@@ -126,7 +126,7 @@ architecture mapping of SysReg is
    signal timingTxPhy       : TimingPhyType;
    signal timingTxPhyLoc    : TimingPhyType;
    signal timingRxPhy       : TimingRxType;
-   signal timingRxControl   : TimingPhyControlType;
+   signal timingRxControlI  : TimingPhyControlType;
    signal timingRxStatus    : TimingPhyStatusType := TIMING_PHY_STATUS_INIT_C;
    signal timingTxStatus    : TimingPhyStatusType := TIMING_PHY_STATUS_INIT_C;
    signal timingTxRstAsync  : sl;
@@ -273,7 +273,7 @@ begin
          gtRxDataK           => timingRxPhy.dataK,
          gtRxDispErr         => timingRxPhy.dspErr,
          gtRxDecErr          => timingRxPhy.decErr,
-         gtRxControl         => timingRxControl,
+         gtRxControl         => timingRxControlI,
          gtRxStatus          => timingRxStatus,
          gtTxReset           => open, -- not useful; if the TX is reset the TPGMini regs dont' work
          gtLoopback          => timingLoopbackSel,
@@ -333,12 +333,28 @@ begin
       variable v : TimingPhyType;
    begin
       v                  := timingTxPhy;
-      v.control.pllReset := timingTxRstAsync;
+      v.control.pllReset := timingTxPhy.control.pllReset or timingTxRstAsync;
 
       timingTxPhyLoc     <= v;
    end process P_TIMING_PHY;
 
    GEN_TIMING_GTH: if (USE_TIMING_GTH_G) generate
+
+      signal timingRxRst      : sl;
+      signal timingRxControlO : TimingPhyControlType;
+
+   begin
+
+   -- splice in local reset signal
+   -- the timingRxControl.reset signal is in the axilClk domain;
+   -- so is the rxRst produced by the TimingClockSwitcher.
+   P_TIMING_RX_RST : process(timingRxControlI, timingRxRst) is
+      variable v : TimingPhyControlType;
+   begin
+      v       := timingRxControlI;
+      v.reset := timingRxControlI.reset or timingRxRst;
+      timingRxControlO <= v;
+   end process P_TIMING_RX_RST;
 
    U_TimingRefClk_IBUFDS : IBUFDS_GTE3
       generic map (
@@ -389,7 +405,7 @@ begin
          gtTxP            => timingTxP,
          gtTxN            => timingTxN,
 
-         rxControl        => timingRxControl,
+         rxControl        => timingRxControlO,
          rxStatus         => timingRxStatus,
          rxUsrClkActive   => '1',
          rxCdrStable      => timingCdrStable,
@@ -427,6 +443,7 @@ begin
             clkSel                 => timingClkSel, -- timingClkSel already in AXIL domain
 
             txRst                  => timingTxRstAsync,
+            rxRst                  => timingRxRst,
 
             mAxilReadMaster        => tAxilReadMaster,
             mAxilReadSlave         => tAxilReadSlave,
