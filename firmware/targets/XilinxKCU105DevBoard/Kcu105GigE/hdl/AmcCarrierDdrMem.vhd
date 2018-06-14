@@ -56,20 +56,20 @@ entity AmcCarrierDdrMem is
       ----------------   
       -- DDR4 Ports
       refClk          : in    sl;
-      c0_ddr4_adr : OUT STD_LOGIC_VECTOR(16 DOWNTO 0);
-      c0_ddr4_dq : INOUT STD_LOGIC_VECTOR(63 DOWNTO 0);
-      c0_ddr4_dm_dbi_n : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
-      c0_ddr4_dqs_c : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
-      c0_ddr4_dqs_t : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
-      c0_ddr4_ba : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
-      c0_ddr4_bg : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-      c0_ddr4_cke : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-      c0_ddr4_cs_n : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-      c0_ddr4_odt : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+      c0_ddr4_adr     : OUT STD_LOGIC_VECTOR(16 DOWNTO 0);
+      c0_ddr4_dq      : INOUT STD_LOGIC_VECTOR(63 DOWNTO 0);
+      c0_ddr4_dm_dbi_n: INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+      c0_ddr4_dqs_c   : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+      c0_ddr4_dqs_t   : INOUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+      c0_ddr4_ba      : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+      c0_ddr4_bg      : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+      c0_ddr4_cke     : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+      c0_ddr4_cs_n    : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+      c0_ddr4_odt     : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
       c0_ddr4_reset_n : OUT STD_LOGIC;
-      c0_ddr4_act_n : OUT STD_LOGIC;
-      c0_ddr4_ck_c : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
-      c0_ddr4_ck_t : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+      c0_ddr4_act_n   : OUT STD_LOGIC;
+      c0_ddr4_ck_c    : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
+      c0_ddr4_ck_t    : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
       c0_ddr4_alert_n : IN STD_LOGIC
    );
 
