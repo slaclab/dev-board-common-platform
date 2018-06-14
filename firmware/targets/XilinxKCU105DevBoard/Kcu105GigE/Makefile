@@ -2,6 +2,12 @@
 # Define target output
 target: prom
 
+# You can rename the project (e.g., if you build different variants
+# from the same Makefile and source tree). Ruckus will print a fat
+# warning but that can be ignored...
+#
+#export PROJECT=MyProject
+
 # Define Firmware Version Number
 export PRJ_VERSION = 0x00000001
 
