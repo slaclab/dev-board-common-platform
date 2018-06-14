@@ -93,8 +93,32 @@ end Kcu105GigE;
 
 architecture top_level of Kcu105GigE is
 
-   constant AXIS_SIZE_C : positive         := 1;
-   constant RST_DEL_C   : slv(22 downto 0) := toSlv(16#3FFFFF#,23); -- ~ 2*10ms @ 156MHz
+   -- max. positive number; at RST_LEN_LD_C bits this is 2**RST_LEN_LD_C/sysClk256
+   -- (01111111...)
+   --
+   --   1. reset is held asserted for half that time
+   --   2. extPhyReady is asserted after the other half of that time expires
+   --
+   -- => for the PHY, 2*10ms, i.e., RST_LEN_LD_C == 22 would be sufficient
+   --    at 156.25 MHz.
+   --
+   -- *** HOWEVER: I found that when I boot from the SD-card the system controller
+   -- ***          does stuff on the I2C bus until ~15ms AFTER the FPGA is configured.
+   -- ***          In particular, the I2C Mux is reset by the system controller.
+   -- ***          (I monitored SCL and latched a running counter each time
+   -- ***          a rising edge on SCL was detected).
+   -- *** => We hold reset asserted for a longer time; make that ~50ms
+   --
+   constant RST_LEN_LD_C : natural := 24;
+
+   subtype  ResetCountType is signed(RST_LEN_LD_C downto 0);
+
+   constant RST_DEL_C : ResetCountType := (
+      ResetCountType'left => '0',
+      others              => '1'
+   );
+
+   constant AXIS_SIZE_C : positive           := 1;
 
    constant AXIL_CLK_FRQ_C : real := 156.25E6;
 
@@ -104,13 +128,12 @@ architecture top_level of Kcu105GigE is
       DATA_BYTES_C => 4,
       ID_BITS_C    => 4,
       LEN_BITS_C   => 8);
-   
+
    type MuxedSignalsType is record
       txMasters     : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
       txSlaves      : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
       rxMasters     : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
       rxSlaves      : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
-      phyReady      : sl;
    end record;
 
    signal keptSignals   : MuxedSignalsType;
@@ -120,15 +143,9 @@ architecture top_level of Kcu105GigE is
    signal rxMastersSGMII: AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
    signal rxSlavesSGMII : AxiStreamSlaveArray(AXIS_SIZE_C-1 downto 0);
 
-
-
    signal sgmiiClk      : sl;
    signal sgmiiRst      : sl;
    signal sgmiiRstExt   : sl;
-
-   signal sgmiiPhyReady : sl;
-   signal gthPhyReady   : sl := '0';
-
 
    signal sgmiiDmaRst   : sl;
 
@@ -141,6 +158,7 @@ architecture top_level of Kcu105GigE is
    signal ddrClk300     : sl;
    signal sysClk156     : sl;
    signal sysRst156     : sl;
+   signal sysRst156_i   : sl;
    signal sysMmcmLocked : sl;
 
    signal speed10_100   : sl := '0';
@@ -149,7 +167,7 @@ architecture top_level of Kcu105GigE is
 
    signal extPhyRstN    : sl;
    signal extPhyReady   : sl;
-   signal rstCnt        : slv(22 downto 0) := RST_DEL_C;
+   signal rstCnt        : ResetCountType := RST_DEL_C;
    signal phyInitRst    : sl;
    signal phyIrq        : sl;
    signal phyMdi        : sl;
@@ -233,7 +251,7 @@ begin
 
          clkOut(0)        => sysClk156,
 
-         rstOut(0)        => sysRst156,
+         rstOut(0)        => sysRst156_i,
 
          locked           => sysMmcmLocked
       );
@@ -243,20 +261,28 @@ begin
    -- thus we use the on-board clock to reset the (external) PHY.
    -- We must hold reset for >10ms and then wait >5ms until we may talk
    -- to it (we actually wait also >10ms) which is indicated by 'extPhyReady'.
+   -- Note: the actual reset period might be longer due to other needs but
+   --       the general scheme is
+   --       1. hold sysRst156 asserted for period X (>10ms)
+   --       2. deassert sysRst156
+   --       3. wait for period X (>10ms)
+   --       4. assert extPhyReady
    process (sysClk156)
    begin
       if ( rising_edge( sysClk156 ) ) then
-         if ( sysRst156 /= '0' ) then
+         if ( sysRst156_i /= '0' ) then
             rstCnt <= RST_DEL_C;
-         elsif ( rstCnt(22) = '0' ) then
-            rstCnt <= slv( unsigned( rstCnt ) - 1 );
+         elsif ( rstCnt >= 0 ) then
+            rstCnt <= rstCnt - 1;
          end if;
       end if;
    end process;
 
-   extPhyReady <= rstCnt(22);
+   extPhyReady <= ite(rstCnt < 0, '1', '0');
 
-   extPhyRstN  <= ite( ( unsigned(rstCnt(21 downto 20)) >= 2 ) and ( extPhyReady = '0' ), '0', '1' );
+   sysRst156   <= ite(rstCnt(rstCnt'left downto rstCnt'left - 2) >= 2, '1', '0');
+
+   extPhyRstN  <= not sysRst156;
 
    -- The MDIO controller which talks to the external PHY must be held
    -- in reset until extPhyReady; it works in a different clock domain...
@@ -347,7 +373,7 @@ begin
          extRst             => sgmiiRstExt,
          phyClk             => sgmiiClk,
          phyRst             => sgmiiRst,
-         phyReady(0)        => sgmiiPhyReady,
+         phyReady           => open,
          mmcmLocked         => open,
          speed_is_10_100(0) => speed10_100,
          speed_is_100(0)    => speed100,
@@ -366,8 +392,6 @@ begin
 
    keptSignals.txSlaves   <= txSlavesSGMII;
    keptSignals.rxMasters  <= rxMastersSGMII;
-
-   keptSignals.phyReady   <= sgmiiPhyReady;
 
    -------------------
    -- Application Core
