@@ -25,6 +25,7 @@ use work.TimingPkg.all;
 use work.AmcCarrierPkg.all;
 use work.Jesd204bPkg.all;
 use work.AppTopPkg.all;
+use work.AppCorePkg.all;
 
 entity AppCore is
    generic (
@@ -90,9 +91,8 @@ entity AppCore is
       dacSigStatus    : in  DacSigStatusArray(1 downto 0);
       dacSigValids    : in  Slv7Array(1 downto 0);
       dacSigValues    : in  sampleDataVectorArray(1 downto 0, 6 downto 0);
-
-      gpioDip         : in  slv(                 3 downto 0);
-      appLeds         : out slv(NUM_APP_LEDS_G - 1 downto 0) := (others => '0')
+      gpioDip         : in  slv(                               3 downto 0);
+      appLeds         : out slv(APP_CORE_CONFIG_G.numAppLEDs - 1 downto 0) := (others => '0')
    );
 end entity AppCore;
 
