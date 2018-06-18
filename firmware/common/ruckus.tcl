@@ -4,7 +4,6 @@ source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
 # Load the Core
 loadRuckusTcl "$::DIR_PATH/AppTop"
 loadSource -dir "$::DIR_PATH/lib"
-loadRuckusTcl "$::DIR_PATH/VivadoHls"
 
 if { [file exists "$::DIR_PATH/core/ruckus.tcl"] == 1 } {
     # use the user's AppCore if it's there
