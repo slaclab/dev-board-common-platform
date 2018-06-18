@@ -16,4 +16,5 @@ loadSource -path  "$::DIR_PATH/submodules/amc-carrier-core/AmcCarrierCore/core/A
 loadSource -path  "$::DIR_PATH/submodules/amc-carrier-core/AppTop/rtl/xcku040/AppTopPkg.vhd"
 loadRuckusTcl "$::DIR_PATH/submodules/surf"
 loadRuckusTcl "$::DIR_PATH/submodules/lcls-timing-core"
+loadRuckusTcl "$::DIR_PATH/submodules/dev-board-misc-utils"
 loadRuckusTcl "$::DIR_PATH/common"

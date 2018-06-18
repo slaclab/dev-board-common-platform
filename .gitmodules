@@ -10,3 +10,6 @@
 [submodule "firmware/submodules/amc-carrier-core"]
 	path = firmware/submodules/amc-carrier-core
 	url = git@github.com:/slaclab/amc-carrier-core
+[submodule "firmware/submodules/dev-board-misc-utils"]
+	path = firmware/submodules/dev-board-misc-utils
+	url = git@github.com:/slaclab/dev-board-misc-utils
