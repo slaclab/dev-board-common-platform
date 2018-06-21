@@ -73,8 +73,17 @@ entity SysReg is
       ibTimingEthMaster : in  AxiStreamMasterType := AXI_STREAM_MASTER_INIT_C;
       ibTimingEthSlave  : out AxiStreamSlaveType  := AXI_STREAM_SLAVE_FORCE_C;
       -- ADC Ports
+      v0PIn             : in  sl;
+      v0NIn             : in  sl;
+      v2PIn             : in  sl;
+      v2NIn             : in  sl;
+      v8PIn             : in  sl;
+      v8NIn             : in  sl;
       vPIn              : in  sl;
       vNIn              : in  sl;
+      muxAddrOut        : out slv(4 downto 0) := (others => '0');
+      -- Fan
+      fanPwmOut         : out sl := '1';
       -- IIC Port
       iicScl            : inout sl;
       iicSda            : inout sl;
@@ -106,10 +115,16 @@ architecture mapping of SysReg is
    signal tAxilReadMaster   : AxiLiteReadMasterType  := AXI_LITE_READ_MASTER_INIT_C;
    signal tAxilReadSlave    : AxiLiteReadSlaveType;
 
+   signal fAxilWriteMaster  : AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
+   signal fAxilWriteSlave   : AxiLiteWriteSlaveType;
+   signal fAxilReadMaster   : AxiLiteReadMasterType  := AXI_LITE_READ_MASTER_INIT_C;
+   signal fAxilReadSlave    : AxiLiteReadSlaveType;
+
+
    signal mAxilWriteMasters : AxiLiteWriteMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal mAxilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXI_MASTERS_C-1 downto 0) := ( others => AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C );
-   signal mAxilReadMasters  : AxiLiteReadMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
-   signal mAxilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0)  := ( others => AXI_LITE_READ_SLAVE_EMPTY_DECERR_C );
+   signal mAxilWriteSlaves  : AxiLiteWriteSlaveArray (NUM_AXI_MASTERS_C-1 downto 0) := ( others => AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C );
+   signal mAxilReadMasters  : AxiLiteReadMasterArray (NUM_AXI_MASTERS_C-1 downto 0);
+   signal mAxilReadSlaves   : AxiLiteReadSlaveArray  (NUM_AXI_MASTERS_C-1 downto 0)  := ( others => AXI_LITE_READ_SLAVE_EMPTY_DECERR_C );
 
    signal timingRefDiv2     : sl;
    signal timingRefClk      : sl := '0';
@@ -158,22 +173,26 @@ begin
    U_XBAR : entity work.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
-         NUM_SLAVE_SLOTS_G  => 3,
+         NUM_SLAVE_SLOTS_G  => 4,
          NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
          MASTERS_CONFIG_G   => SYSREG_MASTERS_CONFIG_C)
       port map (
          sAxiWriteMasters(0) => sAxilWriteMaster(0),
          sAxiWriteMasters(1) => sAxilWriteMaster(1),
          sAxiWriteMasters(2) => tAxilWriteMaster,
+         sAxiWriteMasters(3) => fAxilWriteMaster,
          sAxiWriteSlaves(0)  => sAxilWriteSlave(0),
          sAxiWriteSlaves(1)  => sAxilWriteSlave(1),
          sAxiWriteSlaves(2)  => tAxilWriteSlave,
+         sAxiWriteSlaves(3)  => fAxilWriteSlave,
          sAxiReadMasters(0)  => sAxilReadMaster(0),
          sAxiReadMasters(1)  => sAxilReadMaster(1),
          sAxiReadMasters(2)  => tAxilReadMaster,
+         sAxiReadMasters(3)  => fAxilReadMaster,
          sAxiReadSlaves(0)   => sAxilReadSlave(0),
          sAxiReadSlaves(1)   => sAxilReadSlave(1),
          sAxiReadSlaves(2)   => tAxilReadSlave,
+         sAxiReadSlaves(3)   => fAxilReadSlave,
          mAxiWriteMasters    => mAxilWriteMasters,
          mAxiWriteSlaves     => mAxilWriteSlaves,
          mAxiReadMasters     => mAxilReadMasters,
@@ -219,12 +238,15 @@ begin
    end generate;
 
    GEN_ULTRA_SCALE : if (XIL_DEVICE_G = "ULTRASCALE") generate
+      signal sysmonAlarm, otAlarm, tempAlarm : sl;
+   begin
       --------------------------
       -- AXI-Lite: SYSMON Module
       --------------------------
       U_SysMon : entity work.SystemManagementWrapper
          generic map (
-            TPD_G => TPD_G)
+            TPD_G => TPD_G
+         )
          port map (
             axiReadMaster  => mAxilReadMasters(SYS_MON_INDEX_C),
             axiReadSlave   => mAxilReadSlaves(SYS_MON_INDEX_C),
@@ -232,8 +254,43 @@ begin
             axiWriteSlave  => mAxilWriteSlaves(SYS_MON_INDEX_C),
             axiClk         => clk,
             axiRst         => rst,
+            v0PIn          => v0PIn,
+            v0NIn          => v0NIn,
+            v2PIn          => v2PIn,
+            v2NIn          => v2NIn,
+            v8PIn          => v8PIn,
+            v8NIn          => v8NIn,
             vPIn           => vPIn,
-            vNIn           => vNIn);
+            vNIn           => vNIn,
+            muxAddrOut     => muxAddrOut,
+            tempAlarmOut   => tempAlarm,
+            otOut          => otAlarm
+         );
+
+      sysmonAlarm <= otAlarm or tempAlarm;
+
+      U_FanCtrl : entity work.AxilFanController
+         generic map (
+            TPD_G               => TPD_G,
+            SYSMON_BASE_ADDR_G  => SYSREG_MASTERS_CONFIG_C(SYS_MON_INDEX_C).baseAddr,
+            AXIL_FREQ_G         => AXIL_CLK_FRQ_G
+         )
+         port map (
+            axilClk          => clk,
+            axilRst          => rst,
+
+            mAxilReadMaster  => fAxilReadMaster,
+            mAxilReadSlave   => fAxilReadSlave,
+
+            sAxilReadMaster  => mAxilReadMasters (FAN_INDEX_C),
+            sAxilReadSlave   => mAxilReadSlaves  (FAN_INDEX_C),
+            sAxilWriteMaster => mAxilWriteMasters(FAN_INDEX_C),
+            sAxilWriteSlave  => mAxilWriteSlaves (FAN_INDEX_C),
+
+            sysmonAlarm      => sysmonAlarm,
+            fanPwm           => fanPwmOut
+         );
+
    end generate;
 
    -- IIC Master

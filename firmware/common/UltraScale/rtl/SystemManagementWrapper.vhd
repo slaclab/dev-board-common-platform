@@ -31,8 +31,20 @@ entity SystemManagementWrapper is
       axiReadSlave   : out AxiLiteReadSlaveType;
       axiWriteMaster : in  AxiLiteWriteMasterType;
       axiWriteSlave  : out AxiLiteWriteSlaveType;
+      tempOut        : out slv(9 downto 0);
+      v0PIn          : in  sl;
+      v0NIn          : in  sl;
+      v2PIn          : in  sl;
+      v2NIn          : in  sl;
+      v8PIn          : in  sl;
+      v8NIn          : in  sl;
       vPIn           : in  sl;
-      vNIn           : in  sl);
+      vNIn           : in  sl;
+      alarmOut       : out sl;
+      tempAlarmOut   : out sl;
+      otOut          : out sl;
+      muxAddrOut     : out slv(4 downto 0)
+      );
 end entity SystemManagementWrapper;
 
 architecture mapping of SystemManagementWrapper is
@@ -64,13 +76,26 @@ begin
          s_axi_rresp   => axiReadSlave.rresp,
          s_axi_rvalid  => axiReadSlave.rvalid,
          s_axi_rready  => axiReadMaster.rready,
+         temp_out      => tempOut,
          ip2intc_irpt  => open,
-         vp            => vpIn,
-         vn            => vnIn,
+         vauxp0        => v0PIn,
+         vauxn0        => v0NIn,
+         vauxp2        => v2PIn,
+         vauxn2        => v2NIn,
+         vauxp8        => v8PIn,
+         vauxn8        => v8NIn,
+         vp            => vPIn,
+         vn            => vNIn,
+         busy_out      => open,
          channel_out   => open,
          eoc_out       => open,
-         alarm_out     => open,
          eos_out       => open,
-         busy_out      => open);
-
+         ot_out        => otOut,
+         vccaux_alarm_out     => open,
+         vccint_alarm_out     => open,
+         user_temp_alarm_out  => tempAlarmOut,
+         vbram_alarm_out      => open,
+         alarm_out            => alarmOut,
+         muxaddr_out          => muxAddrOut);
+         
 end architecture mapping;

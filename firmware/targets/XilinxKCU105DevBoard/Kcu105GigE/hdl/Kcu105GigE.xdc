@@ -8,9 +8,24 @@
 ## the terms contained in the LICENSE.txt file.
 ##############################################################################
 # I/O Port Mapping
+#
 
-# set_property -dict { PACKAGE_PIN V12 IOSTANDARD ANALOG } [get_ports { vPIn }]
-# set_property -dict { PACKAGE_PIN W11 IOSTANDARD ANALOG } [get_ports { vNIn }]
+set_property -dict { PACKAGE_PIN V12 IOSTANDARD ANALOG } [get_ports { vPIn }]
+set_property -dict { PACKAGE_PIN W11 IOSTANDARD ANALOG } [get_ports { vNIn }]
+set_property -dict { PACKAGE_PIN V13 IOSTANDARD ANALOG } [get_ports { v0PIn }]
+set_property -dict { PACKAGE_PIN E13 IOSTANDARD ANALOG } [get_ports { v0NIn }]
+set_property -dict { PACKAGE_PIN J13 IOSTANDARD ANALOG } [get_ports { v2PIn }]
+set_property -dict { PACKAGE_PIN H13 IOSTANDARD ANALOG } [get_ports { v2NIn }]
+set_property -dict { PACKAGE_PIN C11 IOSTANDARD ANALOG } [get_ports { v8PIn }]
+set_property -dict { PACKAGE_PIN B11 IOSTANDARD ANALOG } [get_ports { v8NIn }]
+
+set_property -dict { PACKAGE_PIN T27 IOSTANDARD LVCMOS18 } [get_ports { muxAddrOut[0] }]
+set_property -dict { PACKAGE_PIN R27 IOSTANDARD LVCMOS18 } [get_ports { muxAddrOut[1] }]
+set_property -dict { PACKAGE_PIN N27 IOSTANDARD LVCMOS18 } [get_ports { muxAddrOut[2] }]
+
+set_property -dict { PACKAGE_PIN AJ9 IOSTANDARD LVCMOS18 } [get_ports { fanPwmOut }]
+
+set_property BITSTREAM.CONFIG.OVERTEMPSHUTDOWN ENABLE [current_design]
 
 set_property -dict { PACKAGE_PIN AN8 IOSTANDARD LVCMOS18 } [get_ports { extRst }]
 

@@ -55,12 +55,25 @@ entity AppTop is
       rxMasters       : in  AxiStreamMasterArray(0 downto 0);
       rxSlaves        : out AxiStreamSlaveArray (0 downto 0);
       rxCtrl          : out AxiStreamCtrlArray  (0 downto 0);
+
       -- ADC Ports
+      v0PIn           : in  sl;
+      v0NIn           : in  sl;
+      v2PIn           : in  sl;
+      v2NIn           : in  sl;
+      v8PIn           : in  sl;
+      v8NIn           : in  sl;
       vPIn            : in  sl;
       vNIn            : in  sl;
+      muxAddrOut      : out slv(4 downto 0) := (others => '0');
+
+      -- Fan
+      fanPwmOut       : out sl := '1';
+
       -- IIC Port
       iicScl          : inout sl;
       iicSda          : inout sl;
+
       -- Timing
       timingRefClkP   : in  sl := '0';
       timingRefClkN   : in  sl := '1';
@@ -382,11 +395,23 @@ begin
          ibTimingEthSlave  => ibTimingEthSlave,
 
          -- ADC Ports
+         v0PIn             => v0PIn,
+         v0NIn             => v0NIn,
+         v2PIn             => v2PIn,
+         v2NIn             => v2NIn,
+         v8PIn             => v8PIn,
+         v8NIn             => v8NIn,
          vPIn              => vPIn,
          vNIn              => vNIn,
+         muxAddrOut        => muxAddrOut,
+
+         -- Fan
+         fanPwmOut         => fanPwmOut,
+
          -- IIC Port
          iicScl            => iicScl,
          iicSda            => iicSda,
+
          -- Timing
          timingRefClkP     => timingRefClkP,
          timingRefClkN     => timingRefClkN,

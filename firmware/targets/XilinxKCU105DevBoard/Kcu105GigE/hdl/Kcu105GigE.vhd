@@ -44,8 +44,17 @@ entity Kcu105GigE is
       led        : out slv(7 downto 0);
       gpioDip    : in  slv(3 downto 0);
       -- XADC Ports
+      v0PIn      : in  sl;
+      v0NIn      : in  sl;
+      v2PIn      : in  sl;
+      v2NIn      : in  sl;
+      v8PIn      : in  sl;
+      v8NIn      : in  sl;
       vPIn       : in  sl;
       vNIn       : in  sl;
+      muxAddrOut : out slv(2 downto 0);
+      -- Fan control
+      fanPwmOut  : out sl;
       -- ETH GT Pins
       ethClkP    : in  sl;
       ethClkN    : in  sl;
@@ -191,6 +200,7 @@ architecture top_level of Kcu105GigE is
    signal    dmaRst            : slv(NUM_LANE_C-1 downto 0);
 
    signal    appLeds           : slv(NUM_APP_LEDS_C - 1 downto 0);
+   signal    muxAddrLoc        : slv(4            downto 0);
 
 
    attribute dont_touch                 : string;
@@ -423,8 +433,18 @@ begin
          axiReadSlave   => memAxiReadSlave,
 
          -- ADC Ports
+         v0PIn          => v0PIn,
+         v0NIn          => v0NIn,
+         v2PIn          => v2PIn,
+         v2NIn          => v2NIn,
+         v8PIn          => v8PIn,
+         v8NIn          => v8NIn,
          vPIn           => vPIn,
          vNIn           => vNIn,
+         muxAddrOut     => muxAddrLoc,
+
+         -- Fan Port
+         fanPwmOut      => fanPwmOut,
 
          -- IIC Port
          iicScl         => iicScl,
@@ -441,6 +461,8 @@ begin
          gpioDip        => gpioDip,
          appLeds        => appLeds
       );
+
+   muxAddrOut <= muxAddrLoc(2 downto 0);
 
    U_DdrMem : entity work.AmcCarrierDdrMem
    port map (

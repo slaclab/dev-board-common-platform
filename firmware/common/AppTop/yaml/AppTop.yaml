@@ -12,6 +12,7 @@
 #
 #include AxiVersion.yaml
 #include AxiSysMonUltraScale.yaml
+#include AxiFanController.yaml
 #include TimingFrameRx.yaml
 #include TPGMiniCore.yaml
 #include EvrV2CoreTriggers.yaml
@@ -201,3 +202,7 @@ SysRegs: &SysRegs
       at:
         offset: 0x09010000
       description: "Interleaved RSSI Server"
+    FanController:
+      <<: *AxiFanController
+      at:
+        offset: 0x0a000000

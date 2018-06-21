@@ -36,9 +36,10 @@ package AmcCarrierSysRegPkg is
    constant TCLKSWI_INDEX_C : natural := 7;
    constant BSA_INDEX_C     : natural := 8;
    constant ETH_INDEX_C     : natural := 9;
-   constant APP_INDEX_C     : natural :=10;
+   constant FAN_INDEX_C     : natural :=10;
+   constant APP_INDEX_C     : natural :=11;
 
-   constant NUM_AXI_MASTERS_C : natural := 11;
+   constant NUM_AXI_MASTERS_C : natural := 12;
 
    ---------------------------------------------
    -- Register Mapping: 1st Layer base addresses
@@ -53,6 +54,7 @@ package AmcCarrierSysRegPkg is
    constant TCLKSWI_ADDR_C    : slv(31 downto 0) := x"0700_0000";
    constant BSA_ADDR_C        : slv(31 downto 0) := x"0800_0000";
    constant ETH_ADDR_C        : slv(31 downto 0) := x"0900_0000";
+   constant FAN_ADDR_C        : slv(31 downto 0) := x"0a00_0000";
    constant APP_ADDR_C        : slv(31 downto 0) := x"8000_0000";
 
    constant SYSREG_MASTERS_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) :=
@@ -105,6 +107,11 @@ package AmcCarrierSysRegPkg is
          ETH_INDEX_C     => (
             baseAddr         => ETH_ADDR_C,
             addrBits         => 24,
+            connectivity     => x"FFFF"
+                            ),
+         FAN_INDEX_C     => (
+            baseAddr         => FAN_ADDR_C,
+            addrBits         => 16,
             connectivity     => x"FFFF"
                             ),
          APP_INDEX_C     => (
