@@ -31,41 +31,110 @@ mmio: &mmio
   
 IpAddr: &IpAddr 192.168.2.10
 
+stream: &stream
+    SRP:
+      protocolVersion: SRP_UDP_NONE
+    UDP:
+      port: 8198
+      numRxThreads: 2
+    RSSI:
+    depack:
+      protocolVersion: DEPACKETIZER_V2
+    TDESTMux:
+      stripHeader: yes
+
 NetIODev:
   ipAddr: *IpAddr
   class: NetIODev
   configPrio: 1
   children:
-     mmio:
-       <<: *mmio
-       at:
-         SRP:
-           protocolVersion: SRP_UDP_V3
-           dynTimeout:      false
-           timeoutUS:       800000
-         UDP:
-           port: 8198
-         RSSI:
-         depack:
-           protocolVersion: DEPACKETIZER_V2
-         TDESTMux:
-           TDEST: 0x00
-     axi4:
-       class: MMIODev
-       size:  0x100000000
-       at:
-         SRP:
-           protocolVersion: SRP_UDP_V3
-           dynTimeout:      false
-           timeoutUS:       800000
-         UDP:
-           port: 8198
-         RSSI:
-         depack:
-           protocolVersion: DEPACKETIZER_V2
-         TDESTMux:
-           TDEST: 0x04
-       children:
-         dram:
-           class: IntField
-           at: { offset: 0, nelms: 20 }
+    mmio:
+      <<: *mmio
+      at:
+        SRP:
+          protocolVersion: SRP_UDP_V3
+          dynTimeout:      false
+          timeoutUS:       800000
+        UDP:
+          port: 8198
+        RSSI:
+        depack:
+          protocolVersion: DEPACKETIZER_V2
+        TDESTMux:
+          TDEST: 0x00
+    axi4:
+      class: MMIODev
+      size:  0x100000000
+      at:
+        SRP:
+          protocolVersion: SRP_UDP_V3
+          dynTimeout:      false
+          timeoutUS:       800000
+        UDP:
+          port: 8198
+        RSSI:
+        depack:
+          protocolVersion: DEPACKETIZER_V2
+        TDESTMux:
+          TDEST: 0x04
+      children:
+        dram:
+          class: IntField
+          at: { offset: 0, nelms: 20 }
+    Lcls1TimingStream:
+      class: Field
+      at:
+        SRP:
+          protocolVersion: SRP_UDP_NONE
+        UDP:
+          port: 8197
+          numRxThreads: 1
+          pollSecs: 2
+    Stream0:
+      class: Field
+      at:
+        <<: *stream
+        TDESTMux:
+          TDEST: 0x80
+    Stream1:
+      class: Field
+      at:
+        <<: *stream
+        TDESTMux:
+          TDEST: 0x81
+    Stream2:
+      class: Field
+      at:
+        <<: *stream
+        TDESTMux:
+          TDEST: 0x82
+    Stream3:
+      class: Field
+      at:
+        <<: *stream
+        TDESTMux:
+          TDEST: 0x83
+    Stream4:
+      class: Field
+      at:
+        <<: *stream
+        TDESTMux:
+          TDEST: 0x84
+    Stream5:
+      class: Field
+      at:
+        <<: *stream
+        TDESTMux:
+          TDEST: 0x85
+    Stream6:
+      class: Field
+      at:
+        <<: *stream
+        TDESTMux:
+          TDEST: 0x86
+    Stream7:
+      class: Field
+      at:
+        <<: *stream
+        TDESTMux:
+          TDEST: 0x87
