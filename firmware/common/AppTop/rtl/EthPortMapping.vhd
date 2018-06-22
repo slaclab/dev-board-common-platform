@@ -320,10 +320,10 @@ begin
    end generate;
 
    GEN_MAP_2 : for i in UDP_SRV_SIZE_G - 1 downto 0 generate
-      obServerMasters(i + NUM_INT_SERVERS_C) <= udpIbSrvMasters(i);
-      udpIbSrvSlaves(i)                      <= obServerSlaves  (i + NUM_INT_SERVERS_C);
-      udpObSrvMasters(i)                     <= ibServerMasters (i + NUM_INT_SERVERS_C);
-      ibServerSlaves(i + NUM_INT_SERVERS_C)  <= udpObSrvSlaves(i);
+      ibServerMasters(i + NUM_INT_SERVERS_C) <= udpIbSrvMasters(i);
+      udpIbSrvSlaves(i)                      <= ibServerSlaves  (i + NUM_INT_SERVERS_C);
+      udpObSrvMasters(i)                     <= obServerMasters (i + NUM_INT_SERVERS_C);
+      obServerSlaves(i + NUM_INT_SERVERS_C)  <= udpObSrvSlaves(i);
    end generate;
 
 
