@@ -665,7 +665,7 @@ begin
             dacSigStatus        => dacSigStatus,
             dacSigValids        => dacSigValids,
             dacSigValues        => dacSigValues,
-            
+
             gpioDip             => gpioDip,
             appLeds             => appLeds
          );

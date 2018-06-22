@@ -1,10 +1,10 @@
 ##############################################################################
 ## This file is part of 'DevBoard Common Platform'.
-## It is subject to the license terms in the LICENSE.txt file found in the 
-## top-level directory of this distribution and at: 
-##    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
-## No part of 'DevBoard Common Platform', including this file, 
-## may be copied, modified, propagated, or distributed except according to 
+## It is subject to the license terms in the LICENSE.txt file found in the
+## top-level directory of this distribution and at:
+##    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+## No part of 'DevBoard Common Platform', including this file,
+## may be copied, modified, propagated, or distributed except according to
 ## the terms contained in the LICENSE.txt file.
 ##############################################################################
 # I/O Port Mapping
@@ -97,7 +97,7 @@ resize_pblock       [get_pblocks SGMII_ETH_BLK] -add {CLOCKREGION_X2Y1:CLOCKREGI
 
 
 
-# Timing Constraints 
+# Timing Constraints
 create_clock -name sysClk300P  -period 3.333 [get_ports {sysClk300P}]
 create_clock -name lcls1RefClk -period 4.202 [get_ports {ethClkP}  ]
 create_clock -name lcls2RefClk -period 2.692 -add [get_ports {ethClkP}  ]
@@ -106,7 +106,7 @@ create_clock -name sgmiiClkP   -period 1.600 [get_ports {sgmiiClkP} ]
 
 create_generated_clock -name sysClk156MHz [get_pins {U_SysPll/MmcmGen.U_Mmcm/CLKOUT0}]
 
-create_generated_clock -name sgmiiClk125MHz  [get_pins {U_1GigE_SGMII/U_MMCM/CLKOUT0}] 
+create_generated_clock -name sgmiiClk125MHz  [get_pins {U_1GigE_SGMII/U_MMCM/CLKOUT0}]
 
 create_generated_clock -name dnaClk [get_pins {U_App/U_Reg/U_AxiVersion/GEN_DEVICE_DNA.DeviceDna_1/GEN_ULTRA_SCALE.DeviceDnaUltraScale_Inst/BUFGCE_DIV_Inst/O}]
 

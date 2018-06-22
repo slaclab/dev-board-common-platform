@@ -1,22 +1,22 @@
 -------------------------------------------------------------------------------
--- Title      : 
+-- Title      :
 -------------------------------------------------------------------------------
 -- File       : AmcCarrierDdrMem.vhd
 -- Author     : Larry Ruckman  <ruckman@slac.stanford.edu>
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2015-07-08
 -- Last update: 2017-02-09
--- Platform   : 
+-- Platform   :
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
--- Description: 
+-- Description:
 -------------------------------------------------------------------------------
 -- This file is part of 'LCLS2 Common Carrier Core'.
--- It is subject to the license terms in the LICENSE.txt file found in the 
--- top-level directory of this distribution and at: 
---    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
--- No part of 'LCLS2 Common Carrier Core', including this file, 
--- may be copied, modified, propagated, or distributed except according to 
+-- It is subject to the license terms in the LICENSE.txt file found in the
+-- top-level directory of this distribution and at:
+--    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+-- No part of 'LCLS2 Common Carrier Core', including this file,
+-- may be copied, modified, propagated, or distributed except according to
 -- the terms contained in the LICENSE.txt file.
 -------------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ entity AmcCarrierDdrMem is
       axiReadSlave    : out   AxiReadSlaveType;
       ----------------
       -- Core Ports --
-      ----------------   
+      ----------------
       -- DDR4 Ports
       refClk          : in    sl;
       c0_ddr4_adr     : OUT STD_LOGIC_VECTOR(16 DOWNTO 0);
@@ -87,7 +87,7 @@ architecture mapping of AmcCarrierDdrMem is
 
    constant START_ADDR_C : slv(AXI_CONFIG_C.ADDR_WIDTH_C-1 downto 0) := (others => '0');
    constant STOP_ADDR_C  : slv(AXI_CONFIG_C.ADDR_WIDTH_C-1 downto 0) := (others => '1');
-   
+
 
    COMPONENT ddr4_0
      PORT (
@@ -170,7 +170,7 @@ architecture mapping of AmcCarrierDdrMem is
    attribute KEEP_HIERARCHY           : string;
 
    attribute dont_touch               : string;
-   
+
    type RegType is record
       ddrPwrEn       : sl;
       ddrReset       : sl;
@@ -221,7 +221,7 @@ begin
          dbg_clk => open,
          c0_sys_clk_i => refClk,
          dbg_bus => open,
-   
+
          c0_ddr4_adr => c0_ddr4_adr,
          c0_ddr4_ba => c0_ddr4_ba,
          c0_ddr4_cke => c0_ddr4_cke,
@@ -236,11 +236,11 @@ begin
          c0_ddr4_act_n => c0_ddr4_act_n,
          c0_ddr4_ck_c => c0_ddr4_ck_c,
          c0_ddr4_ck_t => c0_ddr4_ck_t,
-   
+
          c0_ddr4_ui_clk => ddrClk,
          c0_ddr4_ui_clk_sync_rst => coreRst(0),
          c0_ddr4_aresetn => axiRstL,
-   
+
          c0_ddr4_s_axi_awid      => ddrWriteMaster.awid(3 downto 0),
          c0_ddr4_s_axi_awaddr    => ddrWriteMaster.awaddr(30 downto 0),
          c0_ddr4_s_axi_awlen     => ddrWriteMaster.awlen(7 downto 0),
@@ -252,7 +252,7 @@ begin
          c0_ddr4_s_axi_awqos     => ddrWriteMaster.awqos(3 downto 0),
          c0_ddr4_s_axi_awvalid   => ddrWriteMaster.awvalid,
          c0_ddr4_s_axi_awready   => ddrWriteSlave.awready,
-   
+
          c0_ddr4_s_axi_wdata     => ddrWriteMaster.wdata(8*AXI_NBYTES_C-1 downto 0),
          c0_ddr4_s_axi_wstrb     => ddrWriteMaster.wstrb(AXI_NBYTES_C-1 downto 0),
          c0_ddr4_s_axi_wlast     => ddrWriteMaster.wlast,
@@ -279,10 +279,10 @@ begin
          c0_ddr4_s_axi_rresp     => ddrReadSlave.rresp(1 downto 0),
          c0_ddr4_s_axi_rid       => ddrReadSlave.rid(3 downto 0),
          c0_ddr4_s_axi_rdata     => ddrReadSlave.rdata(8*AXI_NBYTES_C-1 downto 0),
-   
+
          sys_rst => sysRst
      );
-   
+
    process(ddrClk)
    begin
       if rising_edge(ddrClk) then

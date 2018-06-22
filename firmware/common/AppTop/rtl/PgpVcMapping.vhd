@@ -4,14 +4,14 @@
 -- Created    : 2015-01-30
 -- Last update: 2017-03-17
 -------------------------------------------------------------------------------
--- Description: 
+-- Description:
 -------------------------------------------------------------------------------
 -- This file is part of 'DevBoard Common Platform'.
--- It is subject to the license terms in the LICENSE.txt file found in the 
--- top-level directory of this distribution and at: 
---    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
--- No part of 'DevBoard Common Platform', including this file, 
--- may be copied, modified, propagated, or distributed except according to 
+-- It is subject to the license terms in the LICENSE.txt file found in the
+-- top-level directory of this distribution and at:
+--    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+-- No part of 'DevBoard Common Platform', including this file,
+-- may be copied, modified, propagated, or distributed except according to
 -- the terms contained in the LICENSE.txt file.
 -------------------------------------------------------------------------------
 
@@ -70,7 +70,7 @@ architecture mapping of PgpVcMapping is
 
 begin
 
-   -- VC0 RX/TX, SRPv3 Register Module    
+   -- VC0 RX/TX, SRPv3 Register Module
 --   U_SRPv3 : entity work.SrpV3AxiLite
 --      generic map (
 --         TPD_G               => TPD_G,
@@ -78,7 +78,7 @@ begin
 --         GEN_SYNC_FIFO_G     => true,
 --         AXI_STREAM_CONFIG_G => SSI_PGP2B_CONFIG_C)
 --      port map (
---         -- Streaming Slave (Rx) Interface (sAxisClk domain) 
+--         -- Streaming Slave (Rx) Interface (sAxisClk domain)
 --         sAxisClk         => clk,
 --         sAxisRst         => rst,
 --         sAxisMaster      => rxMasters(0),
@@ -103,7 +103,7 @@ begin
          GEN_SYNC_FIFO_G     => true,
          AXI_STREAM_CONFIG_G => SSI_PGP2B_CONFIG_C)
       port map (
-         -- Streaming Slave (Rx) Interface (sAxisClk domain) 
+         -- Streaming Slave (Rx) Interface (sAxisClk domain)
          sAxisClk         => clk,
          sAxisRst         => rst,
          sAxisMaster      => rxMasters(0),

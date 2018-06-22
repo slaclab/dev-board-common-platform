@@ -1,10 +1,10 @@
 ##############################################################################
 ## This file is part of 'DevBoard Common Platform'.
-## It is subject to the license terms in the LICENSE.txt file found in the 
-## top-level directory of this distribution and at: 
-##    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
-## No part of 'DevBoard Common Platform', including this file, 
-## may be copied, modified, propagated, or distributed except according to 
+## It is subject to the license terms in the LICENSE.txt file found in the
+## top-level directory of this distribution and at:
+##    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+## No part of 'DevBoard Common Platform', including this file,
+## may be copied, modified, propagated, or distributed except according to
 ## the terms contained in the LICENSE.txt file.
 ##############################################################################
 # I/O Port Mapping
@@ -31,7 +31,7 @@ set_property PACKAGE_PIN T1 [get_ports ethRxN]
 set_property PACKAGE_PIN P6 [get_ports ethClkP]
 set_property PACKAGE_PIN P5 [get_ports ethClkN]
 
-# Timing Constraints 
+# Timing Constraints
 create_clock -name ethClkP -period  6.400 [get_ports {ethClkP}]
 
 create_generated_clock -name ethClk [get_pins {U_10GigE/GEN_LANE[0].TenGigEthGthUltraScale_Inst/U_TenGigEthRst/CLK156_BUFG_GT/O}]
@@ -41,6 +41,6 @@ set_clock_groups -asynchronous -group [get_clocks {ethClk}]  -group [get_clocks 
 set_clock_groups -asynchronous -group [get_clocks {ethClkP}] -group [get_clocks {dnaClk}]
 
 # BITSTREAM Configurations
-set_property BITSTREAM.CONFIG.CONFIGRATE 50 [current_design] 
+set_property BITSTREAM.CONFIG.CONFIGRATE 50 [current_design]
 set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 1 [current_design]
 set_property BITSTREAM.CONFIG.SPI_FALL_EDGE No [current_design]

@@ -7,11 +7,11 @@
 -- Description: Example using 10G-BASER Protocol
 -------------------------------------------------------------------------------
 -- This file is part of 'DevBoard Common Platform'.
--- It is subject to the license terms in the LICENSE.txt file found in the 
--- top-level directory of this distribution and at: 
---    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
--- No part of 'DevBoard Common Platform', including this file, 
--- may be copied, modified, propagated, or distributed except according to 
+-- It is subject to the license terms in the LICENSE.txt file found in the
+-- top-level directory of this distribution and at:
+--    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+-- No part of 'DevBoard Common Platform', including this file,
+-- may be copied, modified, propagated, or distributed except according to
 -- the terms contained in the LICENSE.txt file.
 -------------------------------------------------------------------------------
 
@@ -51,7 +51,7 @@ end Kcu105TenGigE;
 architecture top_level of Kcu105TenGigE is
 
    constant AXIS_SIZE_C : positive         := 1;
-   constant IP_ADDR_C   : slv(31 downto 0) := x"0A02A8C0";  -- 192.168.2.10  
+   constant IP_ADDR_C   : slv(31 downto 0) := x"0A02A8C0";  -- 192.168.2.10
    constant MAC_ADDR_C  : slv(47 downto 0) := x"010300564400";  -- 00:44:56:00:03:01
 
    signal txMasters : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
@@ -79,7 +79,7 @@ begin
       port map (
          -- Local Configurations
          localMac     => (others => MAC_ADDR_C),
-         -- Streaming DMA Interface 
+         -- Streaming DMA Interface
          dmaClk       => (others => clk),
          dmaRst       => (others => rst),
          dmaIbMasters => rxMasters,

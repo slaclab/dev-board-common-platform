@@ -24,7 +24,7 @@ export INCLUDE_ETH_SGMII_LVDS = 1
 
 export REMOVE_UNUSED_CODE = 1
 
-# Using a non-standard target directory structure, 
+# Using a non-standard target directory structure,
 # which requires me to define the TOP_DIR path
 export TOP_DIR = $(abspath $(PWD)/../../..)
 
