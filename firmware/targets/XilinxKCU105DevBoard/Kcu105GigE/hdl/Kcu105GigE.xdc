@@ -115,3 +115,10 @@ create_generated_clock -name jesdClk    [get_pins {U_App/U_SimJesdClock/U_ClockG
 create_generated_clock -name jesdUsrClk [get_pins {U_App/U_SimJesdClock/U_ClockGen/MmcmGen.U_Mmcm/CLKOUT2}]
 
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets U_SysPll/CLKIN1]
+
+set rxChannelsRegClk          jesdUsrClk
+# jesd2x/jesdUsrClk multiplication factor - 1
+set rxChannelsMulticycleSetup 2
+# setup - 1
+set rxChannelsMulticycleHold  1
+

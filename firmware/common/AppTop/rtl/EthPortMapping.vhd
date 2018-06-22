@@ -51,7 +51,6 @@ entity EthPortMapping is
       txSlave         : in  AxiStreamSlaveType;
       rxMaster        : in  AxiStreamMasterType;
       rxSlave         : out AxiStreamSlaveType;
-      rxCtrl          : out AxiStreamCtrlType;
       -- RSSI Streams
       rssiIbMasters   : in  AxiStreamMasterArray(RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
       rssiIbSlaves    : out AxiStreamSlaveArray (RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
