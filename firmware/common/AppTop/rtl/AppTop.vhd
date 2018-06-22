@@ -54,6 +54,8 @@ entity AppTop is
       txSlaves        : in  AxiStreamSlaveArray (0 downto 0);
       rxMasters       : in  AxiStreamMasterArray(0 downto 0);
       rxSlaves        : out AxiStreamSlaveArray (0 downto 0);
+      rxCtrl          : out AxiStreamCtrlArray  (0 downto 0);
+
       -- ADC Ports
       v0PIn           : in  sl;
       v0NIn           : in  sl;
@@ -251,6 +253,7 @@ begin
             txSlave            => txSlaves(0),
             rxMaster           => rxMasters(0),
             rxSlave            => rxSlaves(0),
+            rxCtrl             => rxCtrl(0),
             -- RSSI Interface
             rssiIbMasters      => rssiIbMasters,
             rssiIbSlaves       => rssiIbSlaves,

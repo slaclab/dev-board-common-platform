@@ -28,8 +28,5 @@ export REMOVE_UNUSED_CODE = 1
 # which requires me to define the TOP_DIR path
 export TOP_DIR = $(abspath $(PWD)/../../..)
 
-# Stripline or Cavity
-export APP_CORE_TYPE_BAY0 = "Stripline"
-
 # Use top level makefile
 include $(TOP_DIR)/submodules/ruckus/system_vivado.mk
