@@ -94,8 +94,10 @@ entity AppCore is
       gpioDip         : in  slv(                               3 downto 0);
       appLeds         : out slv(APP_CORE_CONFIG_G.numAppLEDs - 1 downto 0) := (others => '0');
 
-      gpioSmaP        : inout sl;
-      gpioSmaN        : inout sl
+      gpioSmaP        : inout IOLine := IOLINE_DEFAULT_C;
+      gpioSmaN        : inout IOLine := IOLINE_DEFAULT_C;
+
+      pmod            : inout PMODArray(1 downto 0) := ( others => (others => IOLINE_DEFAULT_C ) )
    );
 end entity AppCore;
 

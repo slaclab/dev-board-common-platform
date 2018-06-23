@@ -12,7 +12,7 @@
 
 set_property -dict { PACKAGE_PIN V12 IOSTANDARD ANALOG } [get_ports { vPIn }]
 set_property -dict { PACKAGE_PIN W11 IOSTANDARD ANALOG } [get_ports { vNIn }]
-set_property -dict { PACKAGE_PIN V13 IOSTANDARD ANALOG } [get_ports { v0PIn }]
+set_property -dict { PACKAGE_PIN F13 IOSTANDARD ANALOG } [get_ports { v0PIn }]
 set_property -dict { PACKAGE_PIN E13 IOSTANDARD ANALOG } [get_ports { v0NIn }]
 set_property -dict { PACKAGE_PIN J13 IOSTANDARD ANALOG } [get_ports { v2PIn }]
 set_property -dict { PACKAGE_PIN H13 IOSTANDARD ANALOG } [get_ports { v2NIn }]
@@ -41,6 +41,25 @@ set_property -dict { PACKAGE_PIN P23 IOSTANDARD LVCMOS18 } [get_ports { led[7] }
 # GPIO SMA
 set_property -dict { PACKAGE_PIN H27 IOSTANDARD LVCMOS18 } [get_ports { gpioSmaP }]
 set_property -dict { PACKAGE_PIN G27 IOSTANDARD LVCMOS18 } [get_ports { gpioSmaN }]
+
+# PMOD
+set_property -dict { PACKAGE_PIN AK25 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[0][0] }]
+set_property -dict { PACKAGE_PIN AN21 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[0][1] }]
+set_property -dict { PACKAGE_PIN AH18 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[0][2] }]
+set_property -dict { PACKAGE_PIN AM19 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[0][3] }]
+set_property -dict { PACKAGE_PIN AE26 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[0][4] }]
+set_property -dict { PACKAGE_PIN AF25 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[0][5] }]
+set_property -dict { PACKAGE_PIN AE21 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[0][6] }]
+set_property -dict { PACKAGE_PIN AM17 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[0][7] }]
+
+set_property -dict { PACKAGE_PIN AL14 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[1][0] }]
+set_property -dict { PACKAGE_PIN AM14 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[1][1] }]
+set_property -dict { PACKAGE_PIN AP16 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[1][2] }]
+set_property -dict { PACKAGE_PIN AP15 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[1][3] }]
+set_property -dict { PACKAGE_PIN AM16 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[1][4] }]
+set_property -dict { PACKAGE_PIN AM15 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[1][5] }]
+set_property -dict { PACKAGE_PIN AN18 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[1][6] }]
+set_property -dict { PACKAGE_PIN AN17 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[1][7] }]
 
 # MDIO/Ext. PHY
 set_property PACKAGE_PIN K25     [get_ports "phyIrqN"]

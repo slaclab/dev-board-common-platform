@@ -27,6 +27,7 @@ use work.EthMacPkg.all;
 use work.SsiPkg.all;
 use work.TimingPkg.all;
 use work.AppCoreConfigPkg.all;
+use work.AppCorePkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -99,7 +100,8 @@ entity Kcu105GigE is
       iicMuxRstL : out   sl;
       -- SMA
       gpioSmaP   : inout sl;
-      gpioSmaN   : inout sl
+      gpioSmaN   : inout sl;
+      pmod       : inout Slv8Array(1 downto 0)
    );
 end Kcu105GigE;
 
@@ -204,6 +206,10 @@ architecture top_level of Kcu105GigE is
 
    signal    appLeds           : slv(NUM_APP_LEDS_C - 1 downto 0);
    signal    muxAddrLoc        : slv(4            downto 0);
+
+   signal    gpioSmaPBuf       : IOLine;
+   signal    gpioSmaNBuf       : IOLine;
+   signal    pmodBuf           : PMODArray(1 downto 0);
 
 
    attribute dont_touch                 : string;
@@ -406,6 +412,34 @@ begin
    keptSignals.txSlaves   <= txSlavesSGMII;
    keptSignals.rxMasters  <= rxMastersSGMII;
 
+   U_SMAPBUF : IOBUF
+      port map (
+         io => gpioSmaP,
+         i  => gpioSmaPBuf.i,
+         o  => gpioSmaPBuf.o,
+         t  => gpioSmaPBuf.t
+      );
+
+   U_SMANBUF : IOBUF
+         port map (
+            io => gpioSmaN,
+            i  => gpioSmaNBuf.i,
+            o  => gpioSmaNBuf.o,
+            t  => gpioSmaNBuf.t
+         );
+
+   GEN_PMODBUF_I : for i in pmod'left downto pmod'right generate
+      GEN_PMODBUF_J : for j in pmod(i)'left downto pmod(i)'right generate
+         U_PMODBUF : IOBUF
+            port map (
+               io => pmod(i)(j),
+               i  => pmodBuf(i)(j).i,
+               o  => pmodBuf(i)(j).o,
+               t  => pmodBuf(i)(j).t
+            );
+      end generate;
+   end generate;
+
    -------------------
    -- Application Core
    -------------------
@@ -463,8 +497,9 @@ begin
          appTimingRst   => appTimingRst,
          gpioDip        => gpioDip,
          appLeds        => appLeds,
-         gpioSmaP       => gpioSmaP,
-         gpioSmaN       => gpioSmaN
+         gpioSmaP       => gpioSmaPBuf,
+         gpioSmaN       => gpioSmaNBuf,
+         pmod           => pmodBuf
       );
 
    muxAddrOut <= muxAddrLoc(2 downto 0);
