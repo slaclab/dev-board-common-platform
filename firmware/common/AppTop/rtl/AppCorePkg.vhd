@@ -29,6 +29,22 @@ package AppCorePkg is
    constant APP_DEBUG_STRM_C : natural := 0;
    constant APP_BPCLT_STRM_C : natural := 1;
 
+   type IOLine is record
+      o : sl; -- driven by IOBUF
+      i : sl; -- driven by signal
+      t : sl; -- 1 for input; 0 for output
+   end record;
+
+   constant IOLINE_DEFAULT_C : IOLine := (
+      o => 'Z',
+      i => '0',
+      t => '1'
+   );
+
+   type IOLine8Array is array(7 downto 0) of IOLine;
+
+   type PMODArray is array (natural range <>) of IOLine8Array;
+
    type AppCoreConfigType is record
       useTimingGth         : boolean;                   -- whether to use a GTH for timing (in-logic loopback otherwise)
       useXvcJtagBridge     : boolean;                   -- whether to use an XVC debug bridge

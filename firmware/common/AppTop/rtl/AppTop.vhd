@@ -85,8 +85,9 @@ entity AppTop is
 
       gpioDip         : in  slv(3 downto 0);
       appLeds         : out slv(APP_CORE_CONFIG_G.numAppLEDs - 1 downto 0) := (others => '0');
-      gpioSmaP        : inout sl;
-      gpioSmaN        : inout sl
+      gpioSmaP        : inout IOLine;
+      gpioSmaN        : inout IOLine;
+      pmod            : inout PMODArray(1 downto 0)
       );
 end AppTop;
 
@@ -667,24 +668,27 @@ begin
             dacSigStatus        => dacSigStatus,
             dacSigValids        => dacSigValids,
             dacSigValues        => dacSigValues,
-            
+
             gpioDip             => gpioDip,
             appLeds             => appLeds,
 
             gpioSmaP            => gpioSmaP,
-            gpioSmaN            => gpioSmaN
+            gpioSmaN            => gpioSmaN,
+            pmod                => pmod
          );
 
       GEN_SMA_P_TRIG : if ( APP_CORE_CONFIG_G.smaPTrigger <= timingTrig.trigPulse'high
                            and
                             APP_CORE_CONFIG_G.smaPTrigger >= timingTrig.trigPulse'low ) generate
-         gpioSmaP <= timingTrig.trigPulse( APP_CORE_CONFIG_G.smaPTrigger );
+         gpioSmaP.i <= timingTrig.trigPulse( APP_CORE_CONFIG_G.smaPTrigger );
+         gpioSmaP.t <= '0';
       end generate;
 
       GEN_SMA_N_TRIG : if ( APP_CORE_CONFIG_G.smaNTrigger <= timingTrig.trigPulse'high
                            and
                             APP_CORE_CONFIG_G.smaNTrigger >= timingTrig.trigPulse'low ) generate
-         gpioSmaN <= timingTrig.trigPulse( APP_CORE_CONFIG_G.smaNTrigger );
+         gpioSmaN.i <= timingTrig.trigPulse( APP_CORE_CONFIG_G.smaNTrigger );
+         gpioSmaN.t <= '0';
       end generate;
 
 
