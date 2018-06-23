@@ -1,80 +1,76 @@
-# dev-board-examples
+# SLAC Common Platform Environment on a Development Board
 
-Development Board Firmware/Software Examples
+## Introduction
+This project aims at porting most of the features of the *Common Platform*
+to the (KCU105) development board which is convenient for development and
+testing since the user does not need a full-blown ATCA system. A development
+board is quick to set up, portable and can be operated without the need to
+coordinate with other users.
 
-# Before you clone the GIT repository
+## Features
+Most of the important features of the *Common Platform* are available:
+ - **Timing**: If available an external timing fiber (lcls-1 or lcls-2) 
+   can be connected to the first SFP port. The on-board Si570 oscillator
+   generates suitable reference clocks and is automatically switched/programmed
+   when the user switches the TimingRx between the lcls-1 and lcls-2 modes
+   (`TimingFrameRx/ClkSel:`).
+   If no timing fiber is available then the GTH transceiver can be set into
+   loopback mode (`TPGMiniCore/TxLoopback: 2`).
 
-1) Create a github account:
-> https://github.com/
+   By default the trigger channels 8 and 9 are routed to the board's GPIO
+   SMA connectors (P and N, respectively).
 
-2) On the Linux machine that you will clone the github from, generate a SSH key (if not already done)
-> https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/
+ - **BSA**: Lcls-2 style BSA is available.
+ - **DaqMuxV2**: Shares the DDR memory with the BSA core.
+ - **XVC Support**: Remote connection to ILAs with over XVC.
+ - **DAC Signal Generator**
+ - **Backplane Messaging**
+ - **Fan Control**: When the board sits on your desk the fan can be quite
+   annoying. The fan-controller implements a simple P-controller to keep
+   noise and temperature in check. It is disabled/bypassed by default, however
+   (`FanController/Bypass: 1`). The controller is also overridden if the
+   SysMon detects a temperature alarm condition (85degC).
 
-3) Add a new SSH key to your GitHub account
-> https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/
+## User-Application Integration
+The interface to the application core is declared by the 'AppCore' entity.
+The user is supposed to provide his/her implementation under 
+`firmware/common/core/`. If no such directory is present then the build-scripts
+use the stub `firmware/common/coreStub` which also serves as a template.
 
-4) Setup for large filesystems on github
-> $ git lfs install
+Currently, no external connections of ADCs or DACs are available (DACs are
+simply looped-back to ADCs) but real devices on FMCs could be supported in
+the future.
 
-# Clone the GIT repository
+The assumption is that the user's application code contains some kind of
+simulator which can produce simulated signals.
+
+### Configurable Features
+The user also must provide a package '`AppCoreConfigPkg.vhd`' where
+the constant `APP_CORE_CONFIG_C` is defined. This constant is a record
+with several fields that define configurable parameters of the platform.
+Consult `AppTop/rtl/AppCorePkg.vhd` for more information.
+
+## Other Use Cases
+The bare platform (without any application firmware) can easily be
+configured (at run-time) to produce LCLS-1 style timing signals (and
+data streams) and can thus be used as a stand-alone timing and LCLS-1
+BSA source for development and testing of LCLS-1 software applications.
+
+Note that a proper level-shifter is likely to be required on the SMA triggers
+since their voltage level is 1.8V only.
+
+## Clone the GIT repository
 ```
-$ git clone --recursive git@github.com:slaclab/dev-board-examples
-```
-
-# How to build the firmware 
-
-1) Setup Xilinx licensing
-
-> If you are on the SLAC network, here's how to setup the Xilinx licensing
-
->> In C-Shell: 
-```
-$ source dev-board-examples/firmware/setup_env_slac.csh
-```
-
->> In Bash:    
-```
-$ source dev-board-examples/firmware/setup_env_slac.sh
-```
-
-2) Go to the target directory (that you want to build) and make the firmware:
-
-> Example of building the Ac701GigE firmware example target
-```
-$ cd dev-board-examples/firmware/targets/XilinxKCU105DevBoard/Ac701GigE
-$ make
-```
-
-3) Optional: Review the results in GUI mode
-```
-$ make gui
-```
-
-# How to build/run the software 
-
-1) Install 'rogue' software on your platform
-
-> Build instrustions can be found here:
-
->> https://github.com/slaclab/rogue/blob/master/Readme_build.txt
-
-> If you are on the SLAC network, there in a network install of rogue on AFS:
- ```
-/afs/slac/g/reseng/rogue/master/
-```
-
-2) Go to your git clone's rogue software directory
-```
-$ cd dev-board-examples/software/rogue
+$ git clone --recursive git@github.com:/slaclab/dev-board-common-platform
 ```
 
-3) Setup your environment (example below assumes access to SLAC AFS):
-```
-$ source  setup_template.csh
-```
+Note that you need git LFS. If you are unfamiliar with the basic steps
+for cloning and building SLAC firmware please consult
+<https://github.com/slaclab/dev-board-examples>
 
-4) Launch the PyQT QUI
-```
-$ python3 scripts/DevBoardGui.py 
-```
+## Acknowledgement
 
+This project has been derived from <git@github.com/slaclab/dev-board-examples>
+and is released under the same [license](LICENSE.txt). It has been made a separate project
+because it is currently not possible to create a fork within a single organization
+on github.com.
