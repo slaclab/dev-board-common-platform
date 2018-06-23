@@ -96,7 +96,10 @@ entity Kcu105GigE is
       -- I2C Bus
       iicScl     : inout sl;
       iicSda     : inout sl;
-      iicMuxRstL : out   sl
+      iicMuxRstL : out   sl;
+      -- SMA
+      gpioSmaP   : inout sl;
+      gpioSmaN   : inout sl
    );
 end Kcu105GigE;
 
@@ -459,7 +462,9 @@ begin
          appTimingClk   => appTimingClk,
          appTimingRst   => appTimingRst,
          gpioDip        => gpioDip,
-         appLeds        => appLeds
+         appLeds        => appLeds,
+         gpioSmaP       => gpioSmaP,
+         gpioSmaN       => gpioSmaN
       );
 
    muxAddrOut <= muxAddrLoc(2 downto 0);

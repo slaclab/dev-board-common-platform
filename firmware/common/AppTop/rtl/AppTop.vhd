@@ -84,7 +84,9 @@ entity AppTop is
       appTimingRst    : out sl;
 
       gpioDip         : in  slv(3 downto 0);
-      appLeds         : out slv(APP_CORE_CONFIG_G.numAppLEDs - 1 downto 0) := (others => '0')
+      appLeds         : out slv(APP_CORE_CONFIG_G.numAppLEDs - 1 downto 0) := (others => '0');
+      gpioSmaP        : inout sl;
+      gpioSmaN        : inout sl
       );
 end AppTop;
 
@@ -667,8 +669,24 @@ begin
             dacSigValues        => dacSigValues,
             
             gpioDip             => gpioDip,
-            appLeds             => appLeds
+            appLeds             => appLeds,
+
+            gpioSmaP            => gpioSmaP,
+            gpioSmaN            => gpioSmaN
          );
+
+      GEN_SMA_P_TRIG : if ( APP_CORE_CONFIG_G.smaPTrigger <= timingTrig.trigPulse'high
+                           and
+                            APP_CORE_CONFIG_G.smaPTrigger >= timingTrig.trigPulse'low ) generate
+         gpioSmaP <= timingTrig.trigPulse( APP_CORE_CONFIG_G.smaPTrigger );
+      end generate;
+
+      GEN_SMA_N_TRIG : if ( APP_CORE_CONFIG_G.smaNTrigger <= timingTrig.trigPulse'high
+                           and
+                            APP_CORE_CONFIG_G.smaNTrigger >= timingTrig.trigPulse'low ) generate
+         gpioSmaN <= timingTrig.trigPulse( APP_CORE_CONFIG_G.smaNTrigger );
+      end generate;
+
 
       -- For now just loop back
       adcValids        <= dacValids;

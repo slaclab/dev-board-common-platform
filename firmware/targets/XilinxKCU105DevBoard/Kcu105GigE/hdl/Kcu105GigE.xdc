@@ -38,6 +38,10 @@ set_property -dict { PACKAGE_PIN M22 IOSTANDARD LVCMOS18 } [get_ports { led[5] }
 set_property -dict { PACKAGE_PIN R23 IOSTANDARD LVCMOS18 } [get_ports { led[6] }]
 set_property -dict { PACKAGE_PIN P23 IOSTANDARD LVCMOS18 } [get_ports { led[7] }]
 
+# GPIO SMA
+set_property -dict { PACKAGE_PIN H27 IOSTANDARD LVCMOS18 } [get_ports { gpioSmaP }]
+set_property -dict { PACKAGE_PIN G27 IOSTANDARD LVCMOS18 } [get_ports { gpioSmaN }]
+
 # MDIO/Ext. PHY
 set_property PACKAGE_PIN K25     [get_ports "phyIrqN"]
 set_property IOSTANDARD LVCMOS18 [get_ports "phyIrqN"]
