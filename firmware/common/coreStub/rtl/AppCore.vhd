@@ -92,7 +92,10 @@ entity AppCore is
       dacSigValids    : in  Slv7Array(1 downto 0);
       dacSigValues    : in  sampleDataVectorArray(1 downto 0, 6 downto 0);
       gpioDip         : in  slv(                               3 downto 0);
-      appLeds         : out slv(APP_CORE_CONFIG_G.numAppLEDs - 1 downto 0) := (others => '0')
+      appLeds         : out slv(APP_CORE_CONFIG_G.numAppLEDs - 1 downto 0) := (others => '0');
+
+      gpioSmaP        : inout sl;
+      gpioSmaN        : inout sl
    );
 end entity AppCore;
 

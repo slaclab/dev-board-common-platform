@@ -49,6 +49,8 @@ package AppCorePkg is
       sigGenAddrWidth      : PositiveArray(1 downto 0);
       sigGenLaneMode       : Slv7Array    (1 downto 0); -- 0: 32-bit, 1: 16-bit
       sigGenRamClk         : Slv7Array    (1 downto 0); -- 0: jesd2x, 1: jesd1x
+      smaPTrigger          : integer; -- which trigger to connect to GPIO SMA P (-1 for none)
+      smaNTrigger          : integer; -- which trigger to connect to GPIO SMA P (-1 for none)
    end record;
 
    constant APP_CORE_CONFIG_DFLT_C : AppCoreConfigType := (
@@ -70,7 +72,9 @@ package AppCorePkg is
       numSigGenerators     => (others => 4),         -- 0 = disabled
       sigGenAddrWidth      => (others => 9),
       sigGenLaneMode       => (others => "0000000"), -- 0: 32-bit, 1: 16-bit
-      sigGenRamClk         => (others => "0000000")  -- 0: jesd2x, 1: jesd1x
+      sigGenRamClk         => (others => "0000000"), -- 0: jesd2x, 1: jesd1x
+      smaPTrigger          => 8,
+      smaNTrigger          => 9
    );
 
 end package AppCorePkg;

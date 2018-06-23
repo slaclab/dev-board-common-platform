@@ -30,3 +30,17 @@ export TOP_DIR = $(abspath $(PWD)/../../..)
 
 # Use top level makefile
 include $(TOP_DIR)/submodules/ruckus/system_vivado.mk
+
+.PHONY: clean-config .FORCE
+
+clean: clean-config
+
+clean-config:
+	$(RM) config/defaults.yaml
+
+yaml: config/defaults.yaml
+
+# Application may add more 'defaults' snippets here
+config/defaults.yaml: .FORCE
+	$(RM) $@
+	echo '#include defaults_top.yaml'  >> $@

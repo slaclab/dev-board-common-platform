@@ -438,7 +438,7 @@ begin
          O                => timingRefClkDiv2
       );
 
-   U_TimingGTH : entity work.TimingGthCoreWrapper
+   U_TimingGTH : entity work.TimingGtCoreWrapper
       generic map (
          TPD_G            => TPD_G,
          AXIL_BASE_ADDR_G => SYSREG_MASTERS_CONFIG_C(TIM_GTH_INDEX_C).baseAddr
