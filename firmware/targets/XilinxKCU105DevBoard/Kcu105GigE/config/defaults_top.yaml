@@ -1,0 +1,69 @@
+ - AmcCarrierCore:
+  - AmcCarrierTiming:
+    - EvrV2CoreTriggers: # disable triggers on init
+      - EvrV2ChannelReg:
+        - Enable:  !<value> 0
+      - EvrV2TriggerReg:
+        - Enable:  !<value> 0
+    - TPGMiniCore:
+      - TxLoopback: !<value> 2 # loopback TPG into TimingRx
+    - TimingFrameRx:
+      - C_RxReset:  !<value> 1
+  - AmcCarrierBsa:
+    - BsaWaveformEngine:
+        - WaveformEngineBuffers:
+            - FramesAfterTrigger: !<value> 0x0000
+            - MsgDest: !<value> Auto-Readout
+            - SoftTrigger: !<value> 0x0
+            - Init: !<value> 0x0
+            - Mode: !<value> DoneWhenFull
+            - Enabled: !<value>
+                - 0x1
+                - 0x1
+                - 0x1
+                - 0x1
+                - 0x0
+                - 0x0
+                - 0x0
+                - 0x0
+            - EndAddr: !<value>
+                - 0x0000000000060000
+                - 0x0000000020060000
+                - 0x0000000040060000
+                - 0x0000000060060000
+                - 0x0000000080060000
+                - 0x00000000a0060000
+                - 0x00000000c0060000
+                - 0x00000000e0060000
+            - StartAddr: !<value>
+                - 0x0000000000000000
+                - 0x0000000020000000
+                - 0x0000000040000000
+                - 0x0000000060000000
+                - 0x0000000080000000
+                - 0x00000000a0000000
+                - 0x00000000c0000000
+                - 0x00000000e0000000
+            - Initialize: !<value> 1
+- AppTop:
+        - DaqMuxV2:
+            - DecimationAveraging: !<value> Disabled
+            - FormatDataWidth: !<value> D16-bit
+            - FormatSignWidth: !<value> 0x10
+            - FormatSign: !<value> Signed
+            - InputMuxSel: !<value>
+                - Ch14
+                - Ch15
+                - Ch16
+                - Ch17
+            - DataBufferSize: !<value> 0x00018000
+            - DecimationRateDiv: !<value> 0x0000
+            - FreezeHwMask: !<value> Disabled
+            - FreezeSw: !<value> 0x0
+            - PacketHeaderEn: !<value> Disabled
+            - DaqMode: !<value> TriggeredMode
+            - TriggerClearStatus: !<value> 0x0
+            - TriggerHwArm: !<value> 0x0
+            - TriggerHwAutoRearm: !<value> Disabled
+            - TriggerCascMask: !<value> Disabled
+            - TriggerSw: !<value> 0x0
