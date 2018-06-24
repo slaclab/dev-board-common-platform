@@ -1,4 +1,4 @@
- - AmcCarrierCore:
+- AmcCarrierCore:
   - AmcCarrierTiming:
     - EvrV2CoreTriggers: # disable triggers on init
       - EvrV2ChannelReg:
