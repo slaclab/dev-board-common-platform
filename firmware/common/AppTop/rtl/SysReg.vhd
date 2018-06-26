@@ -151,13 +151,14 @@ architecture mapping of SysReg is
    signal appTimingMode     : sl;
 
 
-   constant NUM_I2C_DEVS_C  : natural := 4;
+   constant NUM_I2C_DEVS_C  : natural := 5;
 
    constant I2C_DEVICE_MAP_C: I2cAxiLiteDevArray(0 to NUM_I2C_DEVS_C-1) := (
       0 => (MakeI2cAxiLiteDevType("1110100", 8, 0, '1')), -- TCA9548
-      1 => (MakeI2cAxiLiteDevType("1011101", 8, 8, '1')), -- SI570
+      1 => (MakeI2cAxiLiteDevType("1011101", 8, 8, '1')), -- Si570
       2 => (MakeI2cAxiLiteDevType("1110101", 8, 0, '1')), -- PCA9544
-      3 => (MakeI2cAxiLiteDevType("1010000", 8, 8, '1')) -- SFP 0/1
+      3 => (MakeI2cAxiLiteDevType("1010000", 8, 8, '1')), -- SFP 0/1
+      4 => (MakeI2cAxiLiteDevType("1101000", 8, 8, '1'))  -- Si5328
    );
 
    constant TCASW_AXIL_BASE_ADDR_C : slv(31 downto 0)  :=

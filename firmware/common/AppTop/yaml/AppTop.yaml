@@ -71,15 +71,19 @@ SysRegs: &SysRegs
         Si570:
           class: IntField
           sizeBits: 32
-          at: { offset: 0x400, nelms: 256, stride: 4 }
+          at: { offset: 0x0400, nelms: 256, stride: 4 }
         Pca9544:
           class: IntField
           sizeBits: 8
-          at: { offset: 0x800 }
+          at: { offset: 0x0800 }
         SFP:
           class: IntField
           sizeBits: 32
-          at: { offset: 0xc00, nelms: 256, stride: 4 }
+          at: { offset: 0x0c00, nelms: 256, stride: 4 }
+        Si5328:
+          class: IntField
+          sizeBits: 32
+          at: { offset: 0x1000, nelms: 256, stride: 4 }
     ##################################################
     AmcCarrierTiming:
       class: MMIODev

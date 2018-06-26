@@ -61,6 +61,10 @@ set_property -dict { PACKAGE_PIN AM15 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { 
 set_property -dict { PACKAGE_PIN AN18 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[1][6] }]
 set_property -dict { PACKAGE_PIN AN17 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[1][7] }]
 
+# Si5328 Reset
+set_property -dict { PACKAGE_PIN K23 IOSTANDARD LVCMOS18 } [get_ports { si5328Rst }]
+set_property -dict { PACKAGE_PIN L22 IOSTANDARD LVCMOS18 } [get_ports { si5328Int }]
+
 # MDIO/Ext. PHY
 set_property PACKAGE_PIN K25     [get_ports "phyIrqN"]
 set_property IOSTANDARD LVCMOS18 [get_ports "phyIrqN"]
@@ -90,13 +94,26 @@ set_property IOSTANDARD DIFF_SSTL12_DCI [get_ports "sysClk300P"]
 set_property ODT RTT_48 [get_ports "sysClk300P"]
 
 # GTH/SFP
-set_property PACKAGE_PIN U4 [get_ports ethTxP]
-set_property PACKAGE_PIN U3 [get_ports ethTxN]
-set_property PACKAGE_PIN T2 [get_ports ethRxP]
-set_property PACKAGE_PIN T1 [get_ports ethRxN]
+set_property PACKAGE_PIN U4 [get_ports "sfpTxP[0]"]
+set_property PACKAGE_PIN U3 [get_ports "sfpTxN[0]"]
+set_property PACKAGE_PIN T2 [get_ports "sfpRxP[0]"]
+set_property PACKAGE_PIN T1 [get_ports "sfpRxN[0]"]
 
-set_property PACKAGE_PIN P6 [get_ports ethClkP]
-set_property PACKAGE_PIN P5 [get_ports ethClkN]
+set_property PACKAGE_PIN W4 [get_ports "sfpTxP[1]"]
+set_property PACKAGE_PIN W3 [get_ports "sfpTxN[1]"]
+set_property PACKAGE_PIN V2 [get_ports "sfpRxP[1]"]
+set_property PACKAGE_PIN V1 [get_ports "sfpRxN[1]"]
+
+set_property IO_BUFFER_TYPE "NONE" [get_ports "sfpTxP[1]"]
+set_property IO_BUFFER_TYPE "NONE" [get_ports "sfpTxN[1]"]
+
+# MGTrefclk0 bank 227
+set_property PACKAGE_PIN P6 [get_ports "refClkP[0]"]
+set_property PACKAGE_PIN P5 [get_ports "refClkN[0]"]
+
+# MGTrefclk1 bank 227
+set_property PACKAGE_PIN M6 [get_ports "refClkP[1]"]
+set_property PACKAGE_PIN M5 [get_ports "refClkN[1]"]
 
 # SGMII/Ext. PHY
 set_property PACKAGE_PIN P25 [get_ports sgmiiRxN]
@@ -121,9 +138,9 @@ resize_pblock       [get_pblocks SGMII_ETH_BLK] -add {CLOCKREGION_X2Y1:CLOCKREGI
 
 
 # Timing Constraints
-create_clock -name sysClk300P  -period 3.333 [get_ports {sysClk300P}]
-create_clock -name lcls1RefClk -period 4.202 [get_ports {ethClkP}  ]
-create_clock -name lcls2RefClk -period 2.692 -add [get_ports {ethClkP}  ]
+create_clock -name sysClk300P  -period 3.333      [get_ports {sysClk300P}]
+create_clock -name lcls1RefClk -period 4.202      [get_ports {refClkP[1]}]
+create_clock -name lcls2RefClk -period 2.692 -add [get_ports {refClkP[1]}]
 
 create_clock -name sgmiiClkP   -period 1.600 [get_ports {sgmiiClkP} ]
 

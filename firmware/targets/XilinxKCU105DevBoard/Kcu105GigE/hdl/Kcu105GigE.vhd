@@ -56,13 +56,17 @@ entity Kcu105GigE is
       muxAddrOut : out slv(2 downto 0);
       -- Fan control
       fanPwmOut  : out sl;
-      -- ETH GT Pins
-      ethClkP    : in  sl;
-      ethClkN    : in  sl;
-      ethRxP     : in  sl;
-      ethRxN     : in  sl;
-      ethTxP     : out sl;
-      ethTxN     : out sl;
+      -- MGT refclk 1 : bank 227 (from Si5238)
+      -- MGT refclk 0 : bank 227 (from Si570 or Si5328 out2 via mux)
+      refClkP    : in  slv(1 downto 0);
+      refClkN    : in  slv(1 downto 0);
+      -- SFP[0] (P5 cage, closer to RJ45      ) Bank 226, GTH-2
+      -- SFP[1] (P4 cage, closer to board edge) Bank 226, GTH-1
+      sfpRxP     : in  slv(1 downto 0);
+      sfpRxN     : in  slv(1 downto 0);
+      sfpTxP     : out slv(1 downto 0);
+      sfpTxN     : out slv(1 downto 0);
+      -- Second SFP cage
       -- SGMII (ext. PHY) ETH
       sgmiiClkP  : in  sl;
       sgmiiClkN  : in  sl;
@@ -70,6 +74,9 @@ entity Kcu105GigE is
       sgmiiRxN   : in  sl;
       sgmiiTxP   : out sl;
       sgmiiTxN   : out sl;
+      -- Si5328 reset
+      si5328Rst  : out sl := '1';
+      si5328Int  : in  sl;
       -- ETH external PHY pins
       phyMdc     : out sl;
       phyMdio    : inout sl;
@@ -141,7 +148,8 @@ architecture top_level of Kcu105GigE is
       ADDR_WIDTH_C => 31,
       DATA_BYTES_C => 4,
       ID_BITS_C    => 4,
-      LEN_BITS_C   => 8);
+      LEN_BITS_C   => 8
+   );
 
    type MuxedSignalsType is record
       txMasters     : AxiStreamMasterArray(AXIS_SIZE_C-1 downto 0);
@@ -377,7 +385,8 @@ begin
          DIVCLK_DIVIDE_G    => 2,       -- 312.5 MHz
          CLKFBOUT_MULT_F_G  => 2.0,     -- VCO: 625 MHz
          -- AXI Streaming Configurations
-         AXIS_CONFIG_G      => (others => EMAC_AXIS_CONFIG_C))
+         AXIS_CONFIG_G      => (others => EMAC_AXIS_CONFIG_C)
+      )
       port map (
          -- Local Configurations
          localMac           => (others => APP_CORE_CONFIG_C.macAddress),
@@ -404,7 +413,8 @@ begin
          sgmiiTxP(0)        => sgmiiTxP,
          sgmiiTxN(0)        => sgmiiTxN,
          sgmiiRxP(0)        => sgmiiRxP,
-         sgmiiRxN(0)        => sgmiiRxN);
+         sgmiiRxN(0)        => sgmiiRxN
+      );
 
    txMastersSGMII         <= keptSignals.txMasters;
    rxSlavesSGMII          <= keptSignals.rxSlaves;
@@ -421,12 +431,12 @@ begin
       );
 
    U_SMANBUF : IOBUF
-         port map (
-            io => gpioSmaN,
-            i  => gpioSmaNBuf.i,
-            o  => gpioSmaNBuf.o,
-            t  => gpioSmaNBuf.t
-         );
+      port map (
+         io => gpioSmaN,
+         i  => gpioSmaNBuf.i,
+         o  => gpioSmaNBuf.o,
+         t  => gpioSmaNBuf.t
+      );
 
    GEN_PMODBUF_I : for i in pmod'left downto pmod'right generate
       GEN_PMODBUF_J : for j in pmod(i)'left downto pmod(i)'right generate
@@ -487,12 +497,12 @@ begin
          iicScl         => iicScl,
          iicSda         => iicSda,
 
-         timingRefClkP  => ethClkP,
-         timingRefClkN  => ethClkN,
-         timingRxP      => ethRxP,
-         timingRxN      => ethRxN,
-         timingTxP      => ethTxP,
-         timingTxN      => ethTxN,
+         timingRefClkP  => refClkP(1),
+         timingRefClkN  => refClkN(1),
+         timingRxP      => sfpRxP(0),
+         timingRxN      => sfpRxN(0),
+         timingTxP      => sfpTxP(0),
+         timingTxN      => sfpTxN(0),
          appTimingClk   => appTimingClk,
          appTimingRst   => appTimingRst,
          gpioDip        => gpioDip,
@@ -505,46 +515,46 @@ begin
    muxAddrOut <= muxAddrLoc(2 downto 0);
 
    U_DdrMem : entity work.AmcCarrierDdrMem
-   port map (
-      -- AXI-Lite Interface
-      axilClk           => sysClk156,
-      axilRst           => sysRst156,
-      axilReadMaster    => AXI_LITE_READ_MASTER_INIT_C,
-      axilReadSlave     => open,
-      axilWriteMaster   => AXI_LITE_WRITE_MASTER_INIT_C,
-      axilWriteSlave    => open,
+      port map (
+         -- AXI-Lite Interface
+         axilClk           => sysClk156,
+         axilRst           => sysRst156,
+         axilReadMaster    => AXI_LITE_READ_MASTER_INIT_C,
+         axilReadSlave     => open,
+         axilWriteMaster   => AXI_LITE_WRITE_MASTER_INIT_C,
+         axilWriteSlave    => open,
 
-      memReady          => memReady,
-      memError          => open,
+         memReady          => memReady,
+         memError          => open,
 
-      -- AXI4 Interface
-      axiClk           => axiClk,
-      axiRst           => axiRst,
-      axiWriteMaster   => memAxiWriteMaster,
-      axiWriteSlave    => memAxiWriteSlave,
-      axiReadMaster    => memAxiReadMaster,
-      axiReadSlave     => memAxiReadSlave,
-      ----------------
-      -- Core Ports --
-      ----------------
-      -- DDR4 Ports
-      refClk           => ddrClk300,
-      c0_ddr4_adr      => c0_ddr4_adr,
-      c0_ddr4_dq       => c0_ddr4_dq,
-      c0_ddr4_dm_dbi_n => c0_ddr4_dm_dbi_n,
-      c0_ddr4_dqs_c    => c0_ddr4_dqs_c,
-      c0_ddr4_dqs_t    => c0_ddr4_dqs_t,
-      c0_ddr4_ba       => c0_ddr4_ba,
-      c0_ddr4_bg       => c0_ddr4_bg,
-      c0_ddr4_cke      => c0_ddr4_cke,
-      c0_ddr4_cs_n     => c0_ddr4_cs_n,
-      c0_ddr4_odt      => c0_ddr4_odt,
-      c0_ddr4_reset_n  => c0_ddr4_reset_n,
-      c0_ddr4_act_n    => c0_ddr4_act_n,
-      c0_ddr4_ck_c     => c0_ddr4_ck_c,
-      c0_ddr4_ck_t     => c0_ddr4_ck_t,
-      c0_ddr4_alert_n  => c0_ddr4_alert_n
-   );
+         -- AXI4 Interface
+         axiClk           => axiClk,
+         axiRst           => axiRst,
+         axiWriteMaster   => memAxiWriteMaster,
+         axiWriteSlave    => memAxiWriteSlave,
+         axiReadMaster    => memAxiReadMaster,
+         axiReadSlave     => memAxiReadSlave,
+         ----------------
+         -- Core Ports --
+         ----------------
+         -- DDR4 Ports
+         refClk           => ddrClk300,
+         c0_ddr4_adr      => c0_ddr4_adr,
+         c0_ddr4_dq       => c0_ddr4_dq,
+         c0_ddr4_dm_dbi_n => c0_ddr4_dm_dbi_n,
+         c0_ddr4_dqs_c    => c0_ddr4_dqs_c,
+         c0_ddr4_dqs_t    => c0_ddr4_dqs_t,
+         c0_ddr4_ba       => c0_ddr4_ba,
+         c0_ddr4_bg       => c0_ddr4_bg,
+         c0_ddr4_cke      => c0_ddr4_cke,
+         c0_ddr4_cs_n     => c0_ddr4_cs_n,
+         c0_ddr4_odt      => c0_ddr4_odt,
+         c0_ddr4_reset_n  => c0_ddr4_reset_n,
+         c0_ddr4_act_n    => c0_ddr4_act_n,
+         c0_ddr4_ck_c     => c0_ddr4_ck_c,
+         c0_ddr4_ck_t     => c0_ddr4_ck_t,
+         c0_ddr4_alert_n  => c0_ddr4_alert_n
+      );
 
    ----------------
    -- IIC Bus (deassert MUX/Switch reset)
