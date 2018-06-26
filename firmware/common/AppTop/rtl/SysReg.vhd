@@ -160,10 +160,12 @@ architecture mapping of SysReg is
       3 => (MakeI2cAxiLiteDevType("1010000", 8, 8, '1')) -- SFP 0/1
    );
 
-   constant TCASW_AXIL_BASE_ADDR_C : slv(31 downto 0) :=
+   constant TCASW_AXIL_BASE_ADDR_C : slv(31 downto 0)  :=
          unsigned(SYSREG_MASTERS_CONFIG_C(IIC_MAS_INDEX_C).baseAddr) + 0*1024;
-   constant SI570_AXIL_BASE_ADDR_C : slv(31 downto 0) :=
+   constant SI570_AXIL_BASE_ADDR_C : slv(31 downto 0)  :=
          unsigned(SYSREG_MASTERS_CONFIG_C(IIC_MAS_INDEX_C).baseAddr) + 1*1024;
+   constant SI5328_AXIL_BASE_ADDR_C : slv(31 downto 0) :=
+         unsigned(SYSREG_MASTERS_CONFIG_C(IIC_MAS_INDEX_C).baseAddr) + 4*1024;
 
 begin
 
@@ -486,10 +488,16 @@ begin
       timingTxUsrRst <= not(timingTxStatus.resetDone);
       timingRecRst   <= not(timingRxStatus.resetDone);
 
-      U_TimingClkSwitcher : entity work.TimingClkSwitcher
+      -- You can also use the Si570 chip to generate the timing refclock;
+      --  a) use the 'TimingClkSwitcherSi570' architecture
+      --  b) use CLOCK_AXIL_BASE_ADDR_G => SI570_AXIL_BASE_ADDR_C
+      --  c) update the toplevel constraints so that the timing GTH
+      --     takes its clock from the correct MGTREFCLK inputs.
+
+      U_TimingClkSwitcher : entity work.TimingClkSwitcher(TimingClkSwitcherSi5328)
          generic map (
             TPD_G                  => TPD_G,
-            SI570_AXIL_BASE_ADDR_G => SI570_AXIL_BASE_ADDR_C,
+            CLOCK_AXIL_BASE_ADDR_G => SI5328_AXIL_BASE_ADDR_C,
             TCASW_AXIL_BASE_ADDR_G => TCASW_AXIL_BASE_ADDR_C,
             AXIL_FREQ_G            => AXIL_CLK_FRQ_G
          )
