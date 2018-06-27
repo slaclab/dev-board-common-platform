@@ -62,7 +62,7 @@ set_property -dict { PACKAGE_PIN AN18 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { 
 set_property -dict { PACKAGE_PIN AN17 IOSTANDARD LVCMOS12 DRIVE 8} [get_ports { pmod[1][7] }]
 
 # Si5328 Reset
-set_property -dict { PACKAGE_PIN K23 IOSTANDARD LVCMOS18 } [get_ports { si5328Rst }]
+set_property -dict { PACKAGE_PIN K23 IOSTANDARD LVCMOS18 } [get_ports { si5328RstN}]
 set_property -dict { PACKAGE_PIN L22 IOSTANDARD LVCMOS18 } [get_ports { si5328Int }]
 
 # MDIO/Ext. PHY

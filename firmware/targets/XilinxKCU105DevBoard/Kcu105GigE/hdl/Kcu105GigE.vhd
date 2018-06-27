@@ -75,7 +75,7 @@ entity Kcu105GigE is
       sgmiiTxP   : out sl;
       sgmiiTxN   : out sl;
       -- Si5328 reset
-      si5328Rst  : out sl := '1';
+      si5328RstN : out sl := '1';
       si5328Int  : in  sl;
       -- ETH external PHY pins
       phyMdc     : out sl;
@@ -104,7 +104,7 @@ entity Kcu105GigE is
       -- I2C Bus
       iicScl     : inout sl;
       iicSda     : inout sl;
-      iicMuxRstL : out   sl;
+      iicMuxRstN : out   sl := '1'; -- deassert IIC Mux reset
       -- SMA
       gpioSmaP   : inout sl;
       gpioSmaN   : inout sl;
@@ -555,12 +555,6 @@ begin
          c0_ddr4_ck_t     => c0_ddr4_ck_t,
          c0_ddr4_alert_n  => c0_ddr4_alert_n
       );
-
-   ----------------
-   -- IIC Bus (deassert MUX/Switch reset)
-   ----------------
-
-   iicMuxRstL <= '1';
 
    ----------------
    -- Misc. Signals
