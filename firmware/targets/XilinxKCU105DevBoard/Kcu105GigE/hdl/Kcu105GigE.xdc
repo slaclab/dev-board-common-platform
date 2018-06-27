@@ -104,8 +104,9 @@ set_property PACKAGE_PIN W3 [get_ports "sfpTxN[1]"]
 set_property PACKAGE_PIN V2 [get_ports "sfpRxP[1]"]
 set_property PACKAGE_PIN V1 [get_ports "sfpRxN[1]"]
 
-set_property IO_BUFFER_TYPE "NONE" [get_ports "sfpTxP[1]"]
-set_property IO_BUFFER_TYPE "NONE" [get_ports "sfpTxN[1]"]
+# Use this if an SFP port is unused:
+#set_property IO_BUFFER_TYPE "NONE" [get_ports "sfpTxP[1]"]
+#set_property IO_BUFFER_TYPE "NONE" [get_ports "sfpTxN[1]"]
 
 # MGTrefclk0 bank 227
 set_property PACKAGE_PIN P6 [get_ports "refClkP[0]"]

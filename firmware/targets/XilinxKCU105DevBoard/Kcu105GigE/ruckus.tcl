@@ -5,8 +5,20 @@ source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
 loadRuckusTcl $::env(PROJ_DIR)/../../../
 
 # Load local source Code and constraints
-loadSource      -dir "$::DIR_PATH/hdl/"
-loadConstraints -dir "$::DIR_PATH/hdl/"
+loadSource      -dir  "$::DIR_PATH/hdl/"
+loadConstraints -path "$::DIR_PATH/hdl/Kcu105GigE.xdc"
+loadConstraints -path "$::DIR_PATH/hdl/ddr4_pins.xdc"
+loadConstraints -path "$::DIR_PATH/hdl/iic_pins.xdc"
+if { [info exists ::env(DISABLE_10G_ETH)] != 1 || ::env(DISABLE_10G_ETH) == 0  } {
+	loadConstraints -path "$::DIR_PATH/hdl/TenGigEth.xdc"
+	loadConstraints -path "$::DIR_PATH/hdl/TenGigEthClockGroups.xdc"
+	set_property PROCESSING_ORDER  LATE  [get_files "$::DIR_PATH/hdl/TenGigEthClockGroups.xdc"]
+}
+
+loadConstraints -path "$::DIR_PATH/hdl/Kcu105GigEClockGroups.xdc"
+
+# process after any library modules have added generated clocks
+set_property PROCESSING_ORDER  LATE  [get_files "$::DIR_PATH/hdl/Kcu105GigEClockGroups.xdc"]
 
 if { [llength [get_ips ddr4_0]] == 0 } {
 	create_ip -name ddr4 -vendor xilinx.com -library ip -version 2.2 -module_name ddr4_0
@@ -26,6 +38,3 @@ if { [llength [get_ips ddr4_0]] == 0 } {
 		CONFIG.System_Clock             {No_Buffer} \
 		] [get_ips ddr4_0]
 }
-
-# process after any library modules have added generated clocks
-set_property PROCESSING_ORDER  LATE  [get_files "$::DIR_PATH/hdl/Kcu105GigEClockGroups.xdc"]

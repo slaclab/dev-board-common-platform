@@ -28,6 +28,12 @@ export REMOVE_UNUSED_CODE = 1
 # which requires me to define the TOP_DIR path
 export TOP_DIR = $(abspath $(PWD)/../../..)
 
+# You can disable the 10G Ethernet support (e.g., if you need the SFP
+# for your project) by setting this variable to a nonzero value:
+#
+# export DISABLE_10G_ETH=1
+#
+
 # Use top level makefile
 include $(TOP_DIR)/submodules/ruckus/system_vivado.mk
 
