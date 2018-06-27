@@ -1,5 +1,5 @@
 # Override default of 'top' property so they can rename project variants
-set_property top Kcu105GigE [current_fileset]
+set_property top Kcu105Eth [current_fileset]
 
 # Append top-level generics set from Makefile variables
 set genericArgList [get_property generic [current_fileset]]
