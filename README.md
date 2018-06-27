@@ -31,6 +31,22 @@ Most of the important features of the *Common Platform* are available:
    (`FanController/Bypass: 1`). The controller is also overridden if the
    SysMon detects a temperature alarm condition (85degC).
 
+### Networking
+The firmware provides 1G ethernet at the RJ45 jack as well as 10G ethernet
+at the SFP1 bay (the one closer to the edge of the board, farther from the
+RJ-45).
+
+During reset the state of the DIP switch (4-position switch, SW12) in
+position 4 (rightmost bit) is sampled to drive a multiplexer which selects
+RJ45/1G vs. SFP1/10G ethernet. 10G is selected if the switch is in the 'on'
+position. Note that the setting is only sampled during reset and ignored
+otherwise.
+
+Support for 10G ethernet may be disabled at compile-time (e.g., if the
+application needs to use the SFP) by setting the `DISABLE_10G_ETH` variable
+in the Makefile. Note that it is the user's responsibility to drive the
+respective top-level ports if 10G ethernet support is disabled.
+
 ## User-Application Integration
 The interface to the application core is declared by the 'AppCore' entity.
 The user is supposed to provide his/her implementation under 
