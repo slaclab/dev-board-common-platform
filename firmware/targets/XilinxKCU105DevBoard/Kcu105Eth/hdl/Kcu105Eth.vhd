@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- File       : Kcu105GigE.vhd
+-- File       : Kcu105Eth.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -- Created    : 2015-04-08
 -- Last update: 2017-02-16
@@ -32,7 +32,7 @@ use work.AppCorePkg.all;
 library unisim;
 use unisim.vcomponents.all;
 
-entity Kcu105GigE is
+entity Kcu105Eth is
    generic (
       TPD_G              : time     := 1 ns;
       BUILD_INFO_G       : BuildInfoType;
@@ -111,9 +111,9 @@ entity Kcu105GigE is
       gpioSmaN   : inout sl;
       pmod       : inout Slv8Array(1 downto 0)
    );
-end Kcu105GigE;
+end Kcu105Eth;
 
-architecture top_level of Kcu105GigE is
+architecture top_level of Kcu105Eth is
 
    constant NUM_LANE_C         : natural := 1;
    constant NUM_APP_LEDS_C     : natural := APP_CORE_CONFIG_C.numAppLEDs;
