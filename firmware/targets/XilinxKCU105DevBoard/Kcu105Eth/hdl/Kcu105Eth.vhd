@@ -226,6 +226,10 @@ architecture top_level of Kcu105Eth is
 
    signal ethMuxGTH     : sl := '0';
 
+   signal localMac      : slv(47 downto 0) := APP_CORE_CONFIG_C.macAddress;
+   signal localIp       : slv(31 downto 0) := APP_CORE_CONFIG_C.ipAddress;
+
+   signal localMacArray : Slv48Array(NUM_LANE_C - 1 downto 0);
 
    attribute dont_touch                 : string;
    attribute dont_touch of keptSignals  : signal is "TRUE";
@@ -393,7 +397,7 @@ begin
       )
       port map (
          -- Local Configurations
-         localMac           => (others => APP_CORE_CONFIG_C.macAddress),
+         localMac           => localMacArray,
          -- Streaming DMA Interface
          dmaClk             => dmaClk,
          dmaRst             => dmaRst,
@@ -439,7 +443,7 @@ begin
          AXIS_CONFIG_G     => (others => EMAC_AXIS_CONFIG_C))
       port map (
          -- Local Configurations
-         localMac          => (others => APP_CORE_CONFIG_C.macAddress),
+         localMac          => localMacArray,
 
          -- Streaming DMA Interface
          dmaClk       => dmaClk,
@@ -458,10 +462,10 @@ begin
          gtClkP       => refClkP(0),
          gtClkN       => refClkN(0),
          -- MGT Ports
-         gtTxP(0)     => sfpTxP(1),
-         gtTxN(0)     => sfpTxN(1),
-         gtRxP(0)     => sfpRxP(1),
-         gtRxN(0)     => sfpRxN(1)
+         gtTxP(0)     => sfpTxP(0),
+         gtTxN(0)     => sfpTxN(0),
+         gtRxP(0)     => sfpRxP(0),
+         gtRxN(0)     => sfpRxN(0)
       );
 
    -- latch state of dip-switch during reset
@@ -469,7 +473,7 @@ begin
    begin
       if ( rising_edge( sysClk156 ) ) then
          if ( sysRst156 = '1' ) then
-            ethMuxGTH <= gpioDip(0);
+            ethMuxGTH <= gpioDip(3);
          end if;
       end if;
    end process P_ETH_MUX_SWITCH;
@@ -495,6 +499,19 @@ begin
       end if;
    end process P_ETH_MUX;
 
+   -- latch state of dip-switch during reset
+   P_ETH_MUX_SWITCH : process ( sysClk156 )
+   begin
+      if ( rising_edge( sysClk156 ) ) then
+         if ( sysRst156 = '1' ) then
+            localMac(42 downto 40) <= APP_CORE_CONFIG_C.macAddress(42 downto 40) xor gpioDip(2 downto 0);
+            localIp (26 downto 24) <= APP_CORE_CONFIG_C.ipAddress (26 downto 24) xor gpioDip(2 downto 0);
+         end if;
+      end if;
+   end process P_ETH_MUX_SWITCH;
+
+   localMacArray <= (others => localMac);
+
    -------------------
    -- Application Core
    -------------------
@@ -510,6 +527,10 @@ begin
          -- Clock and Reset
          axilClk        => sysClk156,
          axilRst        => sysRst156,
+
+         -- Networking Config.
+         localMac       => localMac,
+         localIp        => localIp,
          -- AXIS interface
          txMasters      => keptSignals.txMasters,
          txSlaves       => keptSignals.txSlaves,
@@ -544,10 +565,10 @@ begin
 
          timingRefClkP  => refClkP(1),
          timingRefClkN  => refClkN(1),
-         timingRxP      => sfpRxP(0),
-         timingRxN      => sfpRxN(0),
-         timingTxP      => sfpTxP(0),
-         timingTxN      => sfpTxN(0),
+         timingRxP      => sfpRxP(1),
+         timingRxN      => sfpRxN(1),
+         timingTxP      => sfpTxP(1),
+         timingTxN      => sfpTxN(1),
          appTimingClk   => appTimingClk,
          appTimingRst   => appTimingRst,
          gpioDip        => gpioDip,

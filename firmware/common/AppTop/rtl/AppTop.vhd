@@ -54,6 +54,9 @@ entity AppTop is
       txSlaves        : in  AxiStreamSlaveArray (0 downto 0);
       rxMasters       : in  AxiStreamMasterArray(0 downto 0);
       rxSlaves        : out AxiStreamSlaveArray (0 downto 0);
+      -- Ethernet/IP Addresses
+      localMac        : in  slv(47 downto 0); -- big-endian !
+      localIp         : in  slv(31 downto 0); -- big-endian !
       -- ADC Ports
       v0PIn           : in  sl;
       v0NIn           : in  sl;
@@ -233,8 +236,6 @@ begin
          generic map (
             TPD_G           => TPD_G,
             USE_XVC_G       => APP_CORE_CONFIG_G.useXvcJtagBridge,
-            MAC_ADDR_G      => APP_CORE_CONFIG_G.macAddress,
-            IP_ADDR_G       => APP_CORE_CONFIG_G.ipAddress,
             DHCP_G          => APP_CORE_CONFIG_G.useDhcp,
             JUMBO_G         => APP_CORE_CONFIG_G.enableEthJumboFrames,
             RSSI_SIZE_G     => RSSI_SIZE_C,
@@ -249,6 +250,8 @@ begin
             -- Clock and Reset
             clk                => axilClk,
             rst                => axilRst,
+            localMac           => localMac,
+            localIp            => localIp,
             -- AXIS interface
             txMaster           => txMasters(0),
             txSlave            => txSlaves(0),

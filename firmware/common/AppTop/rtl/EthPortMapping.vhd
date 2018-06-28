@@ -30,8 +30,6 @@ entity EthPortMapping is
       TPD_G           : time             := 1 ns;
       USE_XVC_G       : boolean          := true;
       CLK_FREQUENCY_G : real             := 125.0E+6;
-      MAC_ADDR_G      : slv(47 downto 0) := x"010300564400";  -- 00:44:56:00:03:01 (ETH only)
-      IP_ADDR_G       : slv(31 downto 0) := x"0A02A8C0";  -- 192.168.2.10 (ETH only)
       DHCP_G          : boolean          := true;
       JUMBO_G         : boolean          := false;
       RSSI_SIZE_G     : natural          := 0;
@@ -51,6 +49,9 @@ entity EthPortMapping is
       txSlave         : in  AxiStreamSlaveType;
       rxMaster        : in  AxiStreamMasterType;
       rxSlave         : out AxiStreamSlaveType;
+      -- Addresses
+      localMac        : in  slv(47 downto 0);
+      localIp         : in  slv(31 downto 0);
       -- RSSI Streams
       rssiIbMasters   : in  AxiStreamMasterArray(RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
       rssiIbSlaves    : out AxiStreamSlaveArray (RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
@@ -212,8 +213,8 @@ begin
          COMM_TIMEOUT_G  => 30)
       port map (
          -- Local Configurations
-         localMac        => MAC_ADDR_G,
-         localIp         => IP_ADDR_G,
+         localMac        => localMac,
+         localIp         => localIp,
          -- Interface to Ethernet Media Access Controller (MAC)
          obMacMaster     => rxMaster,
          obMacSlave      => rxSlave,

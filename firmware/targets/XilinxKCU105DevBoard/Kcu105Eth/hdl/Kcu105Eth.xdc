@@ -156,3 +156,7 @@ create_generated_clock -name jesdClk    [get_pins {U_App/U_SimJesdClock/U_ClockG
 create_generated_clock -name jesdUsrClk [get_pins {U_App/U_SimJesdClock/U_ClockGen/MmcmGen.U_Mmcm/CLKOUT2}]
 
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets U_SysPll/CLKIN1]
+
+set_false_path -from [get_ports {gpioDip[2]}]
+set_false_path -from [get_ports {gpioDip[1]}]
+set_false_path -from [get_ports {gpioDip[0]}]
