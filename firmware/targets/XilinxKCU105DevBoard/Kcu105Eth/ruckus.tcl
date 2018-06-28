@@ -9,7 +9,7 @@ loadSource      -dir  "$::DIR_PATH/hdl/"
 loadConstraints -path "$::DIR_PATH/hdl/Kcu105Eth.xdc"
 loadConstraints -path "$::DIR_PATH/hdl/ddr4_pins.xdc"
 loadConstraints -path "$::DIR_PATH/hdl/iic_pins.xdc"
-if { [info exists ::env(DISABLE_10G_ETH)] != 1 || ::env(DISABLE_10G_ETH) == 0  } {
+if { [info exists ::env(DISABLE_10G_ETH)] != 1 || $::env(DISABLE_10G_ETH) == 0  } {
 	loadConstraints -path "$::DIR_PATH/hdl/TenGigEth.xdc"
 	loadConstraints -path "$::DIR_PATH/hdl/TenGigEthClockGroups.xdc"
 	set_property PROCESSING_ORDER  LATE  [get_files "$::DIR_PATH/hdl/TenGigEthClockGroups.xdc"]
