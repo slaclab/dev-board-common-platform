@@ -11,7 +11,8 @@ if { [info exists ::env(DISABLE_10G_ETH)] == 1 } {
 set_property generic ${genericArgList} -objects [current_fileset]
 
 proc CreateLink { link target } {
-	if { [file exists "$link"] == 0 } {
+    # NOTE: 'file exists xxx' doesn't detect a dangling symlink
+    if { [catch {file type "$link"}] == 1 } {
 		if { [file exists "$target"] == 0 } {
 			# TCL refuses to create a dangling link which is what we want here...
 			file mkdir "$target"
