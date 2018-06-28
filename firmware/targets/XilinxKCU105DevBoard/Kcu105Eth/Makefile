@@ -44,6 +44,11 @@ clean: clean-config
 clean-config:
 	$(RM) config/defaults.yaml
 
+$(SOURCE_DEPEND): $(IMPL_DIR)
+
+$(IMPL_DIR):
+	mkdir -p $@
+
 yaml $(SOURCE_DEPEND): config/defaults.yaml
 
 # Application may add more 'defaults' snippets here

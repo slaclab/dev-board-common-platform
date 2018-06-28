@@ -9,3 +9,22 @@ if { [info exists ::env(DISABLE_10G_ETH)] == 1 } {
 }
 
 set_property generic ${genericArgList} -objects [current_fileset]
+
+proc CreateLink { link target } {
+	if { [file exists "$link"] == 0 } {
+		if { [file exists "$target"] == 0 } {
+			# TCL refuses to create a dangling link which is what we want here...
+			file mkdir "$target"
+		}
+		file link -symbolic "$link" "$target"
+		if { [file isdirectory "$target"] == 1 } {
+			file delete -force "$target"
+		}
+	}
+}
+
+# ruckus expects to find $(PROJECT).bit but vivado produces ${topLevel}.bit;
+# create a symbolic link (which is at this time dangling)
+if { [get_property top [current_fileset]] != "$::env(PROJECT)" } {
+    CreateLink "$::env(IMPL_DIR)/$::env(PROJECT).bit"  "$::env(IMPL_DIR)/[get_property top [current_fileset]].bit"
+}
