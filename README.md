@@ -9,6 +9,7 @@ coordinate with other users.
 
 ## Features
 Most of the important features of the *Common Platform* are available:
+
  - **Timing**: If available an external timing fiber (lcls-1 or lcls-2) 
    can be connected to the second SFP port (The one closer to the edge
    of the board, farther from the RJ45 connector). The on-board Si5328 oscillator
@@ -39,7 +40,10 @@ Most of the important features of the *Common Platform* are available:
 
 ### Networking
 The firmware provides 10/100/1000 ethernet at the RJ45 jack as well as
-10G ethernet at the SFP0 bay (the one closer to RJ-45).
+10G ethernet at the SFP0 bay (the one closer to the RJ-45).
+
+The link speed of the 10/100/1000 port is auto-negotiated (auto-negotiation
+can *not* be disabled).
 
 During reset the state of the DIP switch (4-position switch, SW12) in
 position 0 (leftmost bit) is sampled to drive a multiplexer which selects
@@ -63,11 +67,21 @@ reset of the board and XORed with the three least-significant bits
 of the hardcoded MAC as well as the IP address.
 
 The default addresses are (with the 3 DIP switches in OFF position):
+
 - IP:  `192.168.2.10`
 - MAC: `00:44:56:00:03:01`
 
 Thus, if the switch in pos.-4 is ON the IP address becomes `192.168.2.11`
 and the MAC address `00:44:56:00:03:00`.
+
+### LEDs
+Unless the ("user-") LEDs are re-purposed by the Application Core they provide the following information:
+
+- **LED-7** (leftmost): 10/100/1000 Ethernet link status.
+- **LED-6**: 10/100/1000 Ethernet: speed auto-negotiated to 1G
+- **LED-5**: 10/100/1000 Ethernet: speed auto-negotiated to 100 or 1000
+  (=> 10Mb when off).
+- **LED-4**: DRAM ready.
 
 ## User-Application Integration
 The interface to the application core is declared by the 'AppCore' entity.
