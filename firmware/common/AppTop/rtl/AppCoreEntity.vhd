@@ -68,29 +68,29 @@ entity AppCore is
       diagnosticBus   : out diagnosticBusType := DIAGNOSTIC_BUS_INIT_C;
 
       -- JESD
-      jesdClk         : in  slv(1 downto 0);
-      jesdRst         : in  slv(1 downto 0);
-      jesdClk2x       : in  slv(1 downto 0);
-      jesdRst2x       : in  slv(1 downto 0);
-      jesdUsrClk      : in  slv(1 downto 0);
-      jesdUsrRst      : in  slv(1 downto 0);
+      jesdClk         : in  slv(1 downto 0) := (others => '0');
+      jesdRst         : in  slv(1 downto 0) := (others => '0');
+      jesdClk2x       : in  slv(1 downto 0) := (others => '0');
+      jesdRst2x       : in  slv(1 downto 0) := (others => '0');
+      jesdUsrClk      : in  slv(1 downto 0) := (others => '0');
+      jesdUsrRst      : in  slv(1 downto 0) := (others => '0');
 
       freezeHw        : out slv(1 downto 0) := "00";
       trigHw          : out slv(1 downto 0) := "00";
-      trigCascBay     : in  slv(1 downto 0);
+      trigCascBay     : in  slv(1 downto 0) := (others => '0');
 
-      adcValids       : in  Slv7Array(1 downto 0);
-      adcValues       : in  sampleDataVectorArray(1 downto 0, 6 downto 0);
+      adcValids       : in  Slv7Array(1 downto 0) := (others => (others => '0'));
+      adcValues       : in  sampleDataVectorArray(1 downto 0, 6 downto 0) := (others => (others => (others => '0')));
       dacValids       : out Slv7Array(1 downto 0) := (others => "0000000");
       dacValues       : out sampleDataVectorArray(1 downto 0, 6 downto 0) := (others => (others => (others => '0')));
       debugValids     : out Slv4Array(1 downto 0) := (others => "0000");
       debugValues     : out sampleDataVectorArray(1 downto 0, 3 downto 0) := (others => (others => (others => '0')));
 
       -- DAC Signal Generator (jesd 1x if SIG_GEN_LANE_MODE == '0', jesd 2x otherwise)
-      dacSigCtrl      : out DacSigCtrlArray(1 downto 0) := (others => DAC_SIG_CTRL_INIT_C);
-      dacSigStatus    : in  DacSigStatusArray(1 downto 0);
-      dacSigValids    : in  Slv7Array(1 downto 0);
-      dacSigValues    : in  sampleDataVectorArray(1 downto 0, 6 downto 0);
+      dacSigCtrl      : out DacSigCtrlArray(1 downto 0)   := (others => DAC_SIG_CTRL_INIT_C);
+      dacSigStatus    : in  DacSigStatusArray(1 downto 0) := (others => DAC_SIG_STATUS_INIT_C);
+      dacSigValids    : in  Slv7Array(1 downto 0) := (others => (others => '0'));
+      dacSigValues    : in  sampleDataVectorArray(1 downto 0, 6 downto 0) := (others => (others => (others => '0')));
       gpioDip         : in  slv(                               3 downto 0);
       appLeds         : out slv(APP_CORE_CONFIG_G.numAppLEDs - 1 downto 0) := (others => '0');
 

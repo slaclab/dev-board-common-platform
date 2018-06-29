@@ -202,7 +202,7 @@ architecture mapping of AppTop is
 
 
    signal dacSigCtrl        : DacSigCtrlArray      (1 downto 0) := (others => DAC_SIG_CTRL_INIT_C);
-   signal dacSigStatus      : DacSigStatusArray    (1 downto 0);
+   signal dacSigStatus      : DacSigStatusArray    (1 downto 0) := (others => DAC_SIG_STATUS_INIT_C);
    signal dacSigValids      : Slv7Array            (1 downto 0) := (others => (others => '0' ) );
    signal dacSigValues      : sampleDataVectorArray(1 downto 0, 6 downto 0) :=
             (others => (others => (others => '0')));
