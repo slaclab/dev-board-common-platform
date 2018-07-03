@@ -90,8 +90,21 @@ entity AppTop is
       appLeds         : out slv(APP_CORE_CONFIG_G.numAppLEDs - 1 downto 0) := (others => '0');
       gpioSmaP        : inout IOLine;
       gpioSmaN        : inout IOLine;
-      pmod            : inout PMODArray(1 downto 0)
-      );
+      pmod            : inout PMODArray(1 downto 0);
+      -- FMC HPC
+      fmcHpcLAP       : inout slv(33 downto 0);
+      fmcHpcLAN       : inout slv(33 downto 0);
+      fmcHpcHAP       : inout slv(23 downto 0);
+      fmcHpcHAN       : inout slv(23 downto 0);
+      fmcHpcClkM2CP   : in    slv( 1 downto 0);
+      fmcHpcClkM2CN   : in    slv( 1 downto 0);
+      fmcHpcGbtClkM2CP: in    slv( 1 downto 0);
+      fmcHpcGbtClkM2CN: in    slv( 1 downto 0);
+      fmcHpcDPM2CP    : in    slv( 7 downto 0);
+      fmcHpcDPM2CN    : in    slv( 7 downto 0);
+      fmcHpcDPC2MP    : inout slv( 7 downto 0);
+      fmcHpcDPC2MN    : inout slv( 7 downto 0)
+);
 end AppTop;
 
 architecture mapping of AppTop is

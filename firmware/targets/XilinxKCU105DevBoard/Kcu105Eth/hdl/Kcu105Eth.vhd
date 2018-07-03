@@ -103,13 +103,26 @@ entity Kcu105Eth is
       c0_ddr4_ck_t : OUT STD_LOGIC_VECTOR(0 DOWNTO 0);
       c0_ddr4_alert_n : IN STD_LOGIC;
       -- I2C Bus
-      iicScl     : inout sl;
-      iicSda     : inout sl;
-      iicMuxRstN : out   sl := '1'; -- deassert IIC Mux reset
+      iicScl           : inout sl;
+      iicSda           : inout sl;
+      iicMuxRstN       : out   sl := '1'; -- deassert IIC Mux reset
       -- SMA
-      gpioSmaP   : inout sl;
-      gpioSmaN   : inout sl;
-      pmod       : inout Slv8Array(1 downto 0)
+      gpioSmaP         : inout sl;
+      gpioSmaN         : inout sl;
+      pmod             : inout Slv8Array(1 downto 0);
+      -- FMC HPC
+      fmcHpcLAP        : inout slv(33 downto 0);
+      fmcHpcLAN        : inout slv(33 downto 0);
+      fmcHpcHAP        : inout slv(23 downto 0);
+      fmcHpcHAN        : inout slv(23 downto 0);
+      fmcHpcClkM2CP    : in    slv( 1 downto 0);
+      fmcHpcClkM2CN    : in    slv( 1 downto 0);
+      fmcHpcGbtClkM2CP : in    slv( 1 downto 0);
+      fmcHpcGbtClkM2CN : in    slv( 1 downto 0);
+      fmcHpcDPM2CP     : in    slv( 7 downto 0);
+      fmcHpcDPM2CN     : in    slv( 7 downto 0);
+      fmcHpcDPC2MP     : inout slv( 7 downto 0);
+      fmcHpcDPC2MN     : inout slv( 7 downto 0)
    );
 end Kcu105Eth;
 
@@ -525,57 +538,69 @@ begin
       )
       port map (
          -- Clock and Reset
-         axilClk        => sysClk156,
-         axilRst        => sysRst156,
+         axilClk          => sysClk156,
+         axilRst          => sysRst156,
 
          -- Networking Config.
-         localMac       => localMac,
-         localIp        => localIp,
+         localMac         => localMac,
+         localIp          => localIp,
          -- AXIS interface
-         txMasters      => keptSignals.txMasters,
-         txSlaves       => keptSignals.txSlaves,
-         rxMasters      => keptSignals.rxMasters,
-         rxSlaves       => keptSignals.rxSlaves,
+         txMasters        => keptSignals.txMasters,
+         txSlaves         => keptSignals.txSlaves,
+         rxMasters        => keptSignals.rxMasters,
+         rxSlaves         => keptSignals.rxSlaves,
 
          -- AXI Memory Interface
-         axiClk         => axiClk,                              -- [in]
-         axiRst         => axiRst,                              -- [in]
-         axiWriteMaster => memAxiWriteMaster,                   -- [out]
-         axiWriteSlave  => memAxiWriteSlave,                    -- [in]
-         axiReadMaster  => memAxiReadMaster,                    -- [out]
-         axiReadSlave   => memAxiReadSlave,
+         axiClk           => axiClk,                              -- [in]
+         axiRst           => axiRst,                              -- [in]
+         axiWriteMaster   => memAxiWriteMaster,                   -- [out]
+         axiWriteSlave    => memAxiWriteSlave,                    -- [in]
+         axiReadMaster    => memAxiReadMaster,                    -- [out]
+         axiReadSlave     => memAxiReadSlave,
 
          -- ADC Ports
-         v0PIn          => v0PIn,
-         v0NIn          => v0NIn,
-         v2PIn          => v2PIn,
-         v2NIn          => v2NIn,
-         v8PIn          => v8PIn,
-         v8NIn          => v8NIn,
-         vPIn           => vPIn,
-         vNIn           => vNIn,
-         muxAddrOut     => muxAddrLoc,
+         v0PIn            => v0PIn,
+         v0NIn            => v0NIn,
+         v2PIn            => v2PIn,
+         v2NIn            => v2NIn,
+         v8PIn            => v8PIn,
+         v8NIn            => v8NIn,
+         vPIn             => vPIn,
+         vNIn             => vNIn,
+         muxAddrOut       => muxAddrLoc,
 
          -- Fan Port
-         fanPwmOut      => fanPwmOut,
+         fanPwmOut        => fanPwmOut,
 
          -- IIC Port
-         iicScl         => iicScl,
-         iicSda         => iicSda,
+         iicScl           => iicScl,
+         iicSda           => iicSda,
 
-         timingRefClkP  => refClkP(1),
-         timingRefClkN  => refClkN(1),
-         timingRxP      => sfpRxP(1),
-         timingRxN      => sfpRxN(1),
-         timingTxP      => sfpTxP(1),
-         timingTxN      => sfpTxN(1),
-         appTimingClk   => appTimingClk,
-         appTimingRst   => appTimingRst,
-         gpioDip        => gpioDip,
-         appLeds        => appLeds,
-         gpioSmaP       => gpioSmaPBuf,
-         gpioSmaN       => gpioSmaNBuf,
-         pmod           => pmodBuf
+         timingRefClkP    => refClkP(1),
+         timingRefClkN    => refClkN(1),
+         timingRxP        => sfpRxP(1),
+         timingRxN        => sfpRxN(1),
+         timingTxP        => sfpTxP(1),
+         timingTxN        => sfpTxN(1),
+         appTimingClk     => appTimingClk,
+         appTimingRst     => appTimingRst,
+         gpioDip          => gpioDip,
+         appLeds          => appLeds,
+         gpioSmaP         => gpioSmaPBuf,
+         gpioSmaN         => gpioSmaNBuf,
+         pmod             => pmodBuf,
+         fmcHpcLAP        => fmcHpcLAP,
+         fmcHpcLAN        => fmcHpcLAN,
+         fmcHpcHAP        => fmcHpcHAP,
+         fmcHpcHAN        => fmcHpcHAN,
+         fmcHpcClkM2CP    => fmcHpcClkM2CP,
+         fmcHpcClkM2CN    => fmcHpcClkM2CN,
+         fmcHpcGbtClkM2CP => fmcHpcGbtClkM2CP,
+         fmcHpcGbtClkM2CN => fmcHpcGbtClkM2CN,
+         fmcHpcDPM2CP     => fmcHpcDPM2CP,
+         fmcHpcDPM2CN     => fmcHpcDPM2CN,
+         fmcHpcDPC2MP     => fmcHpcDPC2MP,
+         fmcHpcDPC2MN     => fmcHpcDPC2MN
       );
 
    U_DdrMem : entity work.AmcCarrierDdrMem
