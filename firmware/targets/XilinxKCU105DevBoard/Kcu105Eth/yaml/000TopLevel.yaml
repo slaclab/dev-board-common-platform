@@ -12,6 +12,14 @@
 #
 #include AppTop.yaml
 
+
+# comment following 2 lines for interleaved RSSI
+#UdpPortRssi: &UdpPortRssi 8193
+#DepacketizerProtocolVersion: &DepacketizerProtocolVersion DEPACKETIZER_V0
+# comment following 2 lines for non-interleaved RSSI
+UdpPortRssi: &UdpPortRssi 8198
+DepacketizerProtocolVersion: &DepacketizerProtocolVersion DEPACKETIZER_V2
+
 #MMIO range, will be attached to FPGA
 mmio: &mmio
   size: 0x100000000 # 4GB of address space
@@ -35,11 +43,11 @@ stream: &stream
     SRP:
       protocolVersion: SRP_UDP_NONE
     UDP:
-      port: 8198
+      port: *UdpPortRssi
       numRxThreads: 2
     RSSI:
     depack:
-      protocolVersion: DEPACKETIZER_V2
+      protocolVersion: *DepacketizerProtocolVersion
     TDESTMux:
       stripHeader: yes
 
@@ -56,10 +64,10 @@ NetIODev:
           dynTimeout:      false
           timeoutUS:       800000
         UDP:
-          port: 8198
+          port: *UdpPortRssi
         RSSI:
         depack:
-          protocolVersion: DEPACKETIZER_V2
+          protocolVersion: *DepacketizerProtocolVersion
         TDESTMux:
           TDEST: 0x00
     axi4:
@@ -71,10 +79,10 @@ NetIODev:
           dynTimeout:      false
           timeoutUS:       800000
         UDP:
-          port: 8198
+          port: *UdpPortRssi
         RSSI:
         depack:
-          protocolVersion: DEPACKETIZER_V2
+          protocolVersion: *DepacketizerProtocolVersion
         TDESTMux:
           TDEST: 0x04
       children:
