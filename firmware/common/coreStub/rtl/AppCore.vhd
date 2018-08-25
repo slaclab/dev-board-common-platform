@@ -27,8 +27,13 @@ use work.Jesd204bPkg.all;
 use work.AppTopPkg.all;
 use work.AppCorePkg.all;
 
--- Note: use single definition of entity in AppCore/rtl/AppCoreEntity.vhd
+-- Note: use single definition of entity in AppTop/rtl/AppCoreEntity.vhd
 
 architecture Stub of AppCore is
 begin
+
+   -- loop back the application streams
+   obAxisMasters  <= ibAxisMasters;
+   ibAxisSlaves   <= obAxisSlaves;
+
 end architecture Stub;
