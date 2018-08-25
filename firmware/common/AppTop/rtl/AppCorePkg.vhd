@@ -53,6 +53,16 @@ package AppCorePkg is
       ipAddress            : slv(31 downto 0);
       useDhcp              : boolean;
       enableEthJumboFrames : boolean;
+      -- NOTE: When disabling interleaved RSSI the top-level YAML
+      --       MUST be changed accordingly:
+      --       Interleaved RSSI:
+      ---        UDP/port: 8198
+      ---        depack/protocolVersion: DEPACKETIZER_V2
+      --       Non-interleaved RSSI:
+      ---        UDP/port: 8193
+      ---        depack/protocolVersion: DEPACKETIZER_V0
+      enableRssiInterleave : boolean; -- whether to enable interleaved RSSI
+      enableSRPV0          : boolean; -- whether to instantiate V0 backdoor
       disableBSA           : boolean;
       disableBLD           : boolean;
       numAppLEDs           : natural;
@@ -76,7 +86,11 @@ package AppCorePkg is
       macAddress           => x"010300564400",  -- 00:44:56:00:03:01 (ETH only)
       ipAddress            => x"0A02A8C0",      -- 192.168.2.10 (ETH only)
       useDhcp              => true,
-      enableEthJumboFrames => false,
+      enableEthJumboFrames => true,
+      -- NOTE: When disabling interleaved RSSI the top-level YAML
+      --       MUST be changed accordingly:
+      enableRssiInterleave => true,
+      enableSRPV0          => true,
       disableBSA           => false,
       disableBLD           => false,
       numAppLEDs           => 4,
