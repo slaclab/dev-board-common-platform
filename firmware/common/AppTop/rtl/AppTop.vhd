@@ -129,10 +129,10 @@ architecture mapping of AppTop is
    signal axilWriteMasters  : AxiLiteWriteMasterArray(N_AXIL_MASTERS_C - 1 downto 0);
    signal axilWriteSlaves   : AxiLiteWriteSlaveArray (N_AXIL_MASTERS_C - 1 downto 0) := (others => AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C);
 
-   signal mAxilReadMasters  : AxiLiteReadMasterArray (1 downto 0);
-   signal mAxilReadSlaves   : AxiLiteReadSlaveArray  (1 downto 0);
-   signal mAxilWriteMasters : AxiLiteWriteMasterArray(1 downto 0);
-   signal mAxilWriteSlaves  : AxiLiteWriteSlaveArray (1 downto 0);
+   signal mAxilReadMasters  : AxiLiteReadMasterArray (2 downto 0);
+   signal mAxilReadSlaves   : AxiLiteReadSlaveArray  (2 downto 0);
+   signal mAxilWriteMasters : AxiLiteWriteMasterArray(2 downto 0);
+   signal mAxilWriteSlaves  : AxiLiteWriteSlaveArray (2 downto 0);
 
    signal bsaReadMaster     : AxiLiteReadMasterType;
    signal bsaReadSlave      : AxiLiteReadSlaveType  := AXI_LITE_READ_SLAVE_EMPTY_DECERR_C;
@@ -238,9 +238,11 @@ begin
             USE_XVC_G       => APP_CORE_CONFIG_G.useXvcJtagBridge,
             DHCP_G          => APP_CORE_CONFIG_G.useDhcp,
             JUMBO_G         => APP_CORE_CONFIG_G.enableEthJumboFrames,
+            SRP_V0_EN_G     => APP_CORE_CONFIG_G.enableSRPV0,
             RSSI_SIZE_G     => RSSI_SIZE_C,
             RSSI_STRM_CFG_G => RSSI_STRM_CFG_C,
             RSSI_ROUTES_G   => RSSI_ROUTES_C,
+            RSSI_ILEAVE_EN_G=> APP_CORE_CONFIG_G.enableRssiInterleave,
             UDP_SRV_SIZE_G  => 1,
             UDP_SRV_PORTS_G => (0 => 8197),
             UDP_CLT_SIZE_G  => 1,
@@ -273,10 +275,10 @@ begin
             udpObCltMasters(0) => ibAxisMasters(APP_BPCLT_STRM_C),
             udpObCltSlaves (0) => ibAxisSlaves (APP_BPCLT_STRM_C),
             -- AXI-Lite Master interface
-            mAxilWriteMaster   => mAxilWriteMasters(0),
-            mAxilWriteSlave    => mAxilWriteSlaves(0),
-            mAxilReadMaster    => mAxilReadMasters(0),
-            mAxilReadSlave     => mAxilReadSlaves(0),
+            mAxilWriteMasters  => mAxilWriteMasters(1 downto 0),
+            mAxilWriteSlaves   => mAxilWriteSlaves (1 downto 0),
+            mAxilReadMasters   => mAxilReadMasters (1 downto 0),
+            mAxilReadSlaves    => mAxilReadSlaves  (1 downto 0),
             -- AXI-Lite Slave interface
             sAxilWriteMaster   => ethWriteMaster,
             sAxilWriteSlave    => ethWriteSlave,
@@ -620,10 +622,10 @@ begin
             sAxilReadMaster     => axilReadMasters ( CORE_INDEX_C ),
             sAxilReadSlave      => axilReadSlaves  ( CORE_INDEX_C ),
 
-            mAxilWriteMaster    => mAxilWriteMasters(1),
-            mAxilWriteSlave     => mAxilWriteSlaves(1),
-            mAxilReadMaster     => mAxilReadMasters(1),
-            mAxilReadSlave      => mAxilReadSlaves(1),
+            mAxilWriteMaster    => mAxilWriteMasters(2),
+            mAxilWriteSlave     => mAxilWriteSlaves(2),
+            mAxilReadMaster     => mAxilReadMasters(2),
+            mAxilReadSlave      => mAxilReadSlaves(2),
 
             -- Streams
             obAxisMasters       => obAxisMasters,
