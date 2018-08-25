@@ -27,56 +27,58 @@ use work.AmcCarrierSysRegPkg.all;
 
 entity EthPortMapping is
    generic (
-      TPD_G           : time             := 1 ns;
-      USE_XVC_G       : boolean          := true;
-      CLK_FREQUENCY_G : real             := 125.0E+6;
-      DHCP_G          : boolean          := true;
-      JUMBO_G         : boolean          := false;
-      RSSI_SIZE_G     : natural          := 0;
-      RSSI_STRM_CFG_G : AxiStreamConfigArray;
-      RSSI_ROUTES_G   : Slv8Array;
-      UDP_SRV_SIZE_G  : natural          := 0;
-      UDP_SRV_PORTS_G : PositiveArray;
-      UDP_CLT_SIZE_G  : natural          := 0;
-      UDP_CLT_PORTS_G : PositiveArray
+      TPD_G             : time             := 1 ns;
+      USE_XVC_G         : boolean          := true;
+      CLK_FREQUENCY_G   : real             := 125.0E+6;
+      DHCP_G            : boolean          := true;
+      JUMBO_G           : boolean          := false;
+      RSSI_SIZE_G       : natural          := 0;
+      SRP_V0_EN_G       : boolean          := true;
+      RSSI_STRM_CFG_G   : AxiStreamConfigArray;
+      RSSI_ROUTES_G     : Slv8Array;
+      RSSI_ILEAVE_EN_G  : boolean          := true;
+      UDP_SRV_SIZE_G    : natural          := 0;
+      UDP_SRV_PORTS_G   : PositiveArray;
+      UDP_CLT_SIZE_G    : natural          := 0;
+      UDP_CLT_PORTS_G   : PositiveArray
    );
    port (
       -- Clock and Reset
-      clk             : in  sl;
-      rst             : in  sl;
+      clk               : in  sl;
+      rst               : in  sl;
       -- ETH interface
-      txMaster        : out AxiStreamMasterType;
-      txSlave         : in  AxiStreamSlaveType;
-      rxMaster        : in  AxiStreamMasterType;
-      rxSlave         : out AxiStreamSlaveType;
+      txMaster          : out AxiStreamMasterType;
+      txSlave           : in  AxiStreamSlaveType;
+      rxMaster          : in  AxiStreamMasterType;
+      rxSlave           : out AxiStreamSlaveType;
       -- Addresses
-      localMac        : in  slv(47 downto 0);
-      localIp         : in  slv(31 downto 0);
+      localMac          : in  slv(47 downto 0);
+      localIp           : in  slv(31 downto 0);
       -- RSSI Streams
-      rssiIbMasters   : in  AxiStreamMasterArray(RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
-      rssiIbSlaves    : out AxiStreamSlaveArray (RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
-      rssiObMasters   : out AxiStreamMasterArray(RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
-      rssiObSlaves    : in  AxiStreamSlaveArray (RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
+      rssiIbMasters     : in  AxiStreamMasterArray(RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+      rssiIbSlaves      : out AxiStreamSlaveArray (RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
+      rssiObMasters     : out AxiStreamMasterArray(RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+      rssiObSlaves      : in  AxiStreamSlaveArray (RSSI_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
       -- UDP Streams
-      udpIbSrvMasters : in  AxiStreamMasterArray(UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
-      udpIbSrvSlaves  : out AxiStreamSlaveArray (UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
-      udpObSrvMasters : out AxiStreamMasterArray(UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
-      udpObSrvSlaves  : in  AxiStreamSlaveArray (UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
+      udpIbSrvMasters   : in  AxiStreamMasterArray(UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+      udpIbSrvSlaves    : out AxiStreamSlaveArray (UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
+      udpObSrvMasters   : out AxiStreamMasterArray(UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+      udpObSrvSlaves    : in  AxiStreamSlaveArray (UDP_SRV_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
 
-      udpIbCltMasters : in  AxiStreamMasterArray(UDP_CLT_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
-      udpIbCltSlaves  : out AxiStreamSlaveArray (UDP_CLT_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
-      udpObCltMasters : out AxiStreamMasterArray(UDP_CLT_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
-      udpObCltSlaves  : in  AxiStreamSlaveArray (UDP_CLT_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
+      udpIbCltMasters   : in  AxiStreamMasterArray(UDP_CLT_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+      udpIbCltSlaves    : out AxiStreamSlaveArray (UDP_CLT_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
+      udpObCltMasters   : out AxiStreamMasterArray(UDP_CLT_SIZE_G - 1 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+      udpObCltSlaves    : in  AxiStreamSlaveArray (UDP_CLT_SIZE_G - 1 downto 0) := (others => AXI_STREAM_SLAVE_FORCE_C);
       -- AXI-Lite Master Interface
-      mAxilWriteMaster: out AxiLiteWriteMasterType;
-      mAxilWriteSlave : in  AxiLiteWriteSlaveType;
-      mAxilReadMaster : out AxiLiteReadMasterType;
-      mAxilReadSlave  : in  AxiLiteReadSlaveType;
+      mAxilWriteMasters : out AxiLiteWriteMasterArray(1 downto 0);
+      mAxilWriteSlaves  : in  AxiLiteWriteSlaveArray (1 downto 0);
+      mAxilReadMasters  : out AxiLiteReadMasterArray (1 downto 0);
+      mAxilReadSlaves   : in  AxiLiteReadSlaveArray  (1 downto 0);
       -- AXI-Lite Slave Interface
-      sAxilWriteMaster: in  AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
-      sAxilWriteSlave : out AxiLiteWriteSlaveType;
-      sAxilReadMaster : in  AxiLiteReadMasterType  := AXI_LITE_READ_MASTER_INIT_C;
-      sAxilReadSlave  : out AxiLiteReadSlaveType
+      sAxilWriteMaster  : in  AxiLiteWriteMasterType := AXI_LITE_WRITE_MASTER_INIT_C;
+      sAxilWriteSlave   : out AxiLiteWriteSlaveType;
+      sAxilReadMaster   : in  AxiLiteReadMasterType  := AXI_LITE_READ_MASTER_INIT_C;
+      sAxilReadSlave    : out AxiLiteReadSlaveType
       );
 end EthPortMapping;
 
@@ -117,14 +119,14 @@ architecture mapping of EthPortMapping is
       TUSER_BITS_C  => 0,
       TUSER_MODE_C  => TUSER_NONE_C);
 
-   constant RSSI_ILEAVE_EN_C : boolean := true;
 
-   constant RSSI_PORT_C      : positive := ite(RSSI_ILEAVE_EN_C, 8198, 8193);
+   constant RSSI_PORT_C      : positive := ite(RSSI_ILEAVE_EN_G, 8198, 8193);
    constant XVC_PORT_C       : positive := 2542;
+   constant SRP_V0_PORT_C    : positive := 8192;
 
 
-   constant NUM_INT_SERVERS_C  : integer                                     := 2;
-   constant INT_SERVER_PORTS_C : PositiveArray(NUM_INT_SERVERS_C-1 downto 0) := (0 => RSSI_PORT_C, 1 => XVC_PORT_C);
+   constant NUM_INT_SERVERS_C  : integer                                     := 3;
+   constant INT_SERVER_PORTS_C : PositiveArray(NUM_INT_SERVERS_C-1 downto 0) := (0 => RSSI_PORT_C, 1 => XVC_PORT_C, 2 => SRP_V0_PORT_C);
    constant NUM_SERVERS_C      : integer                                     := NUM_INT_SERVERS_C + UDP_SRV_SIZE_G;
    constant SERVER_PORTS_C     : PositiveArray(NUM_SERVERS_C-1 downto 0)     :=
       cat(INT_SERVER_PORTS_C, UDP_SRV_PORTS_G);
@@ -240,15 +242,59 @@ begin
          axilWriteSlave  => axilWriteSlaves (UDP_INDEX_C)
       );
 
+   --------------------------------------
+   -- Legacy AXI-Lite Master without RSSI
+   --------------------------------------
+   GEN_SRP_V0 : if (SRP_V0_EN_G) generate
+
+   U_SRPv0 : entity work.SrpV0AxiLite
+      generic map (
+         TPD_G               => TPD_G,
+         SLAVE_READY_EN_G    => true,
+         EN_32BIT_ADDR_G     => true,
+         BRAM_EN_G           => true,
+         GEN_SYNC_FIFO_G     => true,
+         AXI_STREAM_CONFIG_G => EMAC_AXIS_CONFIG_C
+      )
+      port map (
+         -- Streaming Slave (Rx) Interface (sAxisClk domain) 
+         sAxisClk            => clk,
+         sAxisRst            => rst,
+         sAxisMaster         => obServerMasters(2),
+         sAxisSlave          => obServerSlaves(2),
+         -- Streaming Master (Tx) Data Interface (mAxisClk domain)
+         mAxisClk            => clk,
+         mAxisRst            => rst,
+         mAxisMaster         => ibServerMasters(2),
+         mAxisSlave          => ibServerSlaves(2),
+         -- AXI Lite Bus (axiLiteClk domain)
+         axiLiteClk          => clk,
+         axiLiteRst          => rst,
+         mAxiLiteReadMaster  => mAxilReadMasters(1),
+         mAxiLiteReadSlave   => mAxilReadSlaves(1),
+         mAxiLiteWriteMaster => mAxilWriteMasters(1),
+         mAxiLiteWriteSlave  => mAxilWriteSlaves(1)
+      );
+
+   end generate;
+
+   NO_GEN_SRP_V0 : if (not SRP_V0_EN_G) generate
+      mAxilReadMasters(1)  <= AXI_LITE_READ_MASTER_INIT_C;
+      mAxilWriteMasters(1) <= AXI_LITE_WRITE_MASTER_INIT_C;
+
+      ibServerMasters(2)   <= AXI_STREAM_MASTER_INIT_C;
+      obServerSlaves(2)    <= AXI_STREAM_SLAVE_FORCE_C;
+   end generate;
+
    ------------------------------------------
    -- Software's RSSI Server Interface @ 8193 (non-interleaved mode)/8198 (interleaved mode)
    ------------------------------------------
    U_RssiServer : entity work.RssiCoreWrapper
       generic map (
          TPD_G               => TPD_G,
-         MAX_SEG_SIZE_G      => 1024,
-         SEGMENT_ADDR_SIZE_G => 7,
-         APP_ILEAVE_EN_G     => RSSI_ILEAVE_EN_C,
+         MAX_SEG_SIZE_G      => ite(JUMBO_G, 8192, 1024), -- bytes
+         SEGMENT_ADDR_SIZE_G => ite(JUMBO_G,   10,    7), -- number of 64-bit words
+         APP_ILEAVE_EN_G     => RSSI_ILEAVE_EN_G,
          APP_STREAMS_G       => RSSI_SIZE_C,
          APP_STREAM_ROUTES_G => RSSI_ROUTES_C,
          CLK_FREQUENCY_G     => CLK_FREQUENCY_G,
@@ -308,10 +354,10 @@ begin
          -- Master AXI-Lite Interface (axilClk domain)
          axilClk          => clk,
          axilRst          => rst,
-         mAxilReadMaster  => mAxilReadMaster,
-         mAxilReadSlave   => mAxilReadSlave,
-         mAxilWriteMaster => mAxilWriteMaster,
-         mAxilWriteSlave  => mAxilWriteSlave);
+         mAxilReadMaster  => mAxilReadMasters(0),
+         mAxilReadSlave   => mAxilReadSlaves(0),
+         mAxilWriteMaster => mAxilWriteMasters(0),
+         mAxilWriteSlave  => mAxilWriteSlaves(0));
 
    GEN_MAP_1 : for i in RSSI_SIZE_G - 1 downto 0 generate
       rssiIbMastersLoc(i + INT_RSSI_SIZE_C) <= rssiIbMasters(i);

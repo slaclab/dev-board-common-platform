@@ -47,10 +47,10 @@ entity SysReg is
       clk               : in  sl;
       rst               : in  sl;
       -- AXI-Lite interface
-      sAxilWriteMaster  : in  AxiLiteWriteMasterArray(1 downto 0);
-      sAxilWriteSlave   : out AxiLiteWriteSlaveArray (1 downto 0);
-      sAxilReadMaster   : in  AxiLiteReadMasterArray (1 downto 0);
-      sAxilReadSlave    : out AxiLiteReadSlaveArray  (1 downto 0);
+      sAxilWriteMaster  : in  AxiLiteWriteMasterArray(2 downto 0);
+      sAxilWriteSlave   : out AxiLiteWriteSlaveArray (2 downto 0);
+      sAxilReadMaster   : in  AxiLiteReadMasterArray (2 downto 0);
+      sAxilReadSlave    : out AxiLiteReadSlaveArray  (2 downto 0);
 
       bsaWriteMaster    : out AxiLiteWriteMasterType;
       bsaWriteSlave     : in  AxiLiteWriteSlaveType;
@@ -176,26 +176,30 @@ begin
    U_XBAR : entity work.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
-         NUM_SLAVE_SLOTS_G  => 4,
+         NUM_SLAVE_SLOTS_G  => 5,
          NUM_MASTER_SLOTS_G => NUM_AXI_MASTERS_C,
          MASTERS_CONFIG_G   => SYSREG_MASTERS_CONFIG_C)
       port map (
          sAxiWriteMasters(0) => sAxilWriteMaster(0),
          sAxiWriteMasters(1) => sAxilWriteMaster(1),
-         sAxiWriteMasters(2) => tAxilWriteMaster,
-         sAxiWriteMasters(3) => fAxilWriteMaster,
+         sAxiWriteMasters(2) => sAxilWriteMaster(2),
+         sAxiWriteMasters(3) => tAxilWriteMaster,
+         sAxiWriteMasters(4) => fAxilWriteMaster,
          sAxiWriteSlaves(0)  => sAxilWriteSlave(0),
          sAxiWriteSlaves(1)  => sAxilWriteSlave(1),
-         sAxiWriteSlaves(2)  => tAxilWriteSlave,
-         sAxiWriteSlaves(3)  => fAxilWriteSlave,
+         sAxiWriteSlaves(2)  => sAxilWriteSlave(2),
+         sAxiWriteSlaves(3)  => tAxilWriteSlave,
+         sAxiWriteSlaves(4)  => fAxilWriteSlave,
          sAxiReadMasters(0)  => sAxilReadMaster(0),
          sAxiReadMasters(1)  => sAxilReadMaster(1),
-         sAxiReadMasters(2)  => tAxilReadMaster,
-         sAxiReadMasters(3)  => fAxilReadMaster,
+         sAxiReadMasters(2)  => sAxilReadMaster(2),
+         sAxiReadMasters(3)  => tAxilReadMaster,
+         sAxiReadMasters(4)  => fAxilReadMaster,
          sAxiReadSlaves(0)   => sAxilReadSlave(0),
          sAxiReadSlaves(1)   => sAxilReadSlave(1),
-         sAxiReadSlaves(2)   => tAxilReadSlave,
-         sAxiReadSlaves(3)   => fAxilReadSlave,
+         sAxiReadSlaves(2)   => sAxilReadSlave(2),
+         sAxiReadSlaves(3)   => tAxilReadSlave,
+         sAxiReadSlaves(4)   => fAxilReadSlave,
          mAxiWriteMasters    => mAxilWriteMasters,
          mAxiWriteSlaves     => mAxilWriteSlaves,
          mAxiReadMasters     => mAxilReadMasters,
