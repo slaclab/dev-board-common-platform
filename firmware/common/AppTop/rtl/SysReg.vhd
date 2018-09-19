@@ -587,7 +587,3 @@ begin
    mAxilReadSlaves  (APP_INDEX_C) <= appReadSlave;
 
 end mapping;
- formal axilclk has no actual or default value [/u1/strauman/dev-board-common-platform/firmware/common/AppTop/rtl/SysReg.vhd:323]
- formal stablerst has no actual or default value [/u1/strauman/dev-board-common-platform/firmware/common/AppTop/rtl/SysReg.vhd:448]
-ERROR: [Common 17-69] Command failed: Synthesis failed - please see the console or run log file for details
-
