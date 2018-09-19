@@ -147,7 +147,6 @@ architecture mapping of SysReg is
    signal timingTxRstAsync  : sl;
 
    signal timingBus         : TimingBusType;
-   signal exptBus           : ExptBusType;
    signal appTimingMode     : sl;
 
 
@@ -350,8 +349,6 @@ begin
          appTimingBus        => timingBus,
          appTimingMode       => appTimingMode,
 
-         exptBus             => exptBus,
-
          axilClk             => clk,
          axilRst             => rst,
          axilReadMaster      => mAxilReadMasters (TIMCORE_INDEX_C),
@@ -387,7 +384,6 @@ begin
          evrClk              => appTimingClk,
          evrRst              => appTimingRst,
          evrBus              => timingBus,
-         exptBus             => exptBus,
          -- Trigger and Sync Port
          trigOut             => appTimingTrig, -- out slv(11 downto 0);
          evrModeSel          => appTimingMode
@@ -460,6 +456,7 @@ begin
          axilWriteSlave   => mAxilWriteSlaves(TIM_GTH_INDEX_C),
 
          stableClk        => clk,
+         stableRst        =>
 
          gtRefClk         => timingRefClk,
          gtRefClkDiv2     => timingRefClkDiv2,
@@ -591,3 +588,7 @@ begin
    mAxilReadSlaves  (APP_INDEX_C) <= appReadSlave;
 
 end mapping;
+ formal axilclk has no actual or default value [/u1/strauman/dev-board-common-platform/firmware/common/AppTop/rtl/SysReg.vhd:323]
+ formal stablerst has no actual or default value [/u1/strauman/dev-board-common-platform/firmware/common/AppTop/rtl/SysReg.vhd:448]
+ERROR: [Common 17-69] Command failed: Synthesis failed - please see the console or run log file for details
+
