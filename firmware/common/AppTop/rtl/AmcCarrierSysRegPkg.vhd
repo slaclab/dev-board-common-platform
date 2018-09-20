@@ -119,7 +119,7 @@ package AmcCarrierSysRegPkg is
             connectivity     => x"FFFF"
                             ),
          GIG_INDEX_C     => (
-            baseAddr         => GIG_INDEX_C,
+            baseAddr         => GIG_ADDR_C,
             addrBits         => 16,
             connectivity     => x"FFFF"
                             ),
