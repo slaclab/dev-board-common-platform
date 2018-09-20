@@ -473,10 +473,10 @@ begin
          -- Register Interface
          axiLiteClk(0)          => sysClk156,
          axiLiteRst(0)          => sysRst156,
-         axiLiteReadMasters(0)  => gigEthAxilReadMaster,
-         axiLiteReadSlaves(0)   => gigEthAxilReadSlave,
-         axiLiteWriteMasters(0) => gigEthAxilWriteMaster,
-         axiLiteWriteSlaves(0)  => gigEthAxilWriteSlave,
+         axiLiteReadMasters(0)  => gthEthAxilReadMaster,
+         axiLiteReadSlaves(0)   => gthEthAxilReadSlave,
+         axiLiteWriteMasters(0) => gthEthAxilWriteMaster,
+         axiLiteWriteSlaves(0)  => gthEthAxilWriteSlave,
 
          -- Streaming DMA Interface
          dmaClk                 => dmaClk,
