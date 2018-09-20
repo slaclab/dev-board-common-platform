@@ -130,6 +130,7 @@ v1.1  : Use Si5328 to generate ethernet clocks
         Renamed target subdirectory to Kcu105Eth
 v1.1.1: Image files added
 v1.2.0: Added 'backdoor' controller (SRPV2 over UDP @8192)
+        Added registers for MACs
 
 ## Acknowledgement
 
