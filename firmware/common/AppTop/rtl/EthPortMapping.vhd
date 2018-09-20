@@ -257,7 +257,7 @@ begin
          AXI_STREAM_CONFIG_G => EMAC_AXIS_CONFIG_C
       )
       port map (
-         -- Streaming Slave (Rx) Interface (sAxisClk domain) 
+         -- Streaming Slave (Rx) Interface (sAxisClk domain)
          sAxisClk            => clk,
          sAxisRst            => rst,
          sAxisMaster         => obServerMasters(2),
