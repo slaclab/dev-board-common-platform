@@ -37,9 +37,11 @@ package AmcCarrierSysRegPkg is
    constant BSA_INDEX_C     : natural := 8;
    constant ETH_INDEX_C     : natural := 9;
    constant FAN_INDEX_C     : natural :=10;
-   constant APP_INDEX_C     : natural :=11;
+   constant GIG_INDEX_C     : natural :=11;
+   constant GTH_INDEX_C     : natural :=12;
+   constant APP_INDEX_C     : natural :=13;
 
-   constant NUM_AXI_MASTERS_C : natural := 12;
+   constant NUM_AXI_MASTERS_C : natural := 14;
 
    ---------------------------------------------
    -- Register Mapping: 1st Layer base addresses
@@ -55,6 +57,8 @@ package AmcCarrierSysRegPkg is
    constant BSA_ADDR_C        : slv(31 downto 0) := x"0800_0000";
    constant ETH_ADDR_C        : slv(31 downto 0) := x"0900_0000";
    constant FAN_ADDR_C        : slv(31 downto 0) := x"0a00_0000";
+   constant GIG_ADDR_C        : slv(31 downto 0) := x"0a01_0000";
+   constant GTH_ADDR_C        : slv(31 downto 0) := x"0a02_0000";
    constant APP_ADDR_C        : slv(31 downto 0) := x"8000_0000";
 
    constant SYSREG_MASTERS_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) :=
@@ -111,6 +115,16 @@ package AmcCarrierSysRegPkg is
                             ),
          FAN_INDEX_C     => (
             baseAddr         => FAN_ADDR_C,
+            addrBits         => 16,
+            connectivity     => x"FFFF"
+                            ),
+         GIG_INDEX_C     => (
+            baseAddr         => GIG_INDEX_C,
+            addrBits         => 16,
+            connectivity     => x"FFFF"
+                            ),
+         GTH_INDEX_C     => (
+            baseAddr         => GTH_ADDR_C,
             addrBits         => 16,
             connectivity     => x"FFFF"
                             ),

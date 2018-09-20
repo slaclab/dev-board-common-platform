@@ -42,6 +42,11 @@ entity AppTop is
       -- Clock and Reset
       axilClk         : in  sl;
       axilRst         : in  sl;
+      -- AXI Lite Interface
+      topReadMasters  : out AxiLiteReadMasterArray (1 downto 0);
+      topReadSlaves   : in  AxiLiteReadSlaveArray  (1 downto 0);
+      topWriteMasters : out AxiLiteWriteMasterArray(1 downto 0);
+      topWriteSlaves  : in  AxiLiteWriteSlaveArray (1 downto 0);
       -- AXI Memory Interface
       axiClk          : in  sl;
       axiRst          : in  sl;
@@ -344,17 +349,17 @@ begin
 
    U_Xbar : entity work.AxiLiteCrossbar
       generic map (
-         TPD_G              => TPD_G,
-         NUM_SLAVE_SLOTS_G  => 1,
-         NUM_MASTER_SLOTS_G => N_AXIL_MASTERS_C,
-         MASTERS_CONFIG_G   => AXIL_CONFIG_C)
+         TPD_G               => TPD_G,
+         NUM_SLAVE_SLOTS_G   => 1,
+         NUM_MASTER_SLOTS_G  => N_AXIL_MASTERS_C,
+         MASTERS_CONFIG_G    => AXIL_CONFIG_C)
       port map (
          axiClk              => axilClk,
          axiClkRst           => axilRst,
          sAxiWriteMasters(0) => appWriteMaster,
-         sAxiWriteSlaves(0)  => appWriteSlave,
-         sAxiReadMasters(0)  => appReadMaster,
-         sAxiReadSlaves(0)   => appReadSlave,
+         sAxiWriteSlaves (0) => appWriteSlave,
+         sAxiReadMasters (0) => appReadMaster,
+         sAxiReadSlaves  (0) => appReadSlave,
          mAxiWriteMasters    => axilWriteMasters,
          mAxiWriteSlaves     => axilWriteSlaves,
          mAxiReadMasters     => axilReadMasters,
@@ -389,10 +394,21 @@ begin
          ethWriteMaster    => ethWriteMaster,
          ethWriteSlave     => ethWriteSlave,
 
-         appReadMaster     => appReadMaster,
-         appReadSlave      => appReadSlave,
-         appWriteMaster    => appWriteMaster,
-         appWriteSlave     => appWriteSlave,
+         topReadMasters(0) => appReadMaster,
+         topReadMasters(1) => topReadMasters(0),
+         topReadMasters(2) => topReadMasters(1),
+
+         topReadSlaves(0)  => appReadSlave,
+         topReadSlaves(1)  => topReadSlaves(0),
+         topReadSlaves(2)  => topReadSlaves(1),
+
+         topWriteMasters(0)=> appWriteMaster,
+         topWriteMasters(1)=> topWriteMasters(0),
+         topWriteMasters(2)=> topWriteMasters(1),
+
+         topWriteSlaves(0) => appWriteSlave,
+         topWriteSlaves(1) => topWriteSlaves(0),
+         topWriteSlaves(2) => topWriteSlaves(1),
 
          obTimingEthMaster => obTimingEthMaster,
          obTimingEthSlave  => obTimingEthSlave,

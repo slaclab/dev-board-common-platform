@@ -194,6 +194,17 @@ architecture top_level of Kcu105Eth is
    signal memAxiReadMaster     : AxiReadMasterType;
    signal memAxiReadSlave      : AxiReadSlaveType;
 
+   signal gigEthAxilWriteMaster: AxiLiteWriteMasterType;
+   signal gigEthAxilWriteSlave : AxiLiteWriteSlaveType := AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C;
+   signal gigEthAxilReadMaster : AxiLiteReadMasterType;
+   signal gigEthAxilReadSlave  : AxiLiteReadSlaveType  := AXI_LITE_READ_SLAVE_EMPTY_DECERR_C;
+
+   signal gthEthAxilWriteMaster: AxiLiteWriteMasterType;
+   signal gthEthAxilWriteSlave : AxiLiteWriteSlaveType := AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C;
+   signal gthEthAxilReadMaster : AxiLiteReadMasterType;
+   signal gthEthAxilReadSlave  : AxiLiteReadSlaveType  := AXI_LITE_READ_SLAVE_EMPTY_DECERR_C;
+
+
    signal appTimingClk  : sl;
    signal appTimingRst  : sl;
 
@@ -384,44 +395,56 @@ begin
 
    U_1GigE_SGMII : entity work.GigEthLVDSUltraScaleWrapper
       generic map (
-         TPD_G              => TPD_G,
+         TPD_G                  => TPD_G,
          -- DMA/MAC Configurations
-         NUM_LANE_G         => 1,
+         NUM_LANE_G             => 1,
          -- MMCM Configuration
-         USE_REFCLK_G       => false,
-         CLKIN_PERIOD_G     => 1.6,     -- 625.0 MHz
-         DIVCLK_DIVIDE_G    => 2,       -- 312.5 MHz
-         CLKFBOUT_MULT_F_G  => 2.0,     -- VCO: 625 MHz
+         USE_REFCLK_G           => false,
+         CLKIN_PERIOD_G         => 1.6,     -- 625.0 MHz
+         DIVCLK_DIVIDE_G        => 2,       -- 312.5 MHz
+         CLKFBOUT_MULT_F_G      => 2.0,     -- VCO: 625 MHz
+         -- AXI Lite Configuration
+         EN_AXI_REG_G           => true,
          -- AXI Streaming Configurations
-         AXIS_CONFIG_G      => (others => EMAC_AXIS_CONFIG_C)
+         AXIS_CONFIG_G          => (others => EMAC_AXIS_CONFIG_C)
       )
       port map (
          -- Local Configurations
-         localMac           => localMacArray,
+         localMac               => localMacArray,
+
          -- Streaming DMA Interface
-         dmaClk             => dmaClk,
-         dmaRst             => dmaRst,
-         dmaIbMasters       => rxMastersSGMII,
-         dmaIbSlaves        => rxSlavesSGMII,
-         dmaObMasters       => txMastersSGMII,
-         dmaObSlaves        => txSlavesSGMII,
+         dmaClk                 => dmaClk,
+         dmaRst                 => dmaRst,
+         dmaIbMasters           => rxMastersSGMII,
+         dmaIbSlaves            => rxSlavesSGMII,
+         dmaObMasters           => txMastersSGMII,
+         dmaObSlaves            => txSlavesSGMII,
+
+         -- Register Interface
+         axiLiteClk(0)          => sysClk156,
+         axiLiteRst(0)          => sysRst156,
+         axiLiteReadMasters(0)  => gigEthAxilReadMaster,
+         axiLiteReadSlaves(0)   => gigEthAxilReadSlave,
+         axiLiteWriteMasters(0) => gigEthAxilWriteMaster,
+         axiLiteWriteSlaves(0)  => gigEthAxilWriteSlave,
+
          -- Misc. Signals
-         extRst             => extRst,
-         phyClk             => sgmiiClk,
-         phyRst             => sgmiiRst,
-         phyReady           => open,
-         mmcmLocked         => open,
-         speed_is_10_100(0) => speed10_100,
-         speed_is_100(0)    => speed100,
+         extRst                 => extRst,
+         phyClk                 => sgmiiClk,
+         phyRst                 => sgmiiRst,
+         phyReady               => open,
+         mmcmLocked             => open,
+         speed_is_10_100(0)     => speed10_100,
+         speed_is_100(0)        => speed100,
 
          -- MGT Clock Port
-         sgmiiClkP          => sgmiiClkP,
-         sgmiiClkN          => sgmiiClkN,
+         sgmiiClkP              => sgmiiClkP,
+         sgmiiClkN              => sgmiiClkN,
          -- MGT Ports
-         sgmiiTxP(0)        => sgmiiTxP,
-         sgmiiTxN(0)        => sgmiiTxN,
-         sgmiiRxP(0)        => sgmiiRxP,
-         sgmiiRxN(0)        => sgmiiRxN
+         sgmiiTxP(0)            => sgmiiTxP,
+         sgmiiTxN(0)            => sgmiiTxN,
+         sgmiiRxP(0)            => sgmiiRxP,
+         sgmiiRxN(0)            => sgmiiRxN
       );
 
    GEN_10G_GTH : if ( DISABLE_10G_ETH_G = 0 ) generate
@@ -435,37 +458,47 @@ begin
 
    U_10GigE : entity work.TenGigEthGthUltraScaleWrapper
       generic map (
-         TPD_G             => TPD_G,
-         NUM_LANE_G        => 1,
+         TPD_G                  => TPD_G,
+         NUM_LANE_G             => 1,
          -- QUAD PLL Configurations
-         QPLL_REFCLK_SEL_G => "001",
+         QPLL_REFCLK_SEL_G      => "001",
+         -- AXI Lite Configuration
+         EN_AXI_REG_G           => true,
          -- AXI Streaming Configurations
-         AXIS_CONFIG_G     => (others => EMAC_AXIS_CONFIG_C))
+         AXIS_CONFIG_G          => (others => EMAC_AXIS_CONFIG_C))
       port map (
          -- Local Configurations
-         localMac          => localMacArray,
+         localMac               => localMacArray,
+
+         -- Register Interface
+         axiLiteClk(0)          => sysClk156,
+         axiLiteRst(0)          => sysRst156,
+         axiLiteReadMasters(0)  => gigEthAxilReadMaster,
+         axiLiteReadSlaves(0)   => gigEthAxilReadSlave,
+         axiLiteWriteMasters(0) => gigEthAxilWriteMaster,
+         axiLiteWriteSlaves(0)  => gigEthAxilWriteSlave,
 
          -- Streaming DMA Interface
-         dmaClk       => dmaClk,
-         dmaRst       => dmaRst,
-         dmaIbMasters => rxMastersGTH,
-         dmaIbSlaves  => rxSlavesGTH,
-         dmaObMasters => txMastersGTH,
-         dmaObSlaves  => txSlavesGTH,
+         dmaClk                 => dmaClk,
+         dmaRst                 => dmaRst,
+         dmaIbMasters           => rxMastersGTH,
+         dmaIbSlaves            => rxSlavesGTH,
+         dmaObMasters           => txMastersGTH,
+         dmaObSlaves            => txSlavesGTH,
          -- Misc. Signals
-         extRst       => extRst,
-         coreClk      => clk, -- out
-         coreRst      => rst, -- out
+         extRst                 => extRst,
+         coreClk                => clk, -- out
+         coreRst                => rst, -- out
 
-         phyReady(0)  => phyReady,
+         phyReady(0)            => phyReady,
          -- MGT Clock Port (156.25 MHz or 312.5 MHz)
-         gtClkP       => refClkP(0),
-         gtClkN       => refClkN(0),
+         gtClkP                 => refClkP(0),
+         gtClkN                 => refClkN(0),
          -- MGT Ports
-         gtTxP(0)     => sfpTxP(0),
-         gtTxN(0)     => sfpTxN(0),
-         gtRxP(0)     => sfpRxP(0),
-         gtRxN(0)     => sfpRxN(0)
+         gtTxP(0)               => sfpTxP(0),
+         gtTxN(0)               => sfpTxN(0),
+         gtRxP(0)               => sfpRxP(0),
+         gtRxN(0)               => sfpRxN(0)
       );
 
    -- latch state of dip-switch during reset
@@ -525,57 +558,70 @@ begin
       )
       port map (
          -- Clock and Reset
-         axilClk        => sysClk156,
-         axilRst        => sysRst156,
+         axilClk           => sysClk156,
+         axilRst           => sysRst156,
+
+         topWriteMasters(0)=> gigEthAxilWriteMaster,
+         topWriteMasters(1)=> gthEthAxilWriteMaster,
+
+         topWriteSlaves (0)=> gigEthAxilWriteSlave,
+         topWriteSlaves (1)=> gthEthAxilWriteSlave,
+
+         topReadMasters(0) => gigEthAxilReadMaster,
+         topReadMasters(1) => gthEthAxilReadMaster,
+
+         topReadSlaves (0) => gigEthAxilReadSlave,
+         topReadSlaves (1) => gthEthAxilReadSlave,
+
 
          -- Networking Config.
-         localMac       => localMac,
-         localIp        => localIp,
+         localMac          => localMac,
+         localIp           => localIp,
          -- AXIS interface
-         txMasters      => keptSignals.txMasters,
-         txSlaves       => keptSignals.txSlaves,
-         rxMasters      => keptSignals.rxMasters,
-         rxSlaves       => keptSignals.rxSlaves,
+         txMasters         => keptSignals.txMasters,
+         txSlaves          => keptSignals.txSlaves,
+         rxMasters         => keptSignals.rxMasters,
+         rxSlaves          => keptSignals.rxSlaves,
 
          -- AXI Memory Interface
-         axiClk         => axiClk,                              -- [in]
-         axiRst         => axiRst,                              -- [in]
-         axiWriteMaster => memAxiWriteMaster,                   -- [out]
-         axiWriteSlave  => memAxiWriteSlave,                    -- [in]
-         axiReadMaster  => memAxiReadMaster,                    -- [out]
-         axiReadSlave   => memAxiReadSlave,
+         axiClk            => axiClk,                              -- [in]
+         axiRst            => axiRst,                              -- [in]
+         axiWriteMaster    => memAxiWriteMaster,                   -- [out]
+         axiWriteSlave     => memAxiWriteSlave,                    -- [in]
+         axiReadMaster     => memAxiReadMaster,                    -- [out]
+         axiReadSlave      => memAxiReadSlave,
 
          -- ADC Ports
-         v0PIn          => v0PIn,
-         v0NIn          => v0NIn,
-         v2PIn          => v2PIn,
-         v2NIn          => v2NIn,
-         v8PIn          => v8PIn,
-         v8NIn          => v8NIn,
-         vPIn           => vPIn,
-         vNIn           => vNIn,
-         muxAddrOut     => muxAddrLoc,
+         v0PIn             => v0PIn,
+         v0NIn             => v0NIn,
+         v2PIn             => v2PIn,
+         v2NIn             => v2NIn,
+         v8PIn             => v8PIn,
+         v8NIn             => v8NIn,
+         vPIn              => vPIn,
+         vNIn              => vNIn,
+         muxAddrOut        => muxAddrLoc,
 
          -- Fan Port
-         fanPwmOut      => fanPwmOut,
+         fanPwmOut         => fanPwmOut,
 
          -- IIC Port
-         iicScl         => iicScl,
-         iicSda         => iicSda,
+         iicScl            => iicScl,
+         iicSda            => iicSda,
 
-         timingRefClkP  => refClkP(1),
-         timingRefClkN  => refClkN(1),
-         timingRxP      => sfpRxP(1),
-         timingRxN      => sfpRxN(1),
-         timingTxP      => sfpTxP(1),
-         timingTxN      => sfpTxN(1),
-         appTimingClk   => appTimingClk,
-         appTimingRst   => appTimingRst,
-         gpioDip        => gpioDip,
-         appLeds        => appLeds,
-         gpioSmaP       => gpioSmaPBuf,
-         gpioSmaN       => gpioSmaNBuf,
-         pmod           => pmodBuf
+         timingRefClkP     => refClkP(1),
+         timingRefClkN     => refClkN(1),
+         timingRxP         => sfpRxP(1),
+         timingRxN         => sfpRxN(1),
+         timingTxP         => sfpTxP(1),
+         timingTxN         => sfpTxN(1),
+         appTimingClk      => appTimingClk,
+         appTimingRst      => appTimingRst,
+         gpioDip           => gpioDip,
+         appLeds           => appLeds,
+         gpioSmaP          => gpioSmaPBuf,
+         gpioSmaN          => gpioSmaNBuf,
+         pmod              => pmodBuf
       );
 
    U_DdrMem : entity work.AmcCarrierDdrMem

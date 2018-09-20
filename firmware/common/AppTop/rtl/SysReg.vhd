@@ -57,10 +57,11 @@ entity SysReg is
       bsaReadMaster     : out AxiLiteReadMasterType;
       bsaReadSlave      : in  AxiLiteReadSlaveType;
 
-      appWriteMaster    : out AxiLiteWriteMasterType;
-      appWriteSlave     : in  AxiLiteWriteSlaveType;
-      appReadMaster     : out AxiLiteReadMasterType;
-      appReadSlave      : in  AxiLiteReadSlaveType;
+      topWriteMasters   : out AxiLiteWriteMasterArray(2 downto 0);
+      topWriteSlaves    : in  AxiLiteWriteSlaveArray (2 downto 0) := (others => AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C);
+      topReadMasters    : out AxiLiteReadMasterArray (2 downto 0);
+      topReadSlaves     : in  AxiLiteReadSlaveArray  (2 downto 0) := (others => AXI_LITE_READ_SLAVE_EMPTY_DECERR_C);
+ 
 
       ethWriteMaster    : out AxiLiteWriteMasterType;
       ethWriteSlave     : in  AxiLiteWriteSlaveType;
@@ -581,9 +582,19 @@ begin
    ethReadMaster                  <= mAxilReadMasters (ETH_INDEX_C);
    mAxilReadSlaves  (ETH_INDEX_C) <= ethReadSlave;
 
-   appWriteMaster                 <= mAxilWriteMasters(APP_INDEX_C);
-   mAxilWriteSlaves (APP_INDEX_C) <= appWriteSlave;
-   appReadMaster                  <= mAxilReadMasters (APP_INDEX_C);
-   mAxilReadSlaves  (APP_INDEX_C) <= appReadSlave;
+   topWriteMasters(0)             <= mAxilWriteMasters(APP_INDEX_C);
+   mAxilWriteSlaves (APP_INDEX_C) <= topWriteSlaves(0);
+   topReadMasters(0)              <= mAxilReadMasters (APP_INDEX_C);
+   mAxilReadSlaves  (APP_INDEX_C) <= topReadSlaves(0);
+
+   topWriteMasters(1)             <= mAxilWriteMasters(GIG_INDEX_C);
+   mAxilWriteSlaves (GIG_INDEX_C) <= topWriteSlaves(1);
+   topReadMasters(1)              <= mAxilReadMasters (GIG_INDEX_C);
+   mAxilReadSlaves  (GIG_INDEX_C) <= topReadSlaves(1);
+
+   topWriteMasters(2)             <= mAxilWriteMasters(GTH_INDEX_C);
+   mAxilWriteSlaves (GTH_INDEX_C) <= topWriteSlaves(2);
+   topReadMasters(2)              <= mAxilReadMasters (GTH_INDEX_C);
+   mAxilReadSlaves  (GTH_INDEX_C) <= topReadSlaves(2);
 
 end mapping;
