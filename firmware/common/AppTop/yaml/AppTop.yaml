@@ -27,6 +27,8 @@
 #include AppCore.yaml
 #include DaqMuxV2.yaml
 #include DacSigGen.yaml
+#include GigEthReg.yaml
+#include TenGigEthReg.yaml
 
 AppTop: &AppTop
   size: 0x80000000
@@ -210,3 +212,11 @@ SysRegs: &SysRegs
       <<: *AxiFanController
       at:
         offset: 0x0a000000
+    GigEth:
+      <<: *GigEthReg
+      at:
+        offset: 0x0a010000
+    TenGigEth:
+      <<: *TenGigEthReg
+      at:
+        offset: 0x0a020000
