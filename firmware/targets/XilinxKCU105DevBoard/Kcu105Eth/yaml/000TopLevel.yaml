@@ -51,6 +51,21 @@ stream: &stream
     TDESTMux:
       stripHeader: yes
 
+NetIODbg:
+  ipAddr: *IpAddr
+  class: NetIODev
+  configPrio: 1
+  children:
+    mmio:
+      <<: *mmio
+      at:
+        SRP:
+          protocolVersion: SRP_UDP_V2
+          dynTimeout:      true
+          timeoutUS:       800000
+        UDP:
+          port: 8192
+
 NetIODev:
   ipAddr: *IpAddr
   class: NetIODev
