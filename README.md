@@ -131,6 +131,8 @@ v1.1  : Use Si5328 to generate ethernet clocks
 v1.1.1: Image files added
 v1.2.0: Added 'backdoor' controller (SRPV2 over UDP @8192)
         Added MAC registers
+        Added ethernet transceiver registers
+        Jumbo frame support (use surf with ESLCOMMON-229 patch)
 
 ## Acknowledgement
 
