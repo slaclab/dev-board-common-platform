@@ -453,10 +453,11 @@ begin
 
       U_BSA : entity work.AmcCarrierBsa
          generic map (
-            TPD_G          => TPD_G,
-            FSBL_G         => false,
-            DISABLE_BSA_G  => APP_CORE_CONFIG_G.disableBSA,
-            DISABLE_BLD_G  => APP_CORE_CONFIG_G.disableBLD
+            TPD_G                  => TPD_G,
+            FSBL_G                 => false,
+            WAVEFORM_TDATA_BYTES_G => APP_CORE_CONFIG_G.waveformTdataBytes,
+            DISABLE_BSA_G          => APP_CORE_CONFIG_G.disableBSA,
+            DISABLE_BLD_G          => APP_CORE_CONFIG_G.disableBLD
          )
          port map (
             -- AXI-Lite Interface (axilClk domain)
@@ -513,7 +514,7 @@ begin
          generic map (
             TPD_G                  => TPD_G,
             DECIMATOR_EN_G         => true,
-            WAVEFORM_TDATA_BYTES_G => 4,
+            WAVEFORM_TDATA_BYTES_G => APP_CORE_CONFIG_G.waveformTdataBytes,
             BAY_INDEX_G            => ite((i = 0), '0', '1'),
             N_DATA_IN_G            => 18,
             N_DATA_OUT_G           => 4)

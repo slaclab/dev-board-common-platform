@@ -133,6 +133,7 @@ v1.2.0: Added 'backdoor' controller (SRPV2 over UDP @8192)
         Added MAC registers
         Added ethernet transceiver registers
         Jumbo frame support (use surf with ESLCOMMON-229 patch)
+        Added WAVEFORM_TDATA_BYTES_G to configurable parameters in AppCorePkg.vhd
 
 ## Acknowledgement
 

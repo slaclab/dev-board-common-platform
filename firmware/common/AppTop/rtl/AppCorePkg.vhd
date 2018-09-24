@@ -77,6 +77,7 @@ package AppCorePkg is
       sigGenRamClk         : Slv7Array    (1 downto 0); -- 0: jesd2x, 1: jesd1x
       smaPTrigger          : integer; -- which trigger to connect to GPIO SMA P (-1 for none)
       smaNTrigger          : integer; -- which trigger to connect to GPIO SMA P (-1 for none)
+      waveformTdataBytes   : positive range 4 to 8; -- AXI stream width between DaqMuxV2 and BSA
    end record;
 
    constant APP_CORE_CONFIG_DFLT_C : AppCoreConfigType := (
@@ -104,7 +105,8 @@ package AppCorePkg is
       sigGenLaneMode       => (others => "0000000"), -- 0: 32-bit, 1: 16-bit
       sigGenRamClk         => (others => "0000000"), -- 0: jesd2x, 1: jesd1x
       smaPTrigger          => 8,
-      smaNTrigger          => 9
+      smaNTrigger          => 9,
+      waveformTdataBytes   => 4
    );
 
 end package AppCorePkg;
