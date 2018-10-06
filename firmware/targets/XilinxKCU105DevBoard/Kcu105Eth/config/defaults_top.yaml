@@ -1,4 +1,6 @@
 - AmcCarrierCore:
+  - LocReg/TimingTxReset: !<value> Reset
+  - LocReg/TimingTxReset: !<value> Run
   - AmcCarrierTiming:
     - EvrV2CoreTriggers: # disable triggers on init
       - EvrV2ChannelReg:
