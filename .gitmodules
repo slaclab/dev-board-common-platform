@@ -1,15 +1,15 @@
 [submodule "firmware/submodules/surf"]
 	path = firmware/submodules/surf
-	url = https://github.com:/slaclab/surf
+	url = https://github.com/slaclab/surf
 [submodule "firmware/submodules/ruckus"]
 	path = firmware/submodules/ruckus
-	url = https://github.com:/slaclab/ruckus
+	url = https://github.com/slaclab/ruckus
 [submodule "firmware/submodules/lcls-timing-core"]
 	path = firmware/submodules/lcls-timing-core
-	url = https://github.com:/slaclab/lcls-timing-core
+	url = https://github.com/slaclab/lcls-timing-core
 [submodule "firmware/submodules/amc-carrier-core"]
 	path = firmware/submodules/amc-carrier-core
-	url = https://github.com:/slaclab/amc-carrier-core
+	url = https://github.com/slaclab/amc-carrier-core
 [submodule "firmware/submodules/dev-board-misc-utils"]
 	path = firmware/submodules/dev-board-misc-utils
-	url = https://github.com:/slaclab/dev-board-misc-utils
+	url = https://github.com/slaclab/dev-board-misc-utils
