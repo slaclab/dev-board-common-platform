@@ -457,6 +457,7 @@ begin
          axilWriteSlave   => mAxilWriteSlaves(TIM_GTH_INDEX_C),
 
          stableClk        => clk,
+         stableRst        => rst,
 
          gtRefClk         => timingRefClk,
          gtRefClkDiv2     => timingRefClkDiv2,
