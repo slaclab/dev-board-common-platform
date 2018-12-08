@@ -15,6 +15,7 @@ if { [info exists ::env(DISABLE_10G_ETH)] != 1 || $::env(DISABLE_10G_ETH) == 0  
 	loadConstraints -path "$::DIR_PATH/hdl/TenGigEthGthUltraScale156p25MHzCore.xdc"
 	loadConstraints -path "$::DIR_PATH/hdl/TenGigEthGthUltraScale156p25MHzCore_clocks.xdc"
 	loadConstraints -path "$::DIR_PATH/hdl/TenGigEthGthUltraScale156p25MHzCore_gt.xdc"
+	loadConstraints -path "$::DIR_PATH/hdl/TenGigEthFalsePath.xdc"
 
 	set_property PROCESSING_ORDER  LATE  [get_files "$::DIR_PATH/hdl/TenGigEthClockGroups.xdc"]
 }
