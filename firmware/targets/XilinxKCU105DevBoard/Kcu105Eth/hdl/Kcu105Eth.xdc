@@ -94,11 +94,6 @@ set_property IOSTANDARD DIFF_SSTL12_DCI [get_ports "sysClk300P"]
 set_property ODT RTT_48 [get_ports "sysClk300P"]
 
 # GTH/SFP
-set_property PACKAGE_PIN U4 [get_ports "sfpTxP[0]"]
-set_property PACKAGE_PIN U3 [get_ports "sfpTxN[0]"]
-set_property PACKAGE_PIN T2 [get_ports "sfpRxP[0]"]
-set_property PACKAGE_PIN T1 [get_ports "sfpRxN[0]"]
-
 set_property PACKAGE_PIN W4 [get_ports "sfpTxP[1]"]
 set_property PACKAGE_PIN W3 [get_ports "sfpTxN[1]"]
 set_property PACKAGE_PIN V2 [get_ports "sfpRxP[1]"]
