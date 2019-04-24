@@ -9,4 +9,4 @@
 ##############################################################################
 
 # Setup the Xilinx software and licensing
-source /afs/slac/g/reseng/xilinx/vivado_2018.1/Vivado/2018.3/settings64.csh
+source /afs/slac/g/reseng/xilinx/vivado_2018.3/Vivado/2018.3/settings64.csh
