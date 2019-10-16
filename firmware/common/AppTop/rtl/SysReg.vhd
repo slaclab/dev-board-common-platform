@@ -214,6 +214,7 @@ begin
       generic map (
          TPD_G            => TPD_G,
          BUILD_INFO_G     => BUILD_INFO_G,
+         CLK_PERIOD_G     => (1.0/AXIL_CLK_FRQ_G),
          XIL_DEVICE_G     => XIL_DEVICE_G,
          EN_DEVICE_DNA_G  => true,
          USE_SLOWCLK_G    => USE_SLOWCLK_G)
