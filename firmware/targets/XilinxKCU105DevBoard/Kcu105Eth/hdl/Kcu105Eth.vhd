@@ -400,9 +400,7 @@ begin
          NUM_LANE_G             => 1,
          -- MMCM Configuration
          USE_REFCLK_G           => false,
-         CLKIN_PERIOD_G         => 1.6,     -- 625.0 MHz
-         DIVCLK_DIVIDE_G        => 2,       -- 312.5 MHz
-         CLKFBOUT_MULT_F_G      => 2.0,     -- VCO: 625 MHz
+         CLKOUT1_PHASE_G        => 0.0,
          -- AXI Lite Configuration
          EN_AXI_REG_G           => true,
          -- AXI Streaming Configurations
